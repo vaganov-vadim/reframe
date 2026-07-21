@@ -15,7 +15,7 @@
 (defn -main
   "Starts the Reframe backend server.
    Reads port from config (default: 3000, override via REFRAME_PORT env var)."
-  [& args]
+  [& _]
   (let [config (read-config)
         port   (get-in config [:server :port] 3000)]
     (println "Starting Reframe backend...")
