@@ -305,7 +305,7 @@ DeltaDisplay: anxietyBefore - anxietyAfter
 
 ```
 src/services/
-├── speechService.ts     # Web Speech API: start/stop/cancel, browser check, error handling
+├── speechService.ts     # Web Speech API: start/stop/cancel, browser check, text sanitization (trim, empty check, 3000 char limit), error handling
 ├── apiService.ts        # fetch → POST /api/reframe, SSE EventSource, abort/timeout
 ├── storageService.ts    # localStorage CRUD: sessions, theme, onboarding flag
 └── sessionService.ts    # session lifecycle: start → analyze → rate → save
