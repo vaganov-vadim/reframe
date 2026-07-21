@@ -43,7 +43,7 @@ Reframe — приватный голосовой КПТ-дневник для �
 | SSE streaming | core.async channel |
 | API | REST + SSE |
 | Голосовой ввод | Web Speech API (SpeechRecognition) |
-| График | Чистый SVG, 0 зависимостей |
+| График | Recharts (ленивая загрузка) |
 | Git hooks | lefthook (pre-commit: lint+types, pre-push: tests) |
 
 ---
@@ -193,6 +193,13 @@ Timeout: 10s на полный ответ. При превышении — за�
 - Storage: атом в неймспейсе бэкенда (сбрасывается при перезапуске)
 - При превышении: HTTP 429 + Retry-After заголовок
 
+Конфигурация через Aero (`config.edn`):
+```clojure
+{:rate-limit {:requests-per-minute #long #or [#env REFRAFE_RATE_LIMIT 3]
+              :algorithm :token-bucket}}
+```
+Меняется через env var `REFRAFE_RATE_LIMIT` без перекомпиляции.
+
 ---
 
 ## Data Schema (localStorage)
@@ -299,6 +306,18 @@ src/services/
 
 ---
 
+### Chart Strategy
+
+Библиотека: **Recharts** (~45 KB gzipped). Загружается лениво — только при переходе на вкладку «Прогресс».
+
+- Линейный график за 7 дней: ось X — даты, ось Y — уровень тревоги (1-10)
+- Две линии: оценка «до» (warm terra cotta) и «после» (muted sage)
+- Тултип при наведении: дата, значения до/после, дельта
+- Тренд: пунктирная линия среднего
+- Анимация появления графика при открытии вкладки
+
+---
+
 ## Clojure Backend Dependencies (project.clj)
 
 ```clojure
@@ -311,6 +330,8 @@ src/services/
   [org.clojure/core.async "1.6.681"]
   ;; JSON encoding (Cheshire)
   [cheshire "5.13.0"]
+  ;; Configuration from env vars (rate limit, etc.)
+  [aero "1.1.6"]
 ]
 ```
 
@@ -545,6 +566,114 @@ stages:
   - build-check:
       - vite build
 ```
+
+---
+
+## Deployment (VDS Ubuntu 20.04)
+
+### Architecture
+```
+Интернет → VDS (Ubuntu 20.04)
+├── nginx (порт 80/443)
+│   ├── / → SPA статика (/var/www/reframe/dist)
+│   └── /api/ → reverse proxy localhost:3000
+├── systemd: reframe-backend.service (Clojure uberjar, порт 3000)
+└── Let's Encrypt: отложен до post-MVP (MVP на IP)
+```
+
+### nginx config
+```nginx
+server {
+    listen 80;
+    server_name _;  # IP-based for MVP
+
+    root /var/www/reframe/dist;
+    index index.html;
+
+    # SPA fallback
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API proxy
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 15s;  # LLM может думать до 10s
+    }
+}
+```
+
+### systemd unit
+```
+# /etc/systemd/system/reframe-backend.service
+[Unit]
+Description=Reframe Backend
+After=network.target
+
+[Service]
+Type=simple
+User=reframe
+WorkingDirectory=/opt/reframe
+ExecStart=/usr/bin/java -jar /opt/reframe/reframe.jar
+Restart=always
+RestartSec=5
+EnvironmentFile=/opt/reframe/config.env
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Deploy script
+```bash
+#!/bin/bash
+# deploy.sh
+
+# Frontend
+cd frontend && npm run build
+rsync -avz dist/ user@vds:/var/www/reframe/dist/
+
+# Backend
+cd backend && lein uberjar
+scp target/reframe.jar user@vds:/opt/reframe/
+ssh user@vds "sudo systemctl restart reframe-backend"
+```
+
+### CI/CD (GitHub Actions)
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        env:
+          SSH_KEY: ${{ secrets.VDS_SSH_KEY }}
+          VDS_HOST: ${{ secrets.VDS_HOST }}
+        run: |
+          # Frontend
+          cd frontend && npm ci && npm run build
+          rsync -avz -e "ssh -i $SSH_KEY" dist/ reframe@$VDS_HOST:/var/www/reframe/dist/
+          # Backend
+          cd backend && lein uberjar
+          scp -i $SSH_KEY target/reframe.jar reframe@$VDS_HOST:/opt/reframe/
+          ssh -i $SSH_KEY reframe@$VDS_HOST "sudo systemctl restart reframe-backend"
+```
+
+### Post-MVP (SSL)
+- certbot + Let's Encrypt для домена
+- nginx: редирект HTTP → HTTPS
+- Авто-обновление сертификатов
 
 ---
 
