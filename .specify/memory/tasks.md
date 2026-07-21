@@ -7,14 +7,14 @@
 
 ## Phase 1 — Инфраструктура
 
-- [ ] 1.1 Vite + React + TS scaffold (`npm create vite@latest frontend -- --template react-ts`). tsconfig strict.
-- [ ] 1.2 ESLint flat config (`eslint.config.js`) + Prettier. Проверить: `eslint .` и `prettier --check .`.
-- [ ] 1.3 Lefthook (`lefthook.yml`): pre-commit `tsc --noEmit && eslint .`, pre-push `vitest run`.
-- [ ] 1.4 Clojure backend: `lein new kit reframe` в `backend/`. `lein run` стартует.
-- [ ] 1.5 CI: `.github/workflows/ci.yml` — lint → unit → e2e → build. Триггер: push (кроме main).
-- [ ] 1.6 React Router: `/`, `/history`, `/progress`. TabBar. EmptyState-заглушки.
-- [ ] 1.7 CSS tokens: `styles/tokens.css` (12 custom properties), `global.css` (reset + dark default).
-- [ ] 1.8 ThemeProvider: React Context + `reframe_theme` localStorage + `data-theme` на `<html>`.
+- [x] 1.1 Vite + React + TS scaffold (`npm create vite@latest frontend -- --template react-ts`). tsconfig strict.
+- [x] 1.2 ESLint flat config (`eslint.config.js`) + Prettier. Проверить: `eslint .` и `prettier --check .`.
+- [x] 1.3 Lefthook (`lefthook.yml`): pre-commit `tsc --noEmit && eslint .`, pre-push `vitest run`.
+- [x] 1.4 Clojure backend: `lein new kit reframe` в `backend/`. `lein run` стартует.
+- [x] 1.5 CI: `.github/workflows/ci.yml` — lint → unit → e2e → build. Триггер: push (кроме main).
+- [x] 1.6 React Router: `/`, `/history`, `/progress`. TabBar. EmptyState-заглушки.
+- [x] 1.7 CSS tokens: `styles/tokens.css` (12 custom properties), `global.css` (reset + dark default).
+- [x] 1.8 ThemeProvider: React Context + `reframe_theme` localStorage + `data-theme` на `<html>`.
 
 **E2E после Phase 1**: тест переключения темы (тёмная ↔ светлая, localStorage).
 
