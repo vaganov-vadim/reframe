@@ -23,15 +23,13 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
   const [isListening, setIsListening] = useState(false);
   const [text, setText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<InstanceType<typeof SpeechRecognition> | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const recognitionRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalTranscript = useRef('');
 
   const SpeechRecognitionAPI =
     typeof window !== 'undefined'
-      ? (window as unknown as { SpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ??
-        (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition })
-          .webkitSpeechRecognition
+      ? (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition // eslint-disable-line @typescript-eslint/no-explicit-any
       : undefined;
 
   const isSupported = typeof SpeechRecognitionAPI !== 'undefined';
@@ -44,7 +42,8 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
     recognition.interimResults = true;
     finalTranscript.current = '';
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SpeechRecognitionEvent not in TS DOM types
+    recognition.onresult = (event: any) => {
       let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
@@ -57,7 +56,8 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
       setText(sanitizeText(finalTranscript.current + interim));
     };
 
-    recognition.onerror = (event) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SpeechRecognitionErrorEvent not in TS DOM types
+    recognition.onerror = (event: any) => {
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
         setError('Не удалось распознать речь. Попробуйте ещё раз.');
       }
