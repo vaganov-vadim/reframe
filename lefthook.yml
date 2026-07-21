@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  commands:
+    typecheck:
+      run: npx tsc --noEmit
+      root: frontend
+    lint:
+      run: npx eslint .
+      root: frontend
+
+pre-push:
+  commands:
+    test:
+      run: npx vitest run
+      root: frontend
