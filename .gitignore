@@ -15,5 +15,6 @@ pom.xml.asc
 .clj-kondo/
 .lsp/
 .omo/
-.github/
+.github/*
+!.github/workflows/
 .vscode/
