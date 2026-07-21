@@ -34,3 +34,26 @@ button {
   cursor: pointer;
   font-family: inherit;
 }
+
+/* Range slider thumb — cross-browser */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-primary);
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-primary);
+  cursor: pointer;
+}
