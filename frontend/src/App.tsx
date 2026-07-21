@@ -3,10 +3,12 @@ import { TabBar } from './components/TabBar';
 import { MainScreen } from './components/MainScreen';
 import { HistoryTab } from './components/HistoryTab';
 import { ProgressTab } from './components/ProgressTab';
+import { ThemeToggle } from './components/ThemeToggle';
 
 function App() {
   return (
     <div className="app">
+      <ThemeToggle />
       <Routes>
         <Route path="/" element={<MainScreen />} />
         <Route path="/history" element={<HistoryTab />} />
