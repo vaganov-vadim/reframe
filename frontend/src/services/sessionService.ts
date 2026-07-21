@@ -1,0 +1,38 @@
+import { saveSession, type Session } from './storageService';
+
+export interface LLMResponse {
+  distortions: Array<{ type: string; thought: string; why: string }>;
+  reframing: string;
+  question: string;
+}
+
+export interface InProgressSession {
+  id: string;
+  date: string;
+  anxietyBefore: number;
+}
+
+export function startSession(anxietyBefore: number): InProgressSession {
+  return {
+    id: crypto.randomUUID(),
+    date: new Date().toISOString(),
+    anxietyBefore,
+  };
+}
+
+export function completeSession(
+  session: InProgressSession,
+  anxietyAfter: number,
+  response: LLMResponse,
+): void {
+  const completed: Session = {
+    id: session.id,
+    date: session.date,
+    anxietyBefore: session.anxietyBefore,
+    anxietyAfter,
+    delta: session.anxietyBefore - anxietyAfter,
+    distortion: response.distortions[0]?.type ?? 'не определено',
+    reframing: response.reframing,
+  };
+  saveSession(completed);
+}

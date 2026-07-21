@@ -8,6 +8,7 @@ import { ResponseView } from './ResponseView';
 import { PostRatingSlider } from './PostRatingSlider';
 import { DeltaDisplay } from './DeltaDisplay';
 import { ErrorBanner } from './ErrorBanner';
+import { startSession, completeSession } from '../services/sessionService';
 
 type Phase =
   | 'rating-before'
@@ -107,20 +108,12 @@ export function MainScreen() {
   }, [cancel]);
 
   const handleSave = useCallback(() => {
-    const session = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      distortion: data?.distortions?.[0]?.type ?? 'не определено',
-      anxietyBefore: state.anxietyBefore,
-      anxietyAfter: state.anxietyAfter,
-      delta: state.anxietyBefore - state.anxietyAfter,
+    const inProgress = startSession(state.anxietyBefore);
+    completeSession(inProgress, state.anxietyAfter, {
+      distortions: data?.distortions ?? [],
       reframing: data?.reframing ?? '',
-    };
-    const sessions: unknown[] = JSON.parse(
-      localStorage.getItem('reframe_sessions') ?? '[]',
-    );
-    sessions.unshift(session);
-    localStorage.setItem('reframe_sessions', JSON.stringify(sessions));
+      question: data?.question ?? '',
+    });
     dispatch({ type: 'SAVE' });
   }, [data, state.anxietyBefore, state.anxietyAfter]);
 
