@@ -250,7 +250,7 @@ App (ThemeProvider + Router)
 │   └── EmptyState          # «Здесь появятся твои сессии...»
 │
 ├── ProgressTab             # вкладка «Прогресс»
-│   ├── AnxietyChart        # линейный SVG-график за 7 дней
+│   ├── AnxietyChart        # линейный Recharts-график за 7 дней
 │   └── EmptyState          # «Твой прогресс появится здесь...»
 │
 ├── ThemeToggle             # переключатель тёмная/светлая
@@ -294,6 +294,13 @@ DeltaDisplay: anxietyBefore - anxietyAfter
 
 ---
 
+### Custom Hooks
+
+- `useSpeechRecognition.ts` — обёртка над Web Speech API: start/stop/cancel, browser support check, recognition events
+- `useSSE.ts` — SSE-клиент: connect to POST /api/reframe, parse streaming JSON, handle disconnect/timeout
+
+---
+
 ## Frontend Services
 
 ```
@@ -306,7 +313,7 @@ src/services/
 
 ---
 
-### Chart Strategy
+## Chart Strategy
 
 Библиотека: **Recharts** (~45 KB gzipped). Загружается лениво — только при переходе на вкладку «Прогресс».
 
@@ -410,7 +417,7 @@ Mock switch: env `REFRAFE_MOCK_LLM=true` → backend returns fixture instead of 
 - Сохранение сессии после оценки «после»
 
 **Phase 6 — Прогресс и полировка**
-- ProgressTab: AnxietyChart (SVG, 7 дней, до/после, тренд)
+- ProgressTab: AnxietyChart (Recharts, 7 дней, до/после, тренд)
 - Error states: recognition failure, LLM timeout, network error
 - Tone of voice: все тексты в стиле «друг»
 - SUDS tooltip с 10 уровнями
@@ -441,14 +448,17 @@ reframe/
 ├── frontend/                  # TypeScript + React SPA
 │   ├── src/
 │   │   ├── components/        # UI-компоненты
-│   │   ├── hooks/             # React hooks (useSpeech, useLLM)
+│   │   ├── hooks/             # React hooks (useSpeechRecognition, useSSE)
 │   │   ├── services/          # Бизнес-логика (reframing, storage, prompts)
 │   │   ├── store/             # Клиентское состояние (история записей)
 │   │   ├── styles/            # CSS / дизайн-токены
 │   │   └── types/             # TypeScript-типы (включая контракты API)
+│   │       └── session.ts       # Session interface + STORAGE_KEYS
 │   ├── tests/
 │   │   ├── unit/              # Vitest — ключевые сценарии
 │   │   └── e2e/               # Playwright — критические пользовательские пути
+│   ├── fixtures/                  # Mock data for development
+│   │   └── mock-responses.json # LLM response fixtures
 │   ├── index.html
 │   ├── vite.config.ts
 │   ├── tsconfig.json          # strict: true
@@ -462,6 +472,11 @@ reframe/
 │   ├── test/
 │   │   └── handler_test.clj   # Тесты прокси-слоя
 │   └── project.clj
+│   ├── resources/
+│   │   └── config.edn       # Aero конфигурация (rate limit, LLM params)
+│   └── src/
+│       └── reframe/
+│           └── core.clj     # Инициализация приложения (server start)
 │
 ├── .specify/                  # Spec-kit артефакты
 │   └── memory/
@@ -469,7 +484,8 @@ reframe/
 │       ├── spec.md            # Функциональные требования
 │       └── plan.md            # Этот файл
 │
-└── README.md
+├── README.md
+└── deploy.sh                # Деплой-скрипт (фронтенд + бэкенд)
 ```
 
 ---
@@ -491,17 +507,7 @@ eslint .
 vitest run
 ```
 
-Настроить через `husky` + `lint-staged` или `lefthook`:
-
-```json
-// package.json → lint-staged
-{
-  "lint-staged": {
-    "*.{ts,tsx}": ["eslint --fix", "tsc --noEmit"],
-    "*.{ts,tsx,json,css}": "prettier --write"
-  }
-}
-```
+Настроить через `lefthook`:
 
 Pre-push hook: `vitest run` (быстрее, чем на pre-commit, чтобы не замедлять коммиты).
 
@@ -535,23 +541,17 @@ lein test
    - Мок задержки ответа 5 секунд
    - Проверка: отображается индикатор ожидания, через 5 секунд — предупреждение
 
----
+5. **Ошибка распознавания речи**
+   - Мок Web Speech API → onerror / пустой результат
+   - Проверка: сообщение «Не удалось распознать речь», кнопка «Записать заново»
 
-## Инструменты и конфигурация
-
-| Инструмент | Назначение | Ключевая настройка |
-|---|---|---|
-| TypeScript | Типизация | `strict: true` в tsconfig.json |
-| ESLint | Линтинг | Flat config (`eslint.config.js`) |
-| Prettier | Форматирование | Интеграция с ESLint |
-| Vitest | Unit-тесты | `environment: 'jsdom'`, coverage-порог |
-| Playwright | E2E-тесты | Моки через `page.route()`, три браузера |
-| Husky/Lefthook | Git hooks | Pre-commit: lint + types, Pre-push: tests |
-| Vite | Сборка | Code splitting, lazy loading, bundle analysis |
+6. **Обрыв streaming**
+   - Мок SSE → закрытие соединения после частичного ответа
+   - Проверка: показана полученная часть + предупреждение «Ответ получен не полностью»
 
 ---
 
-## CI Pipeline (MVP)
+## CI Pipeline (MVP) — ci.yml
 
 ```yaml
 # GitHub Actions / аналог
@@ -635,15 +635,15 @@ WantedBy=multi-user.target
 
 # Frontend
 cd frontend && npm run build
-rsync -avz dist/ user@vds:/var/www/reframe/dist/
+rsync -avz dist/ reframe@<VDS_HOST>:/var/www/reframe/dist/
 
 # Backend
 cd backend && lein uberjar
-scp target/reframe.jar user@vds:/opt/reframe/
-ssh user@vds "sudo systemctl restart reframe-backend"
+scp target/reframe.jar reframe@<VDS_HOST>:/opt/reframe/
+ssh reframe@<VDS_HOST> "sudo systemctl restart reframe-backend"
 ```
 
-### CI/CD (GitHub Actions)
+### CI/CD Deploy (deploy.yml)
 ```yaml
 # .github/workflows/deploy.yml
 name: Deploy
