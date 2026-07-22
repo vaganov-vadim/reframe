@@ -5,9 +5,9 @@ const AnxietyChart = lazy(() => import('./AnxietyChart').then(m => ({ default: m
 export function ProgressTab() {
   return (
     <div style={{
-      width: '100vw',
-      marginLeft: 'calc(-50vw + 50%)',
-      marginRight: 'calc(-50vw + 50%)',
+      maxWidth: '600px',
+      margin: '0 auto',
+      padding: '0 var(--space-xs)',
     }}>
       <Suspense fallback={
         <div style={{ padding: 'var(--space-lg)', textAlign: 'center', color: 'var(--text-secondary)' }}>
