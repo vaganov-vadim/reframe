@@ -1,20 +1,12 @@
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
-interface Tab {
-  path: string;
-  icon: string;
-  label: string;
-}
-
-const TABS: Tab[] = [
-  { path: '/', icon: '◉', label: 'Главная' },
-  { path: '/history', icon: '☰', label: 'История' },
-  { path: '/progress', icon: '📈', label: 'Прогресс' },
+const tabs = [
+  { to: '/', icon: '◉', label: 'Главная' },
+  { to: '/history', icon: '☰', label: 'История' },
+  { to: '/progress', icon: '📈', label: 'Прогресс' },
 ];
 
 export function TabBar() {
-  const location = useLocation();
-
   return (
     <nav
       style={{
@@ -26,40 +18,43 @@ export function TabBar() {
         maxWidth: '480px',
         display: 'flex',
         justifyContent: 'center',
-        gap: 'var(--space-xl)',
+        gap: 0,
         padding:
-          'var(--space-sm) 0 calc(var(--space-sm) + env(safe-area-inset-bottom, 0px))',
-        background: 'linear-gradient(transparent, var(--bg-primary) 40%)',
+          'var(--space-xs) 0 calc(var(--space-sm) + env(safe-area-inset-bottom, 0px))',
+        background: 'var(--bg-primary)',
+        borderTop: '1px solid var(--border)',
         zIndex: 100,
       }}
+      role="navigation"
+      aria-label="Основная навигация"
     >
-      {TABS.map((tab) => {
-        const isActive = location.pathname === tab.path;
-        return (
-          <Link
-            key={tab.path}
-            to={tab.path}
-            style={{
-              width: 'var(--touch-target)',
-              height: 'var(--touch-target)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-              textDecoration: 'none',
-              borderRadius: '50%',
-              background: isActive
-                ? 'var(--accent-glow)'
-                : 'transparent',
-              transition: 'all 0.2s',
-            }}
-            aria-label={tab.label}
-          >
-            {tab.icon}
-          </Link>
-        );
-      })}
+      {tabs.map((t) => (
+        <NavLink
+          key={t.to}
+          to={t.to}
+          title={t.label}
+          style={({ isActive }) => ({
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '2px',
+            padding: 'var(--space-xs) var(--space-sm)',
+            margin: '0 var(--space-xs)',
+            textDecoration: 'none',
+            color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+            fontSize: '11px',
+            fontWeight: isActive ? 600 : 400,
+            borderRadius: 'var(--border-radius-sm)',
+            background: isActive ? 'var(--accent-glow)' : 'transparent',
+            transition: 'background 0.2s, color 0.2s',
+          })}
+        >
+          <span style={{ fontSize: '18px', lineHeight: 1 }}>{t.icon}</span>
+          <span>{t.label}</span>
+        </NavLink>
+      ))}
     </nav>
   );
 }
