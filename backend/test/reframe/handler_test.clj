@@ -1,10 +1,12 @@
 (ns reframe.handler-test
   "Comprehensive test suite for HTTP handler (Phase 2).
    RED phase: tests define expected API contract before handler implementation."
-  (:require [clojure.test :refer :all]
+  (:require [cheshire.core :as json]
+            [clojure.test :refer :all]
             [reframe.handler :as handler]
             [reframe.rate-limiter :as rate-limiter]
-            [reframe.llm-client :as llm-client]))
+            [reframe.llm-client :as llm-client])
+  (:import [java.io ByteArrayInputStream]))
 
 ;; ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -14,6 +16,11 @@
          :api-url "http://mock.example.com"
          :model   "mock-model"
          :mock-enabled "true"}})
+
+(defn- json-body
+  "Returns an InputStream with JSON-encoded body-params."
+  [body-params]
+  (ByteArrayInputStream. (.getBytes (json/generate-string body-params))))
 
 (use-fixtures :each
   (fn [f]
@@ -36,7 +43,7 @@
     (llm-client/set-mock-mode! :fixture)
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
-                                 :body-params {:text "Я опоздал на встречу"}})]
+                                 :body (json-body {:text "Я опоздал на встречу"})})]
       (is (= 200 (:status response)))
       (is (= "text/event-stream" (get-in response [:headers "Content-Type"]))))))
 
@@ -46,21 +53,21 @@
   (testing "POST /api/reframe with empty text returns 400 Bad Request"
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
-                                 :body-params {:text ""}})]
+                                 :body (json-body {:text ""})})]
       (is (= 400 (:status response))))))
 
 (deftest post-reframe-missing-text
   (testing "POST /api/reframe with missing text key returns 400 Bad Request"
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
-                                 :body-params {}})]
+                                 :body (json-body {})})]
       (is (= 400 (:status response))))))
 
 (deftest post-reframe-text-too-long
   (testing "POST /api/reframe with text > 3000 chars returns 400 Bad Request"
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
-                                 :body-params {:text (apply str (repeat 3001 "x"))}})]
+                                 :body (json-body {:text (apply str (repeat 3001 "x"))})})]
       (is (= 400 (:status response))))))
 
 ;; ─── POST /api/reframe — rate limiting ─────────────────────────────────────
@@ -71,7 +78,7 @@
     (dotimes [_ 3] (rate-limiter/allow-request? {}))
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
-                                 :body-params {:text "test"}})]
+                                 :body (json-body {:text "test"})})]
       (is (= 429 (:status response)))
       (is (contains? (set (keys (:headers response))) "Retry-After")))))
 
@@ -82,7 +89,7 @@
     (llm-client/set-mock-mode! :timeout)
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
-                                 :body-params {:text "test"}})]
+                                 :body (json-body {:text "test"})})]
       (is (= 504 (:status response))))))
 
 (deftest post-reframe-llm-error
@@ -90,7 +97,7 @@
     (llm-client/set-mock-mode! :error)
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
-                                 :body-params {:text "test"}})]
+                                 :body (json-body {:text "test"})})]
       (is (= 502 (:status response))))))
 
 ;; ─── POST /api/reframe — method & content negotiation ──────────────────────
@@ -104,7 +111,7 @@
   (testing "PUT /api/reframe returns 405 Method Not Allowed"
     (let [response ((handler/app test-config) {:request-method :put
                                  :uri "/api/reframe"
-                                 :body-params {:text "test"}})]
+                                 :body (json-body {:text "test"})})]
       (is (= 405 (:status response))))))
 
 (deftest unsupported-content-type
@@ -112,7 +119,7 @@
     (let [response ((handler/app test-config) {:request-method :post
                                  :uri "/api/reframe"
                                  :content-type "text/plain"
-                                 :body-params {:text "test"}})]
+                                 :body (json-body {:text "test"})})]
       (is (= 415 (:status response))))))
 
 ;; ─── 404 — unknown routes ──────────────────────────────────────────────────
