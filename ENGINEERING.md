@@ -1,0 +1,80 @@
+# Reframe
+
+Приватный голосовой КПТ-дневник для профессионалов под стрессом.
+Голос → анализ через КПТ (Бёрнс) → рефрейминг. Все данные на устройстве.
+
+## Быстрый старт
+
+### Требования
+
+- **Node.js** 20+
+- **Java** 21+ (для Clojure)
+- **Leiningen** (менеджер зависимостей Clojure)
+- **Chrome** (для Web Speech API)
+
+### Запуск
+
+```bash
+# 1. Фронтенд
+cd frontend && npm install && npm run dev
+
+# 2. Бэкенд (в отдельном терминале)
+cd backend && lein deps && REFRAME_MOCK_LLM=true lein run
+```
+
+### Проверка
+
+Открыть http://localhost:5173 в Chrome (Web Speech API).
+
+### Режимы работы
+
+| Режим | Команда | Что делает |
+|-------|---------|------------|
+| **Mock (по умолчанию)** | `REFRAME_MOCK_LLM=true lein run` | Возвращает предопределённые КПТ-ответы. Не требует API-ключа. |
+| **Real LLM** | `lein run` | Отправляет запросы к DeepSeek. Требует `LLM_API_KEY` в `backend/config.env`. |
+
+### Переменные окружения
+
+Создать `backend/config.env` (только для реального LLM):
+
+```
+LLM_API_KEY=your-key
+```
+
+### Сеть
+
+- Фронтенд: http://localhost:5173 (Vite dev server)
+- Бэкенд: http://localhost:3000 (Clojure/Kit)
+- Прокси: Vite перенаправляет `/api/*` на `localhost:3000`
+
+## Архитектура
+
+```
+Chrome → React SPA → POST /api/reframe → Clojure прокси → LLM API → localStorage
+```
+
+## Стек
+
+| Слой | Технология |
+|------|-----------|
+| Фронтенд | TypeScript (strict) + React + Vite |
+| Хранение | localStorage |
+| Бэкенд | Clojure + Kit |
+| LLM | DeepSeek (заменяем) |
+| Тесты | Vitest + Playwright |
+
+## Разработка
+
+- **TDD**: тесты перед кодом
+- **Pre-commit**: Lefthook (типы, линтер, тесты)
+- **CI/CD**: GitHub Actions — авто-деплой на VDS после мёрджа в main
+
+## Приватность
+
+Все данные только в localStorage. Бэкенд без БД. История — только метаданные.
+
+## Документация
+
+- [Конституция](.specify/memory/constitution.md)
+- [Спецификация](.specify/memory/spec.md)
+- [План](.specify/memory/plan.md)
