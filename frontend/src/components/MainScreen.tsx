@@ -111,6 +111,7 @@ export function MainScreen() {
   } = useSSE();
 
   const surfaceThoughtRef = useRef<string | null>(null);
+  const deepResultRef = useRef<HTMLDivElement>(null);
 
   const handleStart = useCallback(() => {
     dispatch({ type: 'START_RECORDING' });
@@ -162,6 +163,12 @@ export function MainScreen() {
     }
     prevListening.current = isListening;
   }, [isListening, state.phase, getFinalText, sendText, sendDeepText]);
+
+  useEffect(() => {
+    if (state.phase === 'deep-result') {
+      deepResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [state.phase]);
 
   const handleCancel = useCallback(() => {
     cancel();
@@ -342,10 +349,8 @@ export function MainScreen() {
 
       {state.phase === 'deep-recording' && (
         <>
-          <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: 'var(--space-md)' }}>
-              Что эта мысль говорит о вас?
-            </p>
+          <div style={{ textAlign: 'center', padding: 'var(--space-md)', color: 'var(--text-secondary)', fontSize: '15px', marginBottom: 'var(--space-md)' }}>
+            Что эта мысль говорит о вас?
           </div>
           <RecordButton
             state="recording"
@@ -379,11 +384,13 @@ export function MainScreen() {
       {state.phase === 'deep-result' && (
         <>
           <ResponseView data={data} loading={false} />
-          <VerticalArrow
-            levels={deepData?.levels ?? null}
-            reframing={deepData?.reframing}
-            question={deepData?.question}
-          />
+          <div ref={deepResultRef}>
+            <VerticalArrow
+              levels={deepData?.levels ?? null}
+              reframing={deepData?.reframing}
+              question={deepData?.question}
+            />
+          </div>
           <PostRatingSlider
             value={state.anxietyAfter}
             onChange={(v) => dispatch({ type: 'SET_ANXIETY_AFTER', value: v })}
