@@ -50,7 +50,7 @@
   "POST /api/reframe — validate, rate limit, call LLM, return SSE stream.
    Config is the full Aero config map, threaded to llm-client/call-llm."
   [config request]
-  (let [body-params (:body-params request {})
+  (let [body-params (json/parse-string (slurp (:body request)) true)
         text        (:text body-params)]
     (cond
       ;; ── Input validation ──────────────────────────────────────────────

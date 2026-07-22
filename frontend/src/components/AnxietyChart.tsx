@@ -47,6 +47,7 @@ export function AnxietyChart() {
     <div style={{ padding: 'var(--space-md)' }}>
       <h3
         style={{
+          textAlign: 'center',
           fontSize: '14px',
           color: 'var(--text-secondary)',
           marginBottom: 'var(--space-md)',
