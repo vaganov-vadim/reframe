@@ -10,9 +10,9 @@ interface AnxietySliderProps {
 const MARKS = [1, 5, 10];
 
 const MARK_LABELS: Record<number, string> = {
-  1: '😌 спокойно',
-  5: '😟 заметная тревога',
-  10: '😰 предельно',
+  1: 'спокойно',
+  5: 'тревожно',
+  10: 'предельно',
 };
 
 export function AnxietySlider({
@@ -30,7 +30,7 @@ export function AnxietySlider({
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          marginBottom: 'var(--space-sm)',
+          marginBottom: 'var(--space-md)',
         }}
       >
         {MARKS.map((m) => (
@@ -38,9 +38,9 @@ export function AnxietySlider({
             key={m}
             style={{
               fontSize: '12px',
-              color:
-                value === m ? 'var(--accent)' : 'var(--text-secondary)',
               fontWeight: value === m ? 600 : 400,
+              color: value === m ? 'var(--accent)' : 'var(--text-secondary)',
+              transition: 'color 0.2s',
             }}
           >
             {MARK_LABELS[m]}
@@ -67,17 +67,17 @@ export function AnxietySlider({
             appearance: 'none',
             background: 'transparent',
             cursor: disabled ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.5 : 1,
+            opacity: disabled ? 0.4 : 1,
           }}
         />
-        {/* Custom track */}
+        {/* Custom thin track */}
         <div
           style={{
             position: 'absolute',
             top: '50%',
             left: 0,
             right: 0,
-            height: '4px',
+            height: '3px',
             transform: 'translateY(-50%)',
             background: `linear-gradient(to right, var(--slider-fill) ${fillPercent}%, var(--slider-track) ${fillPercent}%)`,
             borderRadius: '2px',
@@ -109,7 +109,7 @@ export function AnxietySlider({
       >
         <span
           style={{
-            fontSize: '24px',
+            fontSize: '32px',
             fontWeight: 600,
             color: 'var(--accent)',
           }}
@@ -118,7 +118,7 @@ export function AnxietySlider({
         </span>
         <span
           style={{
-            fontSize: '12px',
+            fontSize: '14px',
             color: 'var(--text-secondary)',
             marginLeft: 'var(--space-xs)',
           }}

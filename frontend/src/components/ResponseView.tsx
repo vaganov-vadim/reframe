@@ -11,12 +11,15 @@ export function DistortionList({
     <div style={{ padding: 'var(--space-md)' }}>
       <h3
         style={{
-          fontSize: '14px',
+          fontSize: '13px',
+          fontWeight: 500,
           color: 'var(--text-secondary)',
-          marginBottom: 'var(--space-sm)',
+          marginBottom: 'var(--space-md)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
         }}
       >
-        Когнитивные искажения:
+        Когнитивные искажения
       </h3>
       {distortions.map((d, i) => (
         <div
@@ -26,15 +29,19 @@ export function DistortionList({
             borderRadius: 'var(--border-radius)',
             padding: 'var(--space-md)',
             marginBottom: 'var(--space-sm)',
-            border: '1px solid var(--border)',
+            borderLeft: '3px solid var(--accent)',
+            borderTop: '1px solid var(--border)',
+            borderRight: '1px solid var(--border)',
+            borderBottom: '1px solid var(--border)',
           }}
         >
           <div
             style={{
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: 600,
               color: 'var(--accent)',
-              marginBottom: '4px',
+              marginBottom: '6px',
+              letterSpacing: '0.3px',
             }}
           >
             {d.type}
@@ -44,12 +51,21 @@ export function DistortionList({
               fontSize: '14px',
               color: 'var(--text-secondary)',
               fontStyle: 'italic',
-              marginBottom: '4px',
+              marginBottom: '6px',
+              lineHeight: '1.5',
             }}
           >
-            «{d.thought}»
+            &laquo;{d.thought}&raquo;
           </div>
-          <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{d.why}</div>
+          <div
+            style={{
+              fontSize: '14px',
+              color: 'var(--text-primary)',
+              lineHeight: '1.5',
+            }}
+          >
+            {d.why}
+          </div>
         </div>
       ))}
     </div>
@@ -62,18 +78,33 @@ export function ReframingText({ text }: { text: string }) {
   return (
     <div
       style={{
-        padding: 'var(--space-md)',
+        padding: 'var(--space-lg)',
         background: 'var(--bg-secondary)',
         borderRadius: 'var(--border-radius)',
         margin: 'var(--space-md)',
         fontSize: '15px',
-        lineHeight: '1.6',
+        lineHeight: '1.7',
         color: 'var(--text-primary)',
-        border: '1px solid var(--accent)',
+        border: '1px solid var(--border)',
         borderLeftWidth: '3px',
+        borderLeftColor: 'var(--success)',
+        position: 'relative',
       }}
     >
-      {text}
+      <div
+        style={{
+          position: 'absolute',
+          top: '-10px',
+          left: 'var(--space-md)',
+          fontSize: '28px',
+          color: 'var(--success)',
+          lineHeight: 1,
+          opacity: 0.6,
+        }}
+      >
+        &ldquo;
+      </div>
+      <div style={{ paddingTop: '8px' }}>{text}</div>
     </div>
   );
 }
@@ -90,11 +121,24 @@ export function ResponseView({
       <div
         style={{
           textAlign: 'center',
-          padding: 'var(--space-lg)',
+          padding: 'var(--space-xl) var(--space-md)',
           color: 'var(--text-secondary)',
+          fontSize: '15px',
         }}
       >
-        Анализирую...
+        <div
+          style={{
+            display: 'inline-block',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            border: '2px solid var(--border)',
+            borderTopColor: 'var(--accent)',
+            animation: 'spin 0.8s linear infinite',
+            marginBottom: 'var(--space-md)',
+          }}
+        />
+        <p>Анализирую...</p>
       </div>
     );
   }
@@ -112,6 +156,7 @@ export function ResponseView({
             fontSize: '14px',
             color: 'var(--text-secondary)',
             fontStyle: 'italic',
+            textAlign: 'center',
           }}
         >
           {data.question}

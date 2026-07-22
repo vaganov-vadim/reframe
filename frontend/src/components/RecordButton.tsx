@@ -26,12 +26,14 @@ export function RecordButton({ state, onStart, onStop, onCancel }: RecordButtonP
     return (
       <div style={{ textAlign: 'center' }}>
         <RecordingIndicator />
-        <div style={{
-          display: 'flex',
-          gap: 'var(--space-md)',
-          justifyContent: 'center',
-          marginTop: 'var(--space-md)',
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-md)',
+            justifyContent: 'center',
+            marginTop: 'var(--space-md)',
+          }}
+        >
           <button
             onClick={onStop}
             style={{
@@ -70,42 +72,52 @@ export function RecordButton({ state, onStart, onStop, onCancel }: RecordButtonP
     );
   }
 
-  // idle state
+  // idle state — hero centered button
   return (
-    <div style={{ textAlign: 'center', padding: 'var(--space-lg) var(--space-md)' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 'var(--space-xl) 0',
+        flex: 1,
+      }}
+    >
       <button
         onClick={onStart}
         style={{
-          width: '120px',
-          height: '120px',
+          width: '140px',
+          height: '140px',
           borderRadius: '50%',
           background: 'var(--accent)',
           color: 'var(--bg-primary)',
           border: 'none',
           fontSize: '18px',
           fontWeight: 600,
+          letterSpacing: '0.5px',
           cursor: 'pointer',
+          boxShadow:
+            '0 0 40px var(--accent-glow), 0 4px 24px rgba(0,0,0,0.3)',
+          animation: 'breathe 3s ease-in-out infinite',
+          transition: 'transform 0.2s, box-shadow 0.2s',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          boxShadow: '0 4px 24px rgba(200, 168, 124, 0.3)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
         }}
       >
         Говорить
       </button>
-      <p style={{
-        color: 'var(--text-secondary)',
-        fontSize: '14px',
-        marginTop: 'var(--space-md)',
-      }}>
-        Нажмите и расскажите, что вас тревожит
+      <p
+        style={{
+          marginTop: 'var(--space-lg)',
+          color: 'var(--text-secondary)',
+          fontSize: '14px',
+          textAlign: 'center',
+          maxWidth: '280px',
+        }}
+      >
+        Расскажите, что вас тревожит
       </p>
     </div>
   );
