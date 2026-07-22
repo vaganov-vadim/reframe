@@ -1,4 +1,4 @@
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useRef, useEffect } from 'react';
 import { useRecording } from '../contexts/RecordingContext';
 import { useSSE } from '../hooks/useSSE';
 import { AnxietySlider } from './AnxietySlider';
@@ -80,6 +80,7 @@ export function MainScreen() {
 
   const {
     text,
+    isListening,
     getFinalText,
     error: speechError,
     isSupported,
@@ -96,15 +97,29 @@ export function MainScreen() {
 
   const handleStop = useCallback(() => {
     stop();
-    const finalText = getFinalText();
-    if (!finalText) {
-      dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
-      return;
+    // Phase stays 'recording' until useEffect fires.
+    // Do NOT read text here — recognition.stop() is async,
+    // final transcript arrives after stop() returns.
+  }, [stop]);
+
+  // When recording stops (isListening goes true → false),
+  // check if we have text and should send it.
+  const prevListening = useRef(isListening);
+
+  useEffect(() => {
+    // Just transitioned from listening to not-listening
+    if (prevListening.current && !isListening && state.phase === 'recording') {
+      const finalText = getFinalText();
+      if (finalText) {
+        dispatch({ type: 'STOP_RECORDING' });
+        dispatch({ type: 'ANALYZE' });
+        sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+      } else {
+        dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+      }
     }
-    dispatch({ type: 'STOP_RECORDING' });
-    dispatch({ type: 'ANALYZE' });
-    sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
-  }, [stop, getFinalText, sendText]);
+    prevListening.current = isListening;
+  }, [isListening, state.phase, getFinalText, sendText]);
 
   const handleCancel = useCallback(() => {
     cancel();
