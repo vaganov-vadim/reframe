@@ -50,7 +50,7 @@ export function AnxietyChart() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-md)' }}>
+    <div style={{ padding: 'var(--space-xs)' }}>
       <h3
         style={{
           textAlign: 'center',
@@ -63,14 +63,17 @@ export function AnxietyChart() {
         Последние сессии
       </h3>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis
             dataKey="time"
-            tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
+            tick={{ fontSize: 10, fill: 'var(--text-secondary)' }}
             axisLine={{ stroke: 'var(--border)' }}
             tickLine={false}
+            angle={data.length > 7 ? -45 : 0}
+            textAnchor={data.length > 7 ? 'end' : 'middle'}
+            height={data.length > 7 ? 60 : 30}
             interval={data.length > 7 ? Math.floor(data.length / 7) : 0}
           />
           <YAxis
