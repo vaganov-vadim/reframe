@@ -12,59 +12,91 @@ export function DistortionList({
       <h3
         style={{
           fontSize: '13px',
-          fontWeight: 500,
           color: 'var(--text-secondary)',
           marginBottom: 'var(--space-md)',
-          textTransform: 'uppercase',
+          textAlign: 'center',
           letterSpacing: '0.5px',
         }}
       >
-        Когнитивные искажения
+        КОГНИТИВНЫЕ ИСКАЖЕНИЯ
       </h3>
       {distortions.map((d, i) => (
         <div
           key={i}
           style={{
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--border-radius)',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto 1fr',
+            gap: 'var(--space-sm)',
+            alignItems: 'start',
+            marginBottom: 'var(--space-md)',
             padding: 'var(--space-md)',
-            marginBottom: 'var(--space-sm)',
-            borderLeft: '3px solid var(--accent)',
-            borderTop: '1px solid var(--border)',
-            borderRight: '1px solid var(--border)',
-            borderBottom: '1px solid var(--border)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--border-radius-sm)',
+            border: '1px solid var(--border)',
           }}
         >
-          <div
-            style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--accent)',
-              marginBottom: '6px',
-              letterSpacing: '0.3px',
-            }}
-          >
-            {d.type}
+          {/* Column 1: Automatic thought */}
+          <div>
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'var(--text-secondary)',
+                marginBottom: '4px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
+              Мысль
+            </div>
+            <div
+              style={{
+                fontSize: '14px',
+                color: 'var(--text-primary)',
+                fontStyle: 'italic',
+                lineHeight: '1.5',
+              }}
+            >
+              &laquo;{d.thought}&raquo;
+            </div>
           </div>
-          <div
-            style={{
-              fontSize: '14px',
-              color: 'var(--text-secondary)',
-              fontStyle: 'italic',
-              marginBottom: '6px',
-              lineHeight: '1.5',
-            }}
-          >
-            &laquo;{d.thought}&raquo;
+
+          {/* Arrow */}
+          <div style={{ display: 'flex', alignItems: 'center', paddingTop: '14px' }}>
+            <span style={{ color: 'var(--accent)', fontSize: '16px' }}>&rarr;</span>
           </div>
-          <div
-            style={{
-              fontSize: '14px',
-              color: 'var(--text-primary)',
-              lineHeight: '1.5',
-            }}
-          >
-            {d.why}
+
+          {/* Column 2+3: Distortion type + reason */}
+          <div>
+            <div
+              style={{
+                fontSize: '10px',
+                color: 'var(--text-secondary)',
+                marginBottom: '4px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
+              Искажение
+            </div>
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--accent)',
+                marginBottom: 'var(--space-sm)',
+              }}
+            >
+              {d.type}
+            </div>
+            <div
+              style={{
+                fontSize: '13px',
+                color: 'var(--text-primary)',
+                lineHeight: '1.5',
+              }}
+            >
+              {d.why}
+            </div>
           </div>
         </div>
       ))}
@@ -149,17 +181,58 @@ export function ResponseView({
     <div>
       <DistortionList distortions={data.distortions} />
       <ReframingText text={data.reframing} />
+
       {data.question && (
         <div
           style={{
-            padding: '0 var(--space-md) var(--space-md)',
-            fontSize: '14px',
-            color: 'var(--text-secondary)',
-            fontStyle: 'italic',
+            padding: 'var(--space-md)',
+            margin: '0 var(--space-md) var(--space-md)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--border-radius-sm)',
+            border: '1px dashed var(--accent)',
             textAlign: 'center',
           }}
         >
-          {data.question}
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'var(--text-secondary)',
+              marginBottom: '6px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+          >
+            Вопрос для размышления
+          </div>
+          <div
+            style={{
+              fontSize: '14px',
+              color: 'var(--accent)',
+              fontStyle: 'italic',
+              lineHeight: '1.5',
+              fontWeight: 500,
+            }}
+          >
+            {data.question}
+          </div>
+        </div>
+      )}
+
+      {data.pattern && (
+        <div
+          style={{
+            padding: 'var(--space-sm) var(--space-md)',
+            margin: '0 var(--space-md) var(--space-md)',
+            fontSize: '12px',
+            color: 'var(--text-secondary)',
+            textAlign: 'center',
+            lineHeight: '1.5',
+            background: 'var(--bg-secondary)',
+            borderRadius: 'var(--border-radius-sm)',
+          }}
+        >
+          <span style={{ opacity: 0.5 }}>Повторяющийся паттерн: </span>
+          {data.pattern}
         </div>
       )}
     </div>

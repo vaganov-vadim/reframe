@@ -10,6 +10,7 @@ export interface ReframeResponse {
   distortions: Distortion[];
   reframing: string;
   question: string;
+  pattern?: string;
 }
 
 export interface SSEState {
