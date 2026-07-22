@@ -71,6 +71,33 @@ TDD, Lefthook pre-commit, CI/CD GitHub Actions, деплой на VDS.
 
 Все данные только в localStorage. Бэкенд без БД. История — только метаданные.
 
+## Деплой
+
+Приложение развёрнуто на VDS (Ubuntu 20.04):
+- **Фронтенд**: nginx → статика `/var/www/reframe/dist/`
+- **Бэкенд**: systemd-сервис `reframe-backend`, порт 3000
+- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`)
+
+### Пайплайн
+```
+push в main → lint → test → build → e2e → deploy
+```
+Деплой только после прохождения всех проверок.
+
+### Переменные
+| Переменная | Назначение | Где |
+|---|---|---|
+| `LLM_API_KEY` | Ключ LLM-провайдера | `/opt/reframe/config.env` |
+| `REFRAFE_RATE_LIMIT` | Лимит запросов/мин | `/opt/reframe/config.env` |
+| `VDS_SSH_KEY` | CI/CD ключ | GitHub Secrets |
+| `VDS_HOST` | IP сервера | GitHub Secrets |
+
+### Полезное
+- Статус сервиса: `sudo systemctl status reframe-backend`
+- Логи: `sudo journalctl -u reframe-backend -f`
+- Перезапуск: `sudo systemctl restart reframe-backend`
+- Перезагрузка nginx: `sudo systemctl reload nginx`
+
 ## Документация
 
 - [Конституция](.specify/memory/constitution.md)

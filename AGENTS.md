@@ -97,6 +97,30 @@ reframe/
     └── POST-MVP.md
 ```
 
+## Инфраструктура
+
+### CI/CD (ci.yml)
+```
+push → frontend-lint-types → frontend-test → frontend-build → frontend-e2e
+                         ↘ backend-test ↗          ↕ (parallel)
+                                                    ↓
+                                               deploy (main only)
+```
+- PR: lint + test + build + e2e
+- Merge to main: всё выше + деплой на VDS
+- Все проверки обязательны перед деплоем
+
+### Сервер
+- VDS Ubuntu 20.04, nginx + systemd
+- `/opt/reframe/` — бэкенд JAR + config.env + fixtures
+- `/var/www/reframe/dist/` — SPA статика
+- `reframe` user — ограниченные права (только systemctl restart своего сервиса)
+- Wireguard VPN — НЕ ТРОГАТЬ
+
+### Секреты (никогда не коммитить)
+- API-ключи и пароли — только в GitHub Secrets и `/opt/reframe/config.env`
+- CI/CD SSH-ключ — `VDS_SSH_KEY` в GitHub Secrets
+
 ## Что НЕ надо предлагать (уже решено)
 
 - ❌ Заменить Clojure на Node.js — осознанный выбор
