@@ -43,7 +43,7 @@ Reframe — приватный голосовой КПТ-дневник для �
 | SSE streaming | core.async channel |
 | API | REST + SSE |
 | Голосовой ввод | Web Speech API (SpeechRecognition) |
-| График | Recharts (ленивая загрузка) |
+
 | Git hooks | lefthook (pre-commit: lint+types, pre-push: tests) |
 
 ---
@@ -261,8 +261,9 @@ App (ThemeProvider + Router)
 │   └── EmptyState          # «Здесь появятся твои сессии...»
 │
 ├── ProgressTab             # вкладка «Прогресс»
-│   ├── AnxietyChart        # линейный Recharts-график за 7 дней
-│   └── EmptyState          # «Твой прогресс появится здесь...»
+│   ├── SummaryCards         # сводка: сессии, дельта, тренд
+│   ├── DistortionCloud      # облако тегов искажений
+│   └── EmptyState           # «Твой прогресс появится здесь...»
 │
 ├── ThemeToggle             # переключатель тёмная/светлая
 ├── ErrorBanner             # ошибки сети / LLM
@@ -319,18 +320,6 @@ src/services/
 ├── storageService.ts    # localStorage CRUD: sessions, theme, onboarding flag
 └── sessionService.ts    # session lifecycle: start → analyze → rate → save
 ```
-
----
-
-## Chart Strategy
-
-Библиотека: **Recharts** (~45 KB gzipped). Загружается лениво — только при переходе на вкладку «Прогресс».
-
-- Линейный график за 7 дней: ось X — даты, ось Y — уровень тревоги (1-10)
-- Две линии: оценка «до» (warm terra cotta) и «после» (muted sage)
-- Тултип при наведении: дата, значения до/после, дельта
-- Тренд: пунктирная линия среднего
-- Анимация появления графика при открытии вкладки
 
 ---
 
