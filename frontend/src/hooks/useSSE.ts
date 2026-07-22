@@ -56,7 +56,7 @@ export function useSSE() {
   const abortRef = useRef<AbortController | null>(null);
 
   const sendText = useCallback(async (text: string) => {
-    setState({ loading: true, data: null, error: null });
+    setState((prev) => ({ ...prev, loading: true, data: null, error: null }));
     abortRef.current = new AbortController();
 
     try {
@@ -71,21 +71,23 @@ export function useSSE() {
       });
 
       if (!response.ok) {
-        setState({
+        setState((prev) => ({
+          ...prev,
           loading: false,
           data: null,
           error: `Ошибка сервера: ${response.status}`,
-        });
+        }));
         return;
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
-        setState({
+        setState((prev) => ({
+          ...prev,
           loading: false,
           data: null,
           error: 'Streaming не поддерживается',
-        });
+        }));
         return;
       }
 
@@ -103,11 +105,12 @@ export function useSSE() {
         for (const line of lines) {
           const parsed = parseSSEData(line);
           if (parsed && typeof parsed === 'object' && 'error' in (parsed as Record<string, unknown>)) {
-            setState({
+            setState((prev) => ({
+              ...prev,
               loading: false,
               data: null,
               error: (parsed as Record<string, string>).error,
-            });
+            }));
             return;
           }
           if (parsed && typeof parsed === 'object' && 'reframing' in (parsed as Record<string, unknown>)) {
@@ -120,6 +123,7 @@ export function useSSE() {
       const error = err as { name?: string };
       if (error.name === 'TimeoutError' || error.name === 'AbortError') {
         setState((prev) => ({
+          ...prev,
           loading: false,
           data: prev.data,
           error: prev.data
@@ -127,11 +131,12 @@ export function useSSE() {
             : 'Не удалось получить ответ. Попробуйте через минуту.',
         }));
       } else {
-        setState({
+        setState((prev) => ({
+          ...prev,
           loading: false,
           data: null,
           error: 'Ошибка сети. Проверьте подключение.',
-        });
+        }));
       }
     }
   }, []);
