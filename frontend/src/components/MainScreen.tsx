@@ -79,6 +79,7 @@ export function MainScreen() {
   });
 
   const {
+    text,
     getFinalText,
     error: speechError,
     isSupported,
@@ -195,12 +196,30 @@ export function MainScreen() {
       )}
 
       {state.phase === 'recording' && (
-        <RecordButton
-          state="recording"
-          onStart={handleStart}
-          onStop={handleStop}
-          onCancel={handleCancel}
-        />
+        <>
+          <RecordButton
+            state="recording"
+            onStart={handleStart}
+            onStop={handleStop}
+            onCancel={handleCancel}
+          />
+          <div style={{
+            margin: 'var(--space-md) auto',
+            padding: 'var(--space-md) var(--space-lg)',
+            maxWidth: '360px',
+            minHeight: '60px',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--border-radius-sm)',
+            border: '1px solid var(--border)',
+            fontSize: '15px',
+            lineHeight: '1.6',
+            color: text ? 'var(--text-primary)' : 'var(--text-secondary)',
+            textAlign: 'center' as const,
+            transition: 'color 0.3s',
+          }}>
+            {text || 'Говорите...'}
+          </div>
+        </>
       )}
 
       {(state.phase === 'analyzing' || state.phase === 'result') && (
