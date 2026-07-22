@@ -8,41 +8,43 @@ export function RecordingIndicator() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 'var(--space-md)',
-        padding: 'var(--space-md)',
+        padding: 'var(--space-xl) 0',
       }}
     >
-      {/* Animated ring */}
+      {/* Pulsing ring */}
       <div
         style={{
           width: '120px',
           height: '120px',
           borderRadius: '50%',
-          background: 'var(--accent)',
+          border: '3px solid var(--accent)',
+          animation: 'recording-pulse 1.5s ease-in-out infinite',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          animation: 'recording-pulse 2s ease-out infinite',
         }}
       >
+        {/* Inner dot */}
         <div
           style={{
-            width: '60px',
-            height: '60px',
+            width: '24px',
+            height: '24px',
             borderRadius: '50%',
-            background: 'var(--bg-primary)',
+            background: 'var(--accent)',
+            animation: 'breathe 1s ease-in-out infinite',
           }}
         />
       </div>
-      <span
+      <p
         style={{
+          marginTop: 'var(--space-lg)',
           color: 'var(--text-secondary)',
-          fontSize: '14px',
+          fontSize: '15px',
           fontWeight: 500,
         }}
       >
-        Запись...
-      </span>
+        ● Запись...
+      </p>
     </div>
   );
 }
