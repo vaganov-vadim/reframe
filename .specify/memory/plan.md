@@ -8,7 +8,7 @@
 
 ## Summary
 
-Reframe — приватный голосовой КПТ-дневник для профессионалов под стрессом. Пользователь говорит → распознавание речи → LLM анализирует через призму КПТ (Бёрнс) → streaming-ответ с рефреймингом. Все данные только на устройстве, бэкенд — тонкий прокси с промпт-инжинирингом (КПТ/Бёрнс).
+Reframe — приватный голосовой КПТ-дневник для профессионалов под стрессом. Пользователь говорит → распознавание речи → LLM анализирует через призму КПТ (Бёрнс) → ответ с рефреймингом. Все данные только на устройстве, бэкенд — тонкий прокси с промпт-инжинирингом (КПТ/Бёрнс).
 
 ---
 
@@ -40,8 +40,8 @@ Reframe — приватный голосовой КПТ-дневник для �
 | Бэкенд | Clojure + Kit (Ring, Reitit, malli) |
 | HTTP-сервер | http-kit (Ring adapter, встроен в Kit) |
 | HTTP-клиент | clj-http (вызов LLM API) |
-| SSE streaming | core.async channel |
-| API | REST + SSE |
+| Потоковая передача | core.async channel → ответ клиенту |
+| API | REST + JSON |
 | Голосовой ввод | Web Speech API (SpeechRecognition) |
 
 | Git hooks | lefthook (pre-commit: lint+types, pre-push: tests) |
@@ -95,8 +95,8 @@ Animations (defined in tokens.css):
 
 | Показатель | Цель MVP | Измерение |
 |---|---|---|
-| Первый токен LLM | ≤ 1 секунда | Время от запроса до первого SSE-события |
-| Полный ответ LLM | ≤ 5 секунд (целевой) | Время от запроса до закрытия SSE-потока |
+| Первый токен LLM | ≤ 1 секунда | Время от запроса до первого фрагмента ответа |
+| Полный ответ LLM | ≤ 5 секунд (целевой) | Время от запроса до полного ответа LLM |
 | Time to Interactive | ≤ 2 секунды | Lighthouse TTI |
 | Распознавание речи | ≤ 2 секунды после остановки записи | Web Speech API onresult |
 | Сохранение сессии | ≤ 50ms | localStorage setItem |
@@ -173,17 +173,17 @@ Request:
 }
 ```
 
-Response: SSE stream (Content-Type: text/event-stream).
-Frontend: fetch + ReadableStream → parse SSE events
+Response: JSON (Content-Type: application/json).
+Frontend: fetch → parse JSON
 
-Каждое событие — одна JSON-строка:
-```
-data: {"distortions": [...], "reframing": "...", "question": "..."}
+Ответ:
+```json
+{"distortions": [...], "reframing": "...", "question": "..."}
 ```
 
 При ошибке:
-```
-data: {"error": "string"}
+```json
+{"error": "string"}
 ```
 
 LLM provider configuration (server-side env vars):
@@ -191,7 +191,7 @@ LLM provider configuration (server-side env vars):
 - `LLM_API_URL` — эндпоинт (по умолчанию DeepSeek)
 - `LLM_MODEL` — модель (по умолчанию deepseek-chat)
 
-Timeout: 10s на полный ответ. При превышении — закрыть поток, вернуть `{"error": "timeout"}`.
+Timeout: 10s на полный ответ. При превышении — вернуть `{"error": "timeout"}`.
 
 ---
 
@@ -233,7 +233,7 @@ const STORAGE_KEYS = {
 } as const;
 ```
 
-The LLM response may include a transient `pattern` field (наиболее частое искажение) — not persisted to localStorage, shown inline during streaming only.
+The LLM response may include a transient `pattern` field (наиболее частое искажение) — not persisted to localStorage, shown inline during response only.
 
 ---
 
@@ -249,7 +249,7 @@ App (ThemeProvider + Router)
 │   │   └── AnxietyTooltip  # tooltip с 10 уровнями при наведении
 │   ├── RecordButton        # кнопка «Говорить» / «Стоп» / «Отмена»
 │   │   └── RecordingIndicator  # визуальная обратная связь при записи
-│   ├── ResponseView        # streaming-ответ
+│   ├── ResponseView        # ответ LLM
 │   │   ├── DistortionList  # список искажений
 │   │   └── ReframingText   # текст рефрейминга
 │   ├── PostRatingSlider    # оценка «после» (тот же AnxietySlider)
@@ -287,9 +287,9 @@ Clojure handler (handler.clj)
     ├── Rate limit check (token bucket, 3 req/min)
     ├── Prompt formatting (prompt.clj — Burns methodology)
     ├── LLM API call (clj-http → DeepSeek/LLM provider)
-    └── SSE stream back (core.async channel)
+    └── Ответ клиенту (core.async channel)
     ↓
-Frontend: POST /api/reframe → fetch + ReadableStream → parse SSE events
+Frontend: POST /api/reframe → fetch → parse JSON
     ├── Parse JSON: {distortions, reframing, question, pattern}
     ├── DistortionList: render each distortion
     └── ReframingText: render reframing
@@ -309,7 +309,7 @@ DeltaDisplay: anxietyBefore - anxietyAfter
 ### Custom Hooks
 
 - `useSpeechRecognition.ts` — React-хук (обёртка над Web Speech API): start/stop/cancel, browser support check, recognition events
-- `useSSE.ts` — React-хук (SSE-клиент): connect via POST /api/reframe + fetch + ReadableStream, parse streaming JSON, handle disconnect/timeout
+- `useSSE.ts` — React-хук (потоковый клиент): connect via POST /api/reframe + fetch, parse streaming JSON, handle disconnect/timeout
 
 ---
 
@@ -331,7 +331,7 @@ src/services/
   [kit "2.0"]
   ;; HTTP client for LLM API calls
   [clj-http "3.13.0"]
-  ;; Async streaming via SSE
+  ;; Async ответ via core.async
   [org.clojure/core.async "1.6.681"]
   ;; JSON encoding (Cheshire)
   [cheshire "5.13.0"]
@@ -341,7 +341,7 @@ src/services/
 ```
 
 Backend files:
-- `src/reframe/handler.clj` — HTTP routes, rate limiting, SSE streaming
+- `src/reframe/handler.clj` — HTTP routes, rate limiting, ответ клиенту
 - `src/reframe/prompt.clj` — system prompt text, Burns methodology
 - `test/reframe/handler_test.clj` — proxy layer tests
 
@@ -390,7 +390,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
                                       ├── Кнопка "Говорить" → Запись (interim текст)
                                       │   ├── Стоп → Текст → Отправка
                                       │   └── Отмена → Сброс
-                                      ├── Streaming ответ
+                                      ├── Ответ
                                       │   ├── Искажения + рефрейминг
                                       │   └── Ошибка? → ErrorBanner + retry
                                       ├── Слайдер тревоги (после)
@@ -401,7 +401,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 ## Customer Journey Map
 
 ```
-1. Открытие → 2. Оценка тревоги (до) → 3. Запись речи → 4. Отправка → 5. Ожидание (streaming) → 6. Просмотр результата → 7. Оценка тревоги (после) → 8. Сохранение → 9. История / Прогресс
+1. Открытие → 2. Оценка тревоги (до) → 3. Запись речи → 4. Отправка → 5. Ожидание → 6. Просмотр результата → 7. Оценка тревоги (после) → 8. Сохранение → 9. История / Прогресс
 
 На каждом шаге:
 - Позитивный сценарий
@@ -441,7 +441,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 ### Обработка ошибок
 - [ ] При отсутствии сети — ErrorBanner с кнопкой «Повторить»
 - [ ] При таймауте LLM — предупреждение через 10 секунд
-- [ ] При обрыве streaming — показана полученная часть + предупреждение
+- [ ] При обрыве ответа — показана полученная часть + предупреждение
 - [ ] При ошибке распознавания речи — сообщение и возврат к началу
 - [ ] При 429 (rate limit) — сообщение «Слишком много запросов»
 - [ ] Браузер без Speech API — заглушка с инструкцией открыть Chrome
@@ -458,7 +458,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 | Два быстрых нажатия «Говорить» | Второе игнорируется (уже в режиме записи) |
 | localStorage заполнен (quota exceeded) | Данные не сохраняются, пользователь не видит ошибку (MVP) |
 | LLM вернул JSON неожиданной структуры | ErrorBanner + кнопка «Повторить» |
-| Пользователь сменил вкладку во время streaming | Streaming продолжается, ответ отображается при возврате |
+| Пользователь сменил вкладку во время получения ответа | Ответ продолжает приходить, отображается при возврате |
 
 ## Implementation Phases
 
@@ -471,7 +471,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 - Empty states: заглушки для всех вкладок
 
 **Phase 2 — Бэкенд-прокси**
-- POST /api/reframe → prompt formatting → LLM → SSE
+- POST /api/reframe → prompt formatting → LLM → JSON
 - Rate limiting (token bucket, 3 req/min)
 - LLM mock switch (REFRAME_MOCK_LLM)
 - Backend tests (handler_test.clj)
@@ -484,10 +484,10 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 - ThemeToggle
 - Адаптивная вёрстка (320px+)
 
-**Phase 4 — Голос + Streaming**
+**Phase 4 — Голос + Ответ**
 - speechService.ts: Web Speech API integration
 - useSSE.ts: POST /api/reframe, fetch + ReadableStream
-- ResponseView: DistortionList + ReframingText (streaming render)
+- ResponseView: DistortionList + ReframingText (потоковый рендеринг)
 - PostRatingSlider + DeltaDisplay
 - BrowserFallback: заглушка для браузеров без Web Speech API
 - RecordingIndicator: визуальная обратная связь при записи
@@ -504,7 +504,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 - Error states: recognition failure, LLM timeout, network error
 - Tone of voice: все тексты в стиле «друг»
 - SUDS tooltip с 10 уровнями
-- README с инструкцией по запуску
+- ENGINEERING.md с инструкцией по запуску
 
 ---
 
@@ -516,7 +516,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 |---|---|---|
 | I. Приватность | ✅ | localStorage, бэкенд без БД |
 | II. Простота | ✅ | Один экран, 2–3 действия |
-| III. Скорость | ✅ | SSE streaming, lazy loading |
+| III. Скорость | ✅ | Потоковая передача, lazy loading |
 | IV. Человекоцентричность | ✅ | Тёплая палитра, 48px зоны, тёмная тема |
 | V. TDD | ✅ | Vitest + Playwright |
 | VI. Контракт-Фёрст | ✅ | API-контракт на бэкенде |
@@ -567,8 +567,8 @@ reframe/
 │       ├── spec.md            # Функциональные требования
 │       └── plan.md            # Этот файл
 │
-├── README.md
-└── deploy.sh                # Деплой-скрипт (фронтенд + бэкенд)
+├── README.md                 # Investor pitch
+├── ENGINEERING.md            # Техническая документация
 ```
 
 ---
@@ -608,7 +608,7 @@ Pre-push hook: `vitest run` (быстрее, чем на pre-commit, чтобы 
 
 1. **Голосовой ввод → ответ**
    - Мок Web Speech API → эмуляция распознавания текста
-   - Мок LLM-провайдера → эмуляция streaming-ответа
+   - Мок LLM-провайдера → эмуляция ответа
    - Проверка: текст ответа отображается на экране
 
 2. **Ошибка сети**
@@ -627,8 +627,8 @@ Pre-push hook: `vitest run` (быстрее, чем на pre-commit, чтобы 
    - Мок Web Speech API → onerror / пустой результат
    - Проверка: сообщение «Не удалось распознать речь», кнопка «Записать заново»
 
-6. **Обрыв streaming**
-   - Мок SSE → закрытие соединения после частичного ответа
+6. **Обрыв ответа**
+   - Мок ответа → закрытие соединения после частичного ответа
    - Проверка: показана полученная часть + предупреждение «Ответ получен не полностью»
 
 7. **Сохранение → история**
@@ -720,21 +720,6 @@ EnvironmentFile=/opt/reframe/config.env
 
 [Install]
 WantedBy=multi-user.target
-```
-
-### Deploy script (deploy.sh)
-
-```bash
-#!/bin/bash
-set -e
-# Скрипт содержит подробные инструкции по ручной настройке VDS
-# (nginx, systemd, директории, конфиг) в комментариях перед выполнением.
-# Основная логика:
-#   VDS_HOST="${VDS_HOST:?Set VDS_HOST env var}"
-#   VDS_USER="${VDS_USER:-reframe}"
-#   frontend: cd frontend && npm ci && npm run build → rsync to VDS
-#   backend:  cd backend && lein uberjar → scp to VDS
-#   restart:  ssh "$VDS_USER@$VDS_HOST" "sudo systemctl restart reframe-backend"
 ```
 
 ### CI/CD Deploy (job в ci.yml)

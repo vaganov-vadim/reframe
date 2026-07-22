@@ -25,13 +25,13 @@
 - [x] 2.1 ТЕСТ: `handler_test.clj` — успешный ответ, 429, таймаут, ошибка LLM.
 - [x] 2.2 `prompt.clj`: `build-prompt(text)` — системный промпт + текст пользователя.
 - [x] 2.3 `llm_client.clj`: `call-llm(prompt)` — clj-http POST к LLM API, stream: true.
-- [x] 2.4 `handler.clj`: POST `/api/reframe` → prompt → LLM → core.async → SSE.
+- [x] 2.4 `handler.clj`: POST `/api/reframe` → prompt → LLM → core.async → ответ клиенту.
 - [x] 2.5 `rate_limiter.clj`: token bucket, atom, Aero config `REFRAFE_RATE_LIMIT`. Middleware: 429 + Retry-After.
 - [x] 2.6 LLM mock: `REFRAFE_MOCK_LLM=true` → случайная фикстура из `mock-responses.json`.
 - [x] 2.7 `resources/config.edn` (Aero) + `core.clj` (запуск сервера с конфигом).
 - [x] 2.8 Прогнать тесты 2.1 → все проходят (Red-Green: сначала падают, потом зелёные).
 
-**E2E после Phase 2**: `curl -X POST /api/reframe -d '{"text":"test"}'` → SSE ответ (с mock LLM).
+**E2E после Phase 2**: `curl -X POST /api/reframe -d '{"text":"test"}'` → ответ (с mock LLM).
 
 ---
 
@@ -46,20 +46,20 @@
 
 ---
 
-## Phase 4 — Голос + Streaming
+## Phase 4 — Голос + Ответ
 
 > Зависит от: Phase 2 (API) + Phase 3 (компоненты).
 
 - [x] 4.1 ТЕСТ: `speechService.test.ts` — мок SpeechRecognition, проверка start/stop/error/cancel.
 - [x] 4.2 `speechService.ts` / `useSpeechRecognition`: Web Speech API hook, sanitize (trim, empty, 3000).
 - [x] 4.3 BrowserFallback: заглушка для браузеров без Web Speech API.
-- [x] 4.4 `apiService.ts` / `useSSE`: POST `/api/reframe`, EventSource, парсинг JSON, таймаут 10s.
-- [x] 4.5 ResponseView: DistortionList + ReframingText. Streaming render. Partial response handling.
+- [x] 4.4 `apiService.ts` / `useSSE`: POST `/api/reframe`, fetch + ReadableStream, парсинг JSON, таймаут 10s.
+- [x] 4.5 ResponseView: DistortionList + ReframingText. Потоковый рендеринг. Partial response handling.
 - [x] 4.6 PostRatingSlider + DeltaDisplay: ползунок «после», дельта с цветом, кнопка «Сохранить».
 - [x] 4.7 ErrorBanner: типы ошибок (сеть, таймаут, распознавание). Кнопка «Повторить».
 - [x] 4.8 MainScreen useReducer: AnxietySlider → Record → Response → PostRate → Save. Связка компонентов.
 
-**E2E после Phase 4**: голосовой ввод → ответ (мок API + мок Speech), ошибка сети (fetch 500), таймаут LLM (≥5s), ошибка распознавания, обрыв streaming.
+**E2E после Phase 4**: голосовой ввод → ответ (мок API + мок Speech), ошибка сети (fetch 500), таймаут LLM (≥5s), ошибка распознавания, обрыв ответа.
 
 ---
 
@@ -115,13 +115,13 @@
 - [x] 8.7 Тест: таймаут LLM (задержка → предупреждение)
 - [x] 8.8 Тест: сохранение → история (localStorage + HistoryTab)
 - [x] 8.9 Тест: график + пустые состояния (ProgressTab, HistoryTab)
-- [ ] 8.10 Удалить Recharts: `npm uninstall recharts`
-- [ ] 8.11 Переписать ProgressTab: сводка + тренд + облако тегов
-- [ ] 8.12 Обновить E2E-тест прогресса
+- [x] 8.10 Удалить Recharts: `npm uninstall recharts`
+- [x] 8.11 Переписать ProgressTab: сводка + тренд + облако тегов
+- [x] 8.12 Обновить E2E-тест прогресса
 
 ---
 
-## Итого: 55 выполнено + 3 новых = 58 задач, 8 фаз
+## Итого: 58 задач выполнено, 8 фаз
 
 ```
 
