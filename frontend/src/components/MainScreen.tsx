@@ -79,7 +79,7 @@ export function MainScreen() {
   });
 
   const {
-    text,
+    getFinalText,
     error: speechError,
     isSupported,
     start,
@@ -96,11 +96,12 @@ export function MainScreen() {
   const handleStop = useCallback(() => {
     stop();
     dispatch({ type: 'STOP_RECORDING' });
-    if (text) {
+    const finalText = getFinalText();
+    if (finalText) {
       dispatch({ type: 'ANALYZE' });
-      sendText(text).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+      sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
     }
-  }, [stop, text, sendText]);
+  }, [stop, getFinalText, sendText]);
 
   const handleCancel = useCallback(() => {
     cancel();
