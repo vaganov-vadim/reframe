@@ -95,12 +95,14 @@ export function MainScreen() {
 
   const handleStop = useCallback(() => {
     stop();
-    dispatch({ type: 'STOP_RECORDING' });
     const finalText = getFinalText();
-    if (finalText) {
-      dispatch({ type: 'ANALYZE' });
-      sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+    if (!finalText) {
+      dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+      return;
     }
+    dispatch({ type: 'STOP_RECORDING' });
+    dispatch({ type: 'ANALYZE' });
+    sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
   }, [stop, getFinalText, sendText]);
 
   const handleCancel = useCallback(() => {
