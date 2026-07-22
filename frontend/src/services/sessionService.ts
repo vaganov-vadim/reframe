@@ -4,6 +4,8 @@ export interface LLMResponse {
   distortions: Array<{ type: string; thought: string; why: string }>;
   reframing: string;
   question: string;
+  verticalArrowLevels?: Array<{ thought: string; label: string }>;
+  verticalArrowReframing?: string;
 }
 
 export interface InProgressSession {
@@ -32,7 +34,10 @@ export function completeSession(
     anxietyAfter,
     delta: session.anxietyBefore - anxietyAfter,
     distortion: response.distortions[0]?.type ?? 'не определено',
+    distortions: response.distortions,
     reframing: response.reframing,
+    verticalArrowLevels: response.verticalArrowLevels,
+    verticalArrowReframing: response.verticalArrowReframing,
   };
   saveSession(completed);
 }

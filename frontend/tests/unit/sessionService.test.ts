@@ -35,6 +35,8 @@ describe('sessionService', () => {
       distortions: [{ type: 'Катастрофизация', thought: '...', why: '...' }],
       reframing: 'Другой взгляд.',
       question: 'Что скажешь?',
+      verticalArrowLevels: [{ thought: 'Я плохой', label: 'Глубинное убеждение' }],
+      verticalArrowReframing: 'Глубже.',
     });
 
     expect(mockedSaveSession).toHaveBeenCalledTimes(1);
@@ -44,6 +46,9 @@ describe('sessionService', () => {
     expect(saved.delta).toBe(5);
     expect(saved.distortion).toBe('Катастрофизация');
     expect(saved.reframing).toBe('Другой взгляд.');
+    expect(saved.distortions).toEqual([{ type: 'Катастрофизация', thought: '...', why: '...' }]);
+    expect(saved.verticalArrowLevels).toEqual([{ thought: 'Я плохой', label: 'Глубинное убеждение' }]);
+    expect(saved.verticalArrowReframing).toBe('Глубже.');
   });
 
   it('completeSession uses default distortion when none provided', () => {
