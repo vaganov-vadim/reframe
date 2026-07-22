@@ -20,5 +20,5 @@
         port   (get-in config [:server :port] 3000)]
     (println "Starting Reframe backend...")
     (println (str "Server listening on http://localhost:" port))
-    (server/run-server handler/app {:port port})
+    (server/run-server (handler/app config) {:port port})
     (println "Server started. Press Ctrl+C to stop.")))
