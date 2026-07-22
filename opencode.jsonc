@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "tools": {
+    "required": [
+      "github"
+    ],
+    "inherited": []
+  }
+}
