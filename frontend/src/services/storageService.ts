@@ -1,4 +1,5 @@
-import { Session, STORAGE_KEYS } from '../types/session';
+import type { Session } from '../types/session';
+import { STORAGE_KEYS } from '../types/session';
 
 const STORAGE_KEY = STORAGE_KEYS.sessions;
 
