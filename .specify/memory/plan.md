@@ -54,18 +54,18 @@ Dark theme (default):
 
 | Token | Value | Usage |
 |---|---|---|
-| --bg-primary | #1C1917 | Основной фон (warm dark) |
-| --bg-secondary | #252220 | Поверхности, карточки |
-| --bg-elevated | #2D2A28 | Модальные окна, tooltip |
-| --text-primary | #EDE4D8 | Основной текст (warm cream) |
-| --text-secondary | #A89880 | Вторичный текст (muted sand) |
-| --accent | #C8A87C | Акцентный цвет (warm gold) |
-| --accent-hover | #D4BA96 | Акцент при наведении |
-| --success | #8BA88A | Позитивная дельта (muted sage) |
-| --error | #C8847A | Высокая тревога / ошибки (warm terra cotta) |
-| --border | #3A3530 | Рамки и разделители |
-| --slider-track | #3A3530 | Трек ползунка |
-| --slider-fill | #C8A87C | Заполнение ползунка |
+| --bg-primary | #0A0E27 | Основной фон (deep navy) |
+| --bg-secondary | #111633 | Поверхности, карточки |
+| --bg-elevated | #181E3D | Модальные окна, tooltip |
+| --text-primary | #F0F0F5 | Основной текст (ivory) |
+| --text-secondary | #8890B0 | Вторичный текст (muted lavender) |
+| --accent | #E8A850 | Акцентный цвет (amber) |
+| --accent-hover | #F0BE6E | Акцент при наведении |
+| --success | #7EB8A0 | Позитивная дельта (muted teal) |
+| --error | #D4786E | Высокая тревога / ошибки (warm coral) |
+| --border | #1E2548 | Рамки и разделители |
+| --slider-track | #1E2548 | Трек ползунка |
+| --slider-fill | #E8A850 | Заполнение ползунка |
 
 Light theme (optional): инвертировать bg/text, accent сохранить.
 
