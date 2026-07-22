@@ -5,23 +5,47 @@
 
 ## Быстрый старт
 
+### Требования
+
+- **Node.js** 20+
+- **Java** 21+ (для Clojure)
+- **Leiningen** (менеджер зависимостей Clojure)
+- **Chrome** (для Web Speech API)
+
+### Запуск
+
 ```bash
-# Фронтенд
+# 1. Фронтенд
 cd frontend && npm install && npm run dev
 
-# Бэкенд
-cd backend && lein run
+# 2. Бэкенд (в отдельном терминале)
+cd backend && lein deps && REFRAME_MOCK_LLM=true lein run
 ```
+
+### Проверка
 
 Открыть http://localhost:5173 в Chrome (Web Speech API).
 
+### Режимы работы
+
+| Режим | Команда | Что делает |
+|-------|---------|------------|
+| **Mock (по умолчанию)** | `REFRAME_MOCK_LLM=true lein run` | Возвращает предопределённые КПТ-ответы. Не требует API-ключа. |
+| **Real LLM** | `lein run` | Отправляет запросы к DeepSeek. Требует `LLM_API_KEY` в `backend/config.env`. |
+
 ### Переменные окружения
 
-Создать `backend/config.env`:
+Создать `backend/config.env` (только для реального LLM):
 
 ```
 LLM_API_KEY=your-key
 ```
+
+### Сеть
+
+- Фронтенд: http://localhost:5173 (Vite dev server)
+- Бэкенд: http://localhost:3000 (Clojure/Kit)
+- Прокси: Vite перенаправляет `/api/*` на `localhost:3000`
 
 ## Архитектура
 
