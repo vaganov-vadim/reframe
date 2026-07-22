@@ -7,72 +7,32 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  ReferenceLine,
 } from 'recharts';
 import { getSessions } from '../services/storageService';
 
 interface ChartPoint {
-  date: string;
+  time: string;
   'До': number | null;
   'После': number | null;
-  delta: number | null;
-}
-
-function toDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 export function AnxietyChart() {
-  const sessions = getSessions();
+  // Get last 15 sessions, ordered chronologically (oldest first)
+  const sessions = getSessions()
+    .slice(0, 15) // latest sessions first (storage order), take last 15
+    .reverse();   // chronological order for chart
 
-  // Build last 7 days map using local date keys
-  const dayMap: Record<string, { before: number[]; after: number[] }> = {};
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    d.setHours(0, 0, 0, 0);
-    const key = toDateKey(d);
-    dayMap[key] = { before: [], after: [] };
-  }
+  // Build chart data — each session is one point
+  const data: ChartPoint[] = sessions.map((s) => ({
+    time:
+      new Date(s.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) +
+      ' ' +
+      new Date(s.date).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+    'До': s.anxietyBefore,
+    'После': s.anxietyAfter,
+  }));
 
-  // Group sessions by day using ISO date key
-  sessions.forEach((s) => {
-    const dayKey = toDateKey(new Date(s.date));
-    if (dayMap[dayKey]) {
-      dayMap[dayKey].before.push(s.anxietyBefore);
-      dayMap[dayKey].after.push(s.anxietyAfter);
-    }
-  });
-
-  // Build chart data with averages
-  const data: ChartPoint[] = Object.entries(dayMap)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([dateKey, vals]) => {
-      const avgBefore = vals.before.length
-        ? vals.before.reduce((a, b) => a + b, 0) / vals.before.length
-        : null;
-      const avgAfter = vals.after.length
-        ? vals.after.reduce((a, b) => a + b, 0) / vals.after.length
-        : null;
-      return {
-        date: new Date(dateKey).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
-        'До': avgBefore ? Math.round(avgBefore * 10) / 10 : null,
-        'После': avgAfter ? Math.round(avgAfter * 10) / 10 : null,
-        delta: avgBefore && avgAfter ? Math.round((avgBefore - avgAfter) * 10) / 10 : null,
-      };
-    });
-
-  const isEmpty = data.every((d) => d['До'] === null);
-
-  // Calculate trend from valid before values
-  const validBefore = data.filter((d) => d['До'] !== null).map((d) => d['До'] as number);
-  const trend =
-    validBefore.length >= 2
-      ? validBefore[validBefore.length - 1] - validBefore[0]
-      : null;
+  const isEmpty = data.length === 0;
 
   if (isEmpty) {
     return (
@@ -100,17 +60,18 @@ export function AnxietyChart() {
           fontWeight: 500,
         }}
       >
-        Последние 7 дней
+        Последние сессии
       </h3>
 
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis
-            dataKey="date"
+            dataKey="time"
             tick={{ fontSize: 11, fill: 'var(--text-secondary)' }}
             axisLine={{ stroke: 'var(--border)' }}
             tickLine={false}
+            interval={data.length > 7 ? Math.floor(data.length / 7) : 0}
           />
           <YAxis
             domain={[0, 10]}
@@ -157,33 +118,8 @@ export function AnxietyChart() {
             connectNulls
             activeDot={{ r: 6 }}
           />
-          {trend !== null && (
-            <ReferenceLine
-              y={validBefore[0]}
-              stroke="var(--text-secondary)"
-              strokeDasharray="4 4"
-              strokeWidth={1}
-            />
-          )}
         </LineChart>
       </ResponsiveContainer>
-
-      {trend !== null && (
-        <div
-          style={{
-            textAlign: 'center',
-            marginTop: 'var(--space-md)',
-            fontSize: '13px',
-            color: trend > 0 ? 'var(--success)' : 'var(--error)',
-          }}
-        >
-          {trend > 0
-            ? `Тревога снижается`
-            : trend < 0
-              ? `Тревога растёт`
-              : `Без изменений`}
-        </div>
-      )}
     </div>
   );
 }
