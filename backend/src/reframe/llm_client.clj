@@ -7,7 +7,7 @@
 ;; ─── Mock infrastructure ────────────────────────────────────────────────────
 
 (defonce ^:private mock-call-count (atom 0))
-(defonce ^:private mock-mode (atom :rotate))  ;; :rotate | :error | :timeout | :fixture
+(defonce ^:private mock-mode (atom :fixture))  ;; :rotate | :error | :timeout | :fixture
 
 (defn- load-mock-fixtures
   "Load mock LLM responses from fixtures file."
