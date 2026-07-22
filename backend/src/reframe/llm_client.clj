@@ -59,11 +59,12 @@
 ;; ─── Real LLM call ──────────────────────────────────────────────────────────
 
 (defn- real-call-llm
-  "Make an actual HTTP request to the LLM API using clj-http."
-  [prompt]
-  (let [api-url  (or (System/getenv "LLM_API_URL")  "https://api.deepseek.com/v1/chat/completions")
-        api-key  (System/getenv "LLM_API_KEY")
-        model    (or (System/getenv "LLM_MODEL")    "deepseek-chat")
+  "Make an actual HTTP request to the LLM API using clj-http.
+   Config is the `:llm` sub-map from Aero config."
+  [llm-config prompt]
+  (let [api-url  (:api-url llm-config)
+        api-key  (:api-key llm-config)
+        model    (:model llm-config)
         response (http/post api-url
                    {:headers     {"Authorization" (str "Bearer " api-key)
                                   "Content-Type"  "application/json"}
@@ -82,13 +83,16 @@
   "Call the LLM with the given prompt.
    Returns the response as a JSON string.
    
-   Mock mode is enabled when:
-   - REFRAME_MOCK_LLM env var is 'true', OR
-   - LLM_API_KEY env var is not set (no credentials)
+   Config is the full Aero config map.  LLM settings are read from (:llm config):
+     :api-url      — LLM API endpoint
+     :api-key      — API authentication token
+     :model        — model name (e.g. deepseek-chat)
+     :mock-enabled — when \"true\" or when :api-key is nil, mock mode is used
    
    In mock mode, responses rotate through error → timeout → fixture."
-  [prompt]
-  (if (or (= "true" (System/getenv "REFRAME_MOCK_LLM"))
-          (nil? (System/getenv "LLM_API_KEY")))
-    (mock-call-llm prompt)
-    (real-call-llm prompt)))
+  [config prompt]
+  (let [{:keys [api-key mock-enabled] :as llm-config} (:llm config)]
+    (if (or (= "true" mock-enabled)
+            (nil? api-key))
+      (mock-call-llm prompt)
+      (real-call-llm llm-config prompt))))

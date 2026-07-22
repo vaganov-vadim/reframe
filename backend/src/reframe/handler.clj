@@ -46,9 +46,10 @@
   [_request]
   (json-body 200 {:status "ok" :service "reframe-backend"}))
 
-(defn reframe-handler
-  "POST /api/reframe — validate, rate limit, call LLM, return SSE stream."
-  [request]
+(defn- reframe-handler
+  "POST /api/reframe — validate, rate limit, call LLM, return SSE stream.
+   Config is the full Aero config map, threaded to llm-client/call-llm."
+  [config request]
   (let [body-params (:body-params request {})
         text        (:text body-params)]
     (cond
@@ -70,7 +71,7 @@
       :else
       (try
         (let [llm-prompt (prompt/build-prompt text)
-              llm-result (llm-client/call-llm llm-prompt)
+               llm-result (llm-client/call-llm config llm-prompt)
               parsed     (try (json/parse-string llm-result)
                               (catch Exception _ llm-result))]
           (sse-body (if (map? parsed) parsed {:result llm-result})))
@@ -83,10 +84,12 @@
 ;; ─── Main dispatcher ────────────────────────────────────────────────────────
 
 (defn app
-  "Ring handler — routes requests to appropriate handlers.
+  "Returns a Ring handler function with config baked in.
+   Routes requests to appropriate handlers.
    Supports: GET /, POST /api/reframe (with validation, rate limiting, LLM).
    Returns 405 for wrong methods on /api/reframe, 404 for unknown routes."
-  [request]
+  [config]
+  (fn [request]
   (let [method (:request-method request)
         uri    (:uri request)]
     (cond
@@ -99,9 +102,9 @@
       (if (not= :post method)
         (json-body 405 {:error "Method Not Allowed"})
         (if (json-content-type? request)
-          (reframe-handler request)
+          (reframe-handler config request)
           (json-body 415 {:error "Unsupported Media Type"})))
 
       ;; Everything else
       :else
-      (json-body 404 {:error "Not Found"}))))
+      (json-body 404 {:error "Not Found"})))))
