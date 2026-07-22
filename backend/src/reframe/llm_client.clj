@@ -2,6 +2,7 @@
   "LLM API client. Supports mock mode (auto-enabled when no API key or REFRAME_MOCK_LLM=true).
    Mock mode rotates through: error → timeout → fixture responses."
   (:require [clj-http.client :as http]
+            [clojure.string :as str]
             [cheshire.core :as json]))
 
 ;; ─── Mock infrastructure ────────────────────────────────────────────────────
@@ -19,8 +20,9 @@
      :rotate  → rotating behavior (call 1=error, call 2=timeout, call 3+=fixture)
      :error   → throws API error
      :timeout → throws timeout
-     :fixture → returns fixture response as JSON string"
-  [_prompt]
+     :fixture → returns fixture response as JSON string.
+                Detects Vertical Arrow prompts and returns the deeper fixture."
+  [prompt]
   (case @mock-mode
     :error
     (throw (ex-info "LLM API Error: upstream returned 500"
@@ -30,7 +32,8 @@
              {:type :llm-timeout :causes :timeout}))
     :fixture
     (let [fixtures (load-mock-fixtures)
-          fixture  (first fixtures)]
+          is-deeper (and prompt (str/includes? prompt "Vertical Arrow"))
+          fixture  (if is-deeper (last fixtures) (first fixtures))]
       (json/generate-string (:output fixture)))
     :rotate
     (let [n (swap! mock-call-count inc)]

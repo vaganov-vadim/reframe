@@ -48,10 +48,14 @@
 
 (defn- reframe-handler
   "POST /api/reframe — validate, rate limit, call LLM, return SSE stream.
+   Supports :mode param in body-params — when \"deeper\", uses build-deeper-prompt
+   with :surface (original thought) and :text (user response).
    Config is the full Aero config map, threaded to llm-client/call-llm."
   [config request]
   (let [body-params (json/parse-string (slurp (:body request)) true)
-        text        (:text body-params)]
+        text        (:text body-params)
+        mode        (:mode body-params)
+        surface     (:surface body-params)]
     (cond
       ;; ── Input validation ──────────────────────────────────────────────
       (nil? text)
@@ -63,6 +67,10 @@
       (> (count text) max-text-length)
       (json-body 400 {:error (str "Text exceeds " max-text-length " characters")})
 
+      ;; ── Deeper mode requires surface ──────────────────────────────────
+      (and (= "deeper" mode) (str/blank? surface))
+      (json-body 400 {:error "Deeper mode requires 'surface' field"})
+
       ;; ── Rate limiting ─────────────────────────────────────────────────
       (not (rate-limiter/allow-request? request))
       (json-body 429 {:error "Rate limit exceeded"} "Retry-After" "60")
@@ -70,7 +78,9 @@
       ;; ── LLM call ─────────────────────────────────────────────────────
       :else
       (try
-        (let [llm-prompt (prompt/build-prompt text)
+        (let [llm-prompt (if (= "deeper" mode)
+                          (prompt/build-deeper-prompt surface text)
+                          (prompt/build-prompt text))
                llm-result (llm-client/call-llm config llm-prompt)
               parsed     (try (json/parse-string llm-result)
                               (catch Exception _ llm-result))]
