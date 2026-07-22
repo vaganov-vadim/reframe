@@ -23,6 +23,7 @@ constitution → specify → plan → tasks → implement
 | `.specify/memory/constitution.md` | Принципы, архитектура, границы, стек | Перед любым решением |
 | `.specify/memory/spec.md` | Функциональные требования, сценарии | Перед plan и implement |
 | `.specify/memory/plan.md` | Технический план, структура, CI, pre-commit | Перед implement |
+| `.specify/memory/tasks.md` | Список задач, фазы, статус выполнения | Перед implement |
 | `.omo/POST-MVP.md` | Что осознанно отложено до v2 | Чтобы не предлагать отложенное |
 | `AGENTS.md` | Этот файл | При входе в проект |
 
@@ -50,7 +51,7 @@ constitution → specify → plan → tasks → implement
 ### Код
 - **TypeScript strict mode** — никаких `any`
 - **TDD** — сначала тест, потом код
-- **Pre-commit gates** — перед коммитом: `tsc --noEmit` (чисто), `eslint` (чисто), `vitest run` (зелено)
+- **Pre-commit gates** — перед коммитом: `tsc --noEmit` (чисто), `eslint` (чисто), `vitest run` (зелено). Корневой `lefthook.yml` — авторитативный (`root: frontend`). `frontend/lefthook.yml` — дубликат без `root:`.
 - **Никакого мёртвого кода**, закомментированных блоков, TODO без issue
 
 ### Архитектура
@@ -93,7 +94,7 @@ reframe/
 │       ├── constitution.md
 │       ├── spec.md
 │       └── plan.md
-└── .omo/              # Планы и отложенные требования
+└── .omo/              # Планы, отложенные требования и transient-артефакты
     ├── constitution-updates.md
     └── POST-MVP.md
 ```

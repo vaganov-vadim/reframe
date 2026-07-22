@@ -20,20 +20,25 @@ export function sanitizeText(text: string): string | null {
 
 const RECORDING_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 
+// Browser-prefixed SpeechRecognition constructor type
+type SpeechRecognitionCtor = new () => SpeechRecognition;
+
+function getSpeechRecognitionAPI(): SpeechRecognitionCtor | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const ctor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  return ctor as SpeechRecognitionCtor | undefined;
+}
+
 export function useSpeechRecognition(): SpeechRecognitionResult {
   const [isListening, setIsListening] = useState(false);
   const [text, setText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalTranscript = useRef('');
 
-  const SpeechRecognitionAPI =
-    typeof window !== 'undefined'
-      ? (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition // eslint-disable-line @typescript-eslint/no-explicit-any
-      : undefined;
-
-  const isSupported = typeof SpeechRecognitionAPI !== 'undefined';
+  const SpeechRecognitionAPI = getSpeechRecognitionAPI();
+  const isSupported = SpeechRecognitionAPI !== undefined;
 
   const start = useCallback(() => {
     if (!isSupported || !SpeechRecognitionAPI) return;
@@ -43,8 +48,7 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
     recognition.interimResults = true;
     finalTranscript.current = '';
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SpeechRecognitionEvent not in TS DOM types
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
@@ -57,8 +61,7 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
       setText(sanitizeText(finalTranscript.current + interim));
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SpeechRecognitionErrorEvent not in TS DOM types
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
         setError('Не удалось распознать речь. Попробуйте ещё раз.');
       }

@@ -61,6 +61,7 @@ Dark theme (default):
 | --text-secondary | #8890B0 | Вторичный текст (muted lavender) |
 | --accent | #E8A850 | Акцентный цвет (amber) |
 | --accent-hover | #F0BE6E | Акцент при наведении |
+| --accent-glow | rgba(232, 168, 80, 0.15) | Подсветка активных элементов |
 | --success | #7EB8A0 | Позитивная дельта (muted teal) |
 | --error | #D4786E | Высокая тревога / ошибки (warm coral) |
 | --border | #1E2548 | Рамки и разделители |
@@ -71,15 +72,22 @@ Light theme (optional): инвертировать bg/text, accent сохран�
 
 Spacing & sizing:
 - Базовая единица: 4px (шаг сетки)
-- Минимальная зона касания: 48×48px
+- CSS-переменные: --space-xs (8px), --space-sm (12px), --space-md (20px), --space-lg (32px), --space-xl (48px)
+- Минимальная зона касания: 48×48px (--touch-target)
 - Отступы контейнера: 16px mobile / 24px desktop
-- Border radius: 12px (soft, friendly)
+- Border radius: 16px (--border-radius), 10px (--border-radius-sm)
 
 Typography:
-- Font family: system-ui, -apple-system, sans-serif
-- Base size: 16px
-- Heading size: 20px (h1), 18px (h2)
-- Line height: 1.5
+- Font family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif (--font-family)
+- Base size: 17px (--font-size-base)
+- Heading size: 22px (--font-size-heading), 28px (--font-size-xl)
+- Font weights: 400 (normal), 500 (medium), 600 (bold)
+- Line height: 1.5 (--line-height)
+
+Animations (defined in tokens.css):
+- `@keyframes breathe` — breathing-анимация кнопки записи (scale + box-shadow)
+- `@keyframes recording-pulse` — пульсация индикатора записи
+- `@keyframes spin` — вращение (индикатор загрузки)
 
 ---
 
@@ -165,7 +173,8 @@ Request:
 }
 ```
 
-Response: SSE stream (Content-Type: text/event-stream)
+Response: SSE stream (Content-Type: text/event-stream).
+Frontend: fetch + ReadableStream → parse SSE events
 
 Каждое событие — одна JSON-строка:
 ```
@@ -195,17 +204,17 @@ Timeout: 10s на полный ответ. При превышении — за�
 
 Конфигурация через Aero (`config.edn`):
 ```clojure
-{:rate-limit {:requests-per-minute #long #or [#env REFRAFE_RATE_LIMIT 3]
+{:rate-limit {:requests-per-minute #long #or [#env REFRAME_RATE_LIMIT 3]
               :algorithm :token-bucket}}
 ```
-Меняется через env var `REFRAFE_RATE_LIMIT` без перекомпиляции.
+Меняется через env var `REFRAME_RATE_LIMIT` без перекомпиляции.
 
 ---
 
 ## Data Schema (localStorage)
 
 ```typescript
-// src/types/session.ts
+// src/types/session.ts — canonical Session interface and STORAGE_KEYS
 interface Session {
   id: string;              // crypto.randomUUID()
   date: string;            // ISO 8601
@@ -219,10 +228,12 @@ interface Session {
 // localStorage keys
 const STORAGE_KEYS = {
   sessions: 'reframe_sessions',          // Session[]
-  onboardingSeen: 'reframe_onboarding',   // boolean
+  onboarding: 'reframe_onboarding',      // boolean
   theme: 'reframe_theme',                // 'dark' | 'light'
 } as const;
 ```
+
+The LLM response may include a transient `pattern` field (наиболее частое искажение) — not persisted to localStorage, shown inline during streaming only.
 
 ---
 
@@ -277,8 +288,8 @@ Clojure handler (handler.clj)
     ├── LLM API call (clj-http → DeepSeek/LLM provider)
     └── SSE stream back (core.async channel)
     ↓
-Frontend: EventSource onmessage
-    ├── Parse JSON: {distortions, reframing, question}
+Frontend: POST /api/reframe → fetch + ReadableStream → parse SSE events
+    ├── Parse JSON: {distortions, reframing, question, pattern}
     ├── DistortionList: render each distortion
     └── ReframingText: render reframing
     ↓
@@ -296,8 +307,8 @@ DeltaDisplay: anxietyBefore - anxietyAfter
 
 ### Custom Hooks
 
-- `useSpeechRecognition.ts` — обёртка над Web Speech API: start/stop/cancel, browser support check, recognition events
-- `useSSE.ts` — SSE-клиент: connect to POST /api/reframe, parse streaming JSON, handle disconnect/timeout
+- `useSpeechRecognition.ts` — React-хук (обёртка над Web Speech API): start/stop/cancel, browser support check, recognition events
+- `useSSE.ts` — React-хук (SSE-клиент): connect via POST /api/reframe + fetch + ReadableStream, parse streaming JSON, handle disconnect/timeout
 
 ---
 
@@ -305,8 +316,6 @@ DeltaDisplay: anxietyBefore - anxietyAfter
 
 ```
 src/services/
-├── speechService.ts     # Web Speech API: start/stop/cancel, browser check, text sanitization (trim, empty check, 3000 char limit), error handling
-├── apiService.ts        # fetch → POST /api/reframe, SSE EventSource, abort/timeout
 ├── storageService.ts    # localStorage CRUD: sessions, theme, onboarding flag
 └── sessionService.ts    # session lifecycle: start → analyze → rate → save
 ```
@@ -373,7 +382,7 @@ Backend files:
 ]
 ```
 
-Mock switch: env `REFRAFE_MOCK_LLM=true` → backend returns fixture instead of calling LLM.
+Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of calling LLM.
 
 ---
 
@@ -475,7 +484,7 @@ Mock switch: env `REFRAFE_MOCK_LLM=true` → backend returns fixture instead of 
 **Phase 2 — Бэкенд-прокси**
 - POST /api/reframe → prompt formatting → LLM → SSE
 - Rate limiting (token bucket, 3 req/min)
-- LLM mock switch (REFRAFE_MOCK_LLM)
+- LLM mock switch (REFRAME_MOCK_LLM)
 - Backend tests (handler_test.clj)
 - API contract validation (malli)
 
@@ -488,7 +497,7 @@ Mock switch: env `REFRAFE_MOCK_LLM=true` → backend returns fixture instead of 
 
 **Phase 4 — Голос + Streaming**
 - speechService.ts: Web Speech API integration
-- apiService.ts: POST /api/reframe, SSE EventSource
+- useSSE.ts: POST /api/reframe, fetch + ReadableStream
 - ResponseView: DistortionList + ReframingText (streaming render)
 - PostRatingSlider + DeltaDisplay
 - BrowserFallback: заглушка для браузеров без Web Speech API
@@ -534,8 +543,8 @@ reframe/
 │   ├── src/
 │   │   ├── components/        # UI-компоненты
 │   │   ├── hooks/             # React hooks (useSpeechRecognition, useSSE)
-│   │   ├── services/          # Бизнес-логика (reframing, storage, prompts)
-│   │   ├── store/             # Клиентское состояние (история записей)
+│   │   ├── services/          # Бизнес-логика (reframing, storage)
+│   │   ├── store/             # Зарезервировано для будущего state-менеджмента (.gitkeep)
 │   │   ├── styles/            # CSS / дизайн-токены
 │   │   └── types/             # TypeScript-типы (включая контракты API)
 │   │       └── session.ts       # Session interface + STORAGE_KEYS
@@ -594,20 +603,19 @@ vitest run
 
 Настроить через `lefthook`:
 
+Корневой `lefthook.yml` — авторитативный, с директивами `root: frontend` для всех команд. Файл `frontend/lefthook.yml` — дубликат без `root:` (для совместимости с IDE).
+
 Pre-push hook: `vitest run` (быстрее, чем на pre-commit, чтобы не замедлять коммиты).
 
 ### Бэкенд
 
-```bash
-# Тесты
-lein test
-```
+Бэкенд в lefthook не включён. Pre-commit gates для бэкенда — ручные (`lein test`).
 
 ---
 
 ## E2E-тесты (Playwright)
 
-Критические пользовательские сценарии (внешние зависимости мокаются):
+Критические пользовательские сценарии (внешние зависимости мокаются). Всего 9 тестов:
 
 1. **Голосовой ввод → ответ**
    - Мок Web Speech API → эмуляция распознавания текста
@@ -633,6 +641,18 @@ lein test
 6. **Обрыв streaming**
    - Мок SSE → закрытие соединения после частичного ответа
    - Проверка: показана полученная часть + предупреждение «Ответ получен не полностью»
+
+7. **Сохранение → история**
+   - Мок localStorage с данными сессии
+   - Проверка: сессия отображается в HistoryTab, детали по клику
+
+8. **График прогресса**
+   - Мок localStorage с 7 днями данных
+   - Проверка: график Recharts с линиями «до»/«после», tooltip, тренд
+
+9. **Пустые состояния**
+   - Мок localStorage без данных
+   - Проверка: EmptyState на вкладках История и Прогресс
 
 ---
 
@@ -713,47 +733,25 @@ EnvironmentFile=/opt/reframe/config.env
 WantedBy=multi-user.target
 ```
 
-### Deploy script
+### Deploy script (deploy.sh)
+
 ```bash
 #!/bin/bash
-# deploy.sh
-
-# Frontend
-cd frontend && npm run build
-rsync -avz dist/ reframe@<VDS_HOST>:/var/www/reframe/dist/
-
-# Backend
-cd backend && lein uberjar
-scp target/reframe.jar reframe@<VDS_HOST>:/opt/reframe/
-ssh reframe@<VDS_HOST> "sudo systemctl restart reframe-backend"
+set -e
+# Скрипт содержит подробные инструкции по ручной настройке VDS
+# (nginx, systemd, директории, конфиг) в комментариях перед выполнением.
+# Основная логика:
+#   VDS_HOST="${VDS_HOST:?Set VDS_HOST env var}"
+#   VDS_USER="${VDS_USER:-reframe}"
+#   frontend: cd frontend && npm ci && npm run build → rsync to VDS
+#   backend:  cd backend && lein uberjar → scp to VDS
+#   restart:  ssh "$VDS_USER@$VDS_HOST" "sudo systemctl restart reframe-backend"
 ```
 
-### CI/CD Deploy (deploy.yml)
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
-on:
-  push:
-    branches: [main]
+### CI/CD Deploy (job в ci.yml)
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy
-        env:
-          SSH_KEY: ${{ secrets.VDS_SSH_KEY }}
-          VDS_HOST: ${{ secrets.VDS_HOST }}
-        run: |
-          # Frontend
-          cd frontend && npm ci && npm run build
-          rsync -avz -e "ssh -i $SSH_KEY" dist/ reframe@$VDS_HOST:/var/www/reframe/dist/
-          # Backend
-          cd backend && lein uberjar
-          scp -i $SSH_KEY target/reframe.jar reframe@$VDS_HOST:/opt/reframe/
-          ssh -i $SSH_KEY reframe@$VDS_HOST "sudo systemctl restart reframe-backend"
-```
+Деплой — отдельная job внутри `.github/workflows/ci.yml`. Триггер: push в main (после прохождения lint, test, build, e2e).
+Отдельного `deploy.yml` нет.
 
 ### Post-MVP (SSL)
 - certbot + Let's Encrypt для домена
