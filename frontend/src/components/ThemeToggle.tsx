@@ -11,18 +11,25 @@ export function ThemeToggle() {
         position: 'fixed',
         top: 'var(--space-md)',
         right: 'var(--space-md)',
-        background: 'var(--bg-elevated)',
-        color: 'var(--text-primary)',
-        border: '1px solid var(--border)',
-        minWidth: 'var(--touch-target)',
-        minHeight: 'var(--touch-target)',
-        borderRadius: 'var(--border-radius)',
-        fontSize: '20px',
+        background: 'transparent',
+        color: 'var(--text-secondary)',
+        border: 'none',
+        width: '36px',
+        height: '36px',
+        fontSize: '18px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 100,
         cursor: 'pointer',
+        opacity: 0.6,
+        transition: 'opacity 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.opacity = '1';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.opacity = '0.6';
       }}
     >
       {theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}

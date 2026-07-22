@@ -1,40 +1,85 @@
 :root {
-  /* Dark theme (default) — warm palette inspired by Calm, Headspace, Nivra */
-  --bg-primary: #1C1917;
-  --bg-secondary: #252220;
-  --bg-elevated: #2D2A28;
-  --text-primary: #EDE4D8;
-  --text-secondary: #A89880;
-  --accent: #C8A87C;
-  --accent-hover: #D4BA96;
-  --success: #8BA88A;
-  --error: #C8847A;
-  --border: #3A3530;
-  --slider-track: #3A3530;
-  --slider-fill: #C8A87C;
+  /* Deep navy background (Calm-inspired, not brown) */
+  --bg-primary: #0A0E27;
+  --bg-secondary: #111633;
+  --bg-elevated: #181E3D;
 
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
+  /* Clean white text */
+  --text-primary: #F0F0F5;
+  --text-secondary: #8890B0;
 
-  /* Typography */
-  --font-family: system-ui, -apple-system, sans-serif;
-  --font-size-base: 16px;
-  --font-size-heading: 20px;
+  /* Warm amber accent (Headspace-inspired) */
+  --accent: #E8A850;
+  --accent-hover: #F0BE6E;
+  --accent-glow: rgba(232, 168, 80, 0.15);
+
+  /* Soft colors */
+  --success: #7EB8A0;
+  --error: #D4786E;
+
+  /* Borders and surfaces */
+  --border: #1E2548;
+  --slider-track: #1E2548;
+  --slider-fill: #E8A850;
+
+  /* Spacing — more generous */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 20px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+
+  /* Typography — larger, cleaner */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-size-base: 17px;
+  --font-size-heading: 22px;
+  --font-size-xl: 28px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 600;
   --line-height: 1.5;
 
   /* Touch */
   --touch-target: 48px;
-  --border-radius: 12px;
+  --border-radius: 16px;
+  --border-radius-sm: 10px;
 }
 
-/* Light theme override */
 [data-theme="light"] {
-  --bg-primary: #F5EDE4;
-  --bg-secondary: #EDE4D8;
+  --bg-primary: #F5F0EB;
+  --bg-secondary: #FFFFFF;
   --bg-elevated: #FFFFFF;
-  --text-primary: #1C1917;
-  --text-secondary: #6B5E53;
+  --text-primary: #1A1D28;
+  --text-secondary: #6B7280;
+  --border: #E5E7EB;
+  --slider-track: #E5E7EB;
+}
+
+/* Animations */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 40px var(--accent-glow), 0 4px 24px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 60px var(--accent-glow), 0 4px 32px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes recording-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  70% {
+    box-shadow: 0 0 0 20px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
