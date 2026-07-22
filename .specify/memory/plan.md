@@ -160,6 +160,8 @@ Animations (defined in tokens.css):
 }
 ```
 
+**Vertical Arrow prompt** — отдельный системный промпт для анализа глубинного убеждения. LLM получает: 1) исходную поверхностную мысль, 2) ответ пользователя на вопрос «что это говорит о тебе?». Возвращает JSON: `{levels: [{thought, label}], reframing}`.
+
 ---
 
 ## API Contract
@@ -185,6 +187,8 @@ Frontend: fetch → parse JSON
 ```json
 {"error": "string"}
 ```
+
+Vertical Arrow использует тот же эндпоинт POST /api/reframe, но с другим вариантом промпта. Фронтенд передаёт флаг `verticalArrow: true` в теле запроса или бэкенд определяет контекст из диалога.
 
 LLM provider configuration (server-side env vars):
 - `LLM_API_KEY` — API-ключ
@@ -251,7 +255,8 @@ App (ThemeProvider + Router)
 │   │   └── RecordingIndicator  # визуальная обратная связь при записи
 │   ├── ResponseView        # ответ LLM
 │   │   ├── DistortionList  # список искажений
-│   │   └── ReframingText   # текст рефрейминга
+│   │   ├── ReframingText   # текст рефрейминга
+│   │   └── VerticalArrow   # кнопка «Копнуть глубже» + лестница
 │   ├── PostRatingSlider    # оценка «после» (тот же AnxietySlider)
 │   └── DeltaDisplay        # дельта тревоги
 │
