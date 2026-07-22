@@ -5,9 +5,11 @@ import { HistoryTab } from './components/HistoryTab';
 import { ProgressTab } from './components/ProgressTab';
 import { ThemeToggle } from './components/ThemeToggle';
 import { OnboardingOverlay } from './components/OnboardingOverlay';
+import { RecordingProvider } from './contexts/RecordingContext';
 
 function App() {
   return (
+    <RecordingProvider>
     <div className="app">
       <OnboardingOverlay />
       <ThemeToggle />
@@ -18,6 +20,7 @@ function App() {
       </Routes>
       <TabBar />
     </div>
+    </RecordingProvider>
   );
 }
 

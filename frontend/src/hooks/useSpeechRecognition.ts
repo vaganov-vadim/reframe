@@ -102,7 +102,8 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      recognitionRef.current?.abort();
+      // Do NOT abort — recording should survive tab switches.
+      // Cleanup happens explicitly via cancel().
     };
   }, []);
 
