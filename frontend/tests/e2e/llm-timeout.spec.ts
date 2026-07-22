@@ -9,7 +9,7 @@ test('shows warning on LLM timeout', async ({ page }) => {
       onresult: ((event: { resultIndex: number; results: { isFinal: boolean; 0: { transcript: string } }[] }) => void) | null = null;
       onerror: ((event: Event) => void) | null = null;
       onend: ((event: Event) => void) | null = null;
-      start() { setTimeout(() => { this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'test' } }] }); this.onend?.(); }, 50); }
+      start() { setTimeout(() => { this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'test' } }] }); }, 50); }
       stop() { this.onend?.(); }
       abort() {}
     }

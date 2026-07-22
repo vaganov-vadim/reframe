@@ -9,7 +9,7 @@ test('full recording flow: speech → API → response', async ({ page }) => {
       onresult: ((event: { resultIndex: number; results: { isFinal: boolean; 0: { transcript: string } }[] }) => void) | null = null;
       onerror: ((event: Event) => void) | null = null;
       onend: ((event: Event) => void) | null = null;
-      start() { setTimeout(() => { this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'Я опоздал и все смеялись' } }] }); this.onend?.(); }, 100); }
+      start() { setTimeout(() => { this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'Я опоздал и все смеялись' } }] }); }, 50); }
       stop() { this.onend?.(); }
       abort() {}
     }
