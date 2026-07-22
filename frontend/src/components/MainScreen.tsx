@@ -1,5 +1,5 @@
 import { useReducer, useCallback } from 'react';
-import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useRecording } from '../contexts/RecordingContext';
 import { useSSE } from '../hooks/useSSE';
 import { AnxietySlider } from './AnxietySlider';
 import { RecordButton } from './RecordButton';
@@ -86,7 +86,7 @@ export function MainScreen() {
     start,
     stop,
     cancel,
-  } = useSpeechRecognition();
+  } = useRecording();
   const { data, loading, error: apiError, sendText } = useSSE();
 
   const handleStart = useCallback(() => {
