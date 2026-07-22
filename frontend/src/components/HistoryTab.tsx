@@ -75,11 +75,48 @@ export function HistoryTab() {
           >
             {selected.reframing}
           </div>
+          {selected.verticalArrowLevels && selected.verticalArrowLevels.length > 0 && (
+            <div style={{ marginTop: 'var(--space-md)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 'var(--space-sm)' }}>
+                Vertical Arrow
+              </div>
+              {selected.verticalArrowLevels.map((level: { thought: string; label: string }, i: number) => (
+                <div key={i} style={{ marginBottom: 'var(--space-sm)' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
+                    {level.label}
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'var(--text-primary)', padding: 'var(--space-sm)', background: 'var(--bg-secondary)', borderRadius: 'var(--border-radius-sm)' }}>
+                    {level.thought}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selected.verticalArrowReframing && (
+            <div
+              style={{
+                background: 'var(--bg-secondary)',
+                borderRadius: 'var(--border-radius)',
+                padding: 'var(--space-md)',
+                marginTop: 'var(--space-md)',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--accent)',
+                borderLeftWidth: '3px',
+              }}
+            >
+              {selected.verticalArrowReframing}
+            </div>
+          )}
+
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-around',
               textAlign: 'center',
+              marginTop: 'var(--space-md)',
             }}
           >
             <div>

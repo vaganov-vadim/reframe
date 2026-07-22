@@ -6,11 +6,14 @@ export interface VerticalArrowLevel {
 export interface Session {
   id: string;
   date: string;
-  distortion: string;
+  distortion: string; // primary distortion
+  distortions?: Array<{ type: string; thought: string; why: string }>; // all distortions
   anxietyBefore: number;
   anxietyAfter: number;
   delta: number;
   reframing: string;
+  verticalArrowLevels?: Array<{ thought: string; label: string }>;
+  verticalArrowReframing?: string;
 }
 
 export const STORAGE_KEYS = {

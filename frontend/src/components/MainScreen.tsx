@@ -179,9 +179,11 @@ export function MainScreen() {
       distortions: data?.distortions ?? [],
       reframing: data?.reframing ?? '',
       question: data?.question ?? '',
+      verticalArrowLevels: deepData?.levels ?? undefined,
+      verticalArrowReframing: deepData?.reframing ?? undefined,
     });
     dispatch({ type: 'SAVE' });
-  }, [data, state.anxietyBefore, state.anxietyAfter]);
+  }, [data, deepData, state.anxietyBefore, state.anxietyAfter]);
 
   if (!isSupported) {
     return (
@@ -342,10 +344,8 @@ export function MainScreen() {
 
       {state.phase === 'deep-recording' && (
         <>
-          <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: 'var(--space-md)' }}>
-              Что эта мысль говорит о вас?
-            </p>
+          <div style={{ textAlign: 'center', padding: 'var(--space-lg) var(--space-md) 0', color: 'var(--text-primary)', fontSize: '16px' }}>
+            Что эта мысль говорит о вас?
           </div>
           <RecordButton
             state="recording"
