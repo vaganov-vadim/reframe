@@ -47,6 +47,7 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
     recognition.continuous = true;
     recognition.interimResults = true;
     finalTranscript.current = '';
+    setText(null);
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = '';

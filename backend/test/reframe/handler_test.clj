@@ -122,6 +122,29 @@
                                  :body (json-body {:text "test"})})]
       (is (= 415 (:status response))))))
 
+;; ─── POST /api/reframe — deeper mode (Vertical Arrow) ──────────────────────
+
+(deftest post-reframe-deeper-ok
+  (testing "POST /api/reframe with mode=deeper returns 200 with levels data"
+    (llm-client/set-mock-mode! :fixture)
+    (let [response ((handler/app test-config) {:request-method :post
+                                 :uri "/api/reframe"
+                                 :body (json-body {:text "Я безответственный человек"
+                                                   :mode "deeper"
+                                                   :surface "Я опоздал на встречу"})})
+          body     (:body response)]
+      (is (= 200 (:status response)))
+      (is (= "text/event-stream" (get-in response [:headers "Content-Type"])))
+      (is (clojure.string/includes? body "levels"))
+      (is (clojure.string/includes? body "reframing")))))
+
+(deftest post-reframe-deeper-missing-surface
+  (testing "POST /api/reframe with mode=deeper but no surface returns 400"
+    (let [response ((handler/app test-config) {:request-method :post
+                                 :uri "/api/reframe"
+                                 :body (json-body {:text "test" :mode "deeper"})})]
+      (is (= 400 (:status response))))))
+
 ;; ─── 404 — unknown routes ──────────────────────────────────────────────────
 
 (deftest unknown-route

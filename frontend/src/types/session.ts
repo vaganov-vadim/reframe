@@ -1,3 +1,8 @@
+export interface VerticalArrowLevel {
+  thought: string;
+  label: string;
+}
+
 export interface Session {
   id: string;
   date: string;

@@ -68,3 +68,30 @@
      Complete prompt string ready for LLM API call"
   [text]
   (str system-prompt "\n\nТекст пользователя: " text))
+
+(defn build-deeper-prompt
+  "Build the LLM prompt for Vertical Arrow (Burns) deep analysis.
+   surface-thought: the original thought from first reframing
+   user-response: what user said when asked 'what does this say about you?'
+   
+   Returns a complete prompt instructing the LLM to perform Vertical Arrow
+   analysis with JSON output containing: levels (surface → intermediate → core belief),
+   reframing, and a consolidating question."
+  [surface-thought user-response]
+  (str "Ты — КПТ-коуч. Пользователь прошёл первый раунд рефрейминга. "
+       "Теперь примени технику Vertical Arrow (Бёрнс).\n\n"
+       "Поверхностная мысль пользователя: " surface-thought "\n"
+       "Ответ пользователя на вопрос «Что это говорит о тебе?»: " user-response "\n\n"
+       "Построй цепочку Vertical Arrow: поверхностная мысль → промежуточная → глубинное убеждение.\n"
+       "Для каждого уровня напиши: 1) саму мысль, 2) метку (Поверхностная мысль / Промежуточная / Глубинное убеждение).\n"
+       "Дай рефрейминг глубинного убеждения.\n\n"
+       "ОТВЕТ ВСЕГДА В JSON (без markdown):\n"
+       "{\n"
+       "  \"levels\": [\n"
+       "    {\"thought\": \"...\", \"label\": \"Поверхностная мысль\"},\n"
+       "    {\"thought\": \"...\", \"label\": \"Промежуточная\"},\n"
+       "    {\"thought\": \"...\", \"label\": \"Глубинное убеждение\"}\n"
+       "  ],\n"
+       "  \"reframing\": \"рефрейминг глубинного убеждения (≤ 50 слов, факты, без оценки)\",\n"
+       "  \"question\": \"вопрос для закрепления\"\n"
+       "}"))

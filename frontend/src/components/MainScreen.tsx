@@ -5,6 +5,7 @@ import { AnxietySlider } from './AnxietySlider';
 import { RecordButton } from './RecordButton';
 import { BrowserFallback } from './BrowserFallback';
 import { ResponseView } from './ResponseView';
+import { VerticalArrow } from './VerticalArrow';
 import { PostRatingSlider } from './PostRatingSlider';
 import { DeltaDisplay } from './DeltaDisplay';
 import { ErrorBanner } from './ErrorBanner';
@@ -15,6 +16,9 @@ type Phase =
   | 'recording'
   | 'analyzing'
   | 'result'
+  | 'deep-recording'
+  | 'deep-analyzing'
+  | 'deep-result'
   | 'rating-after'
   | 'done';
 
@@ -33,6 +37,9 @@ type Action =
   | { type: 'ANALYZE' }
   | { type: 'RESULT_RECEIVED' }
   | { type: 'SET_ANXIETY_AFTER'; value: number }
+  | { type: 'START_DEEP' }
+  | { type: 'DEEP_ANALYZE' }
+  | { type: 'DEEP_RESULT_RECEIVED' }
   | { type: 'SAVE' }
   | { type: 'ERROR'; message: string }
   | { type: 'DISMISS_ERROR' }
@@ -52,6 +59,12 @@ function reducer(state: MainState, action: Action): MainState {
       return { ...state, phase: 'result' };
     case 'SET_ANXIETY_AFTER':
       return { ...state, anxietyAfter: action.value };
+    case 'START_DEEP':
+      return { ...state, phase: 'deep-recording' };
+    case 'DEEP_ANALYZE':
+      return { ...state, phase: 'deep-analyzing' };
+    case 'DEEP_RESULT_RECEIVED':
+      return { ...state, phase: 'deep-result' };
     case 'SAVE':
       return { ...state, phase: 'done' };
     case 'ERROR':
@@ -88,7 +101,16 @@ export function MainScreen() {
     stop,
     cancel,
   } = useRecording();
-  const { data, loading, error: apiError, sendText } = useSSE();
+  const {
+    data,
+    loading,
+    deepData,
+    error: apiError,
+    sendText,
+    sendDeepText,
+  } = useSSE();
+
+  const surfaceThoughtRef = useRef<string | null>(null);
 
   const handleStart = useCallback(() => {
     dispatch({ type: 'START_RECORDING' });
@@ -102,28 +124,53 @@ export function MainScreen() {
     // final transcript arrives after stop() returns.
   }, [stop]);
 
+  const handleDeepStart = useCallback(() => {
+    dispatch({ type: 'START_DEEP' });
+    start();
+  }, [start]);
+
+  const handleDeepStop = useCallback(() => {
+    stop();
+  }, [stop]);
+
   // When recording stops (isListening goes true → false),
   // check if we have text and should send it.
   const prevListening = useRef(isListening);
 
   useEffect(() => {
     // Just transitioned from listening to not-listening
-    if (prevListening.current && !isListening && state.phase === 'recording') {
-      const finalText = getFinalText();
-      if (finalText) {
-        dispatch({ type: 'STOP_RECORDING' });
-        dispatch({ type: 'ANALYZE' });
-        sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
-      } else {
-        dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+    if (prevListening.current && !isListening) {
+      if (state.phase === 'recording') {
+        const finalText = getFinalText();
+        if (finalText) {
+          surfaceThoughtRef.current = finalText;
+          dispatch({ type: 'STOP_RECORDING' });
+          sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+        } else {
+          dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+        }
+      } else if (state.phase === 'deep-recording') {
+        const deepText = getFinalText();
+        if (deepText && surfaceThoughtRef.current) {
+          dispatch({ type: 'DEEP_ANALYZE' });
+          sendDeepText(deepText, surfaceThoughtRef.current)
+            .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }));
+        } else {
+          dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+        }
       }
     }
     prevListening.current = isListening;
-  }, [isListening, state.phase, getFinalText, sendText]);
+  }, [isListening, state.phase, getFinalText, sendText, sendDeepText]);
 
   const handleCancel = useCallback(() => {
     cancel();
     dispatch({ type: 'CANCEL_RECORDING' });
+  }, [cancel]);
+
+  const handleDeepCancel = useCallback(() => {
+    cancel();
+    dispatch({ type: 'RESULT_RECEIVED' });
   }, [cancel]);
 
   const handleSave = useCallback(() => {
@@ -243,6 +290,100 @@ export function MainScreen() {
 
       {state.phase === 'result' && data && (
         <>
+          <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-md)' }}>
+            <button
+              onClick={handleDeepStart}
+              style={{
+                width: '100%',
+                maxWidth: '320px',
+                background: 'transparent',
+                color: 'var(--accent)',
+                border: '1px solid var(--accent)',
+                padding: 'var(--space-md)',
+                fontSize: '15px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                borderRadius: 'var(--border-radius-sm)',
+                transition: 'background 0.2s',
+              }}
+            >
+              Копнуть глубже
+            </button>
+          </div>
+
+          <PostRatingSlider
+            value={state.anxietyAfter}
+            onChange={(v) => dispatch({ type: 'SET_ANXIETY_AFTER', value: v })}
+          />
+          <DeltaDisplay
+            before={state.anxietyBefore}
+            after={state.anxietyAfter}
+          />
+          <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
+            <button
+              onClick={handleSave}
+              style={{
+                width: '100%',
+                maxWidth: '320px',
+                background: 'var(--accent)',
+                color: 'var(--bg-primary)',
+                border: 'none',
+                padding: 'var(--space-md)',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Сохранить сессию
+            </button>
+          </div>
+        </>
+      )}
+
+      {state.phase === 'deep-recording' && (
+        <>
+          <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: 'var(--space-md)' }}>
+              Что эта мысль говорит о вас?
+            </p>
+          </div>
+          <RecordButton
+            state="recording"
+            onStart={handleDeepStart}
+            onStop={handleDeepStop}
+            onCancel={handleDeepCancel}
+          />
+          <div style={{
+            margin: 'var(--space-md) auto',
+            padding: 'var(--space-md) var(--space-lg)',
+            maxWidth: '360px',
+            minHeight: '60px',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--border-radius-sm)',
+            border: '1px solid var(--border)',
+            fontSize: '15px',
+            lineHeight: '1.6',
+            color: text ? 'var(--text-primary)' : 'var(--text-secondary)',
+            textAlign: 'center' as const,
+            transition: 'color 0.3s',
+          }}>
+            {text || 'Скажите одно предложение...'}
+          </div>
+        </>
+      )}
+
+      {state.phase === 'deep-analyzing' && (
+        <VerticalArrow levels={null} loading={true} />
+      )}
+
+      {state.phase === 'deep-result' && (
+        <>
+          <ResponseView data={data} loading={false} />
+          <VerticalArrow
+            levels={deepData?.levels ?? null}
+            reframing={deepData?.reframing}
+            question={deepData?.question}
+          />
           <PostRatingSlider
             value={state.anxietyAfter}
             onChange={(v) => dispatch({ type: 'SET_ANXIETY_AFTER', value: v })}
