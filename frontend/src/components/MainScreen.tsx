@@ -128,6 +128,26 @@ export function MainScreen() {
 
   return (
     <div>
+      <div style={{ textAlign: 'center', padding: 'var(--space-lg) 0 var(--space-md)' }}>
+        <h1 style={{
+          fontSize: 'var(--font-size-xl)',
+          fontWeight: 600,
+          color: 'var(--text-primary)',
+          letterSpacing: '-0.3px',
+          margin: 0,
+        }}>
+          Reframe
+        </h1>
+        <p style={{
+          fontSize: '13px',
+          color: 'var(--text-secondary)',
+          marginTop: '4px',
+          letterSpacing: '0.3px',
+        }}>
+          голосовой КПТ-дневник
+        </p>
+      </div>
+
       <ErrorBanner
         message={state.error || speechError || apiError}
         onRetry={() => dispatch({ type: 'RESET' })}
