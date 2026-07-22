@@ -87,7 +87,7 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsListening(false);
+    // Note: onend handler sets isListening=false AFTER onresult delivers text
   }, []);
 
   const cancel = useCallback(() => {
