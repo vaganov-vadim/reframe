@@ -7,6 +7,7 @@
 ;; ─── Mock infrastructure ────────────────────────────────────────────────────
 
 (defonce ^:private mock-call-count (atom 0))
+(defonce ^:private mock-mode (atom :rotate))  ;; :rotate | :error | :timeout | :fixture
 
 (defn- load-mock-fixtures
   "Load mock LLM responses from fixtures file."
@@ -14,21 +15,46 @@
   (json/parse-string (slurp "fixtures/mock-responses.json") true))
 
 (defn- mock-call-llm
-  "Simulate LLM call with rotating behavior for test coverage:
-     call 1 → throws API error
-     call 2 → throws timeout
-     call 3+ → returns fixture response as JSON string"
+  "Simulate LLM call based on current mock-mode.
+     :rotate  → rotating behavior (call 1=error, call 2=timeout, call 3+=fixture)
+     :error   → throws API error
+     :timeout → throws timeout
+     :fixture → returns fixture response as JSON string"
   [_prompt]
-  (let [n (swap! mock-call-count inc)]
-    (case n
-      1 (throw (ex-info "LLM API Error: upstream returned 500"
-                 {:type :llm-error :causes :api}))
-      2 (throw (ex-info "LLM Timeout: no response within timeout window"
-                 {:type :llm-timeout :causes :timeout}))
-      ;; Return first fixture output as JSON string
-      (let [fixtures (load-mock-fixtures)
-            fixture  (first fixtures)]
-        (json/generate-string (:output fixture))))))
+  (case @mock-mode
+    :error
+    (throw (ex-info "LLM API Error: upstream returned 500"
+             {:type :llm-error :causes :api}))
+    :timeout
+    (throw (ex-info "LLM Timeout: no response within timeout window"
+             {:type :llm-timeout :causes :timeout}))
+    :fixture
+    (let [fixtures (load-mock-fixtures)
+          fixture  (first fixtures)]
+      (json/generate-string (:output fixture)))
+    :rotate
+    (let [n (swap! mock-call-count inc)]
+      (case n
+        1 (throw (ex-info "LLM API Error: upstream returned 500"
+                   {:type :llm-error :causes :api}))
+        2 (throw (ex-info "LLM Timeout: no response within timeout window"
+                   {:type :llm-timeout :causes :timeout}))
+        (let [fixtures (load-mock-fixtures)
+              fixture  (first fixtures)]
+          (json/generate-string (:output fixture)))))))
+
+;; ─── Mock control (for tests) ──────────────────────────────────────────────
+
+(defn reset-mock!
+  "Reset mock counter to 0 and mock mode to :rotate."
+  []
+  (reset! mock-call-count 0)
+  (reset! mock-mode :rotate))
+
+(defn set-mock-mode!
+  "Set the mock behavior mode. Valid modes: :rotate, :error, :timeout, :fixture."
+  [mode]
+  (reset! mock-mode mode))
 
 ;; ─── Real LLM call ──────────────────────────────────────────────────────────
 

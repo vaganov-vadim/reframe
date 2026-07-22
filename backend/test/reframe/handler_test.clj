@@ -2,7 +2,17 @@
   "Comprehensive test suite for HTTP handler (Phase 2).
    RED phase: tests define expected API contract before handler implementation."
   (:require [clojure.test :refer :all]
-            [reframe.handler :as handler]))
+            [reframe.handler :as handler]
+            [reframe.rate-limiter :as rate-limiter]
+            [reframe.llm-client :as llm-client]))
+
+;; ─── Fixtures ───────────────────────────────────────────────────────────────
+
+(use-fixtures :each
+  (fn [f]
+    (rate-limiter/reset-limiter!)
+    (llm-client/reset-mock!)
+    (f)))
 
 ;; ─── GET / ──────────────────────────────────────────────────────────────────
 
@@ -16,6 +26,7 @@
 
 (deftest post-reframe-ok
   (testing "POST /api/reframe with valid text returns 200 and SSE stream"
+    (llm-client/set-mock-mode! :fixture)
     (let [response (handler/app {:request-method :post
                                  :uri "/api/reframe"
                                  :body-params {:text "Я опоздал на встречу"}})]
@@ -49,6 +60,8 @@
 
 (deftest post-reframe-rate-limited
   (testing "POST /api/reframe when rate limited returns 429 with Retry-After header"
+    ;; Exhaust rate limiter (3 tokens) so handler returns 429
+    (dotimes [_ 3] (rate-limiter/allow-request? {}))
     (let [response (handler/app {:request-method :post
                                  :uri "/api/reframe"
                                  :body-params {:text "test"}})]
@@ -59,6 +72,7 @@
 
 (deftest post-reframe-llm-timeout
   (testing "POST /api/reframe on LLM timeout returns 504 Gateway Timeout"
+    (llm-client/set-mock-mode! :timeout)
     (let [response (handler/app {:request-method :post
                                  :uri "/api/reframe"
                                  :body-params {:text "test"}})]
@@ -66,6 +80,7 @@
 
 (deftest post-reframe-llm-error
   (testing "POST /api/reframe on LLM API error returns 502 Bad Gateway"
+    (llm-client/set-mock-mode! :error)
     (let [response (handler/app {:request-method :post
                                  :uri "/api/reframe"
                                  :body-params {:text "test"}})]
