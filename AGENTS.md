@@ -121,6 +121,19 @@ type(scope): краткое описание в повелительном на�
 - `feat(frontend): add voice recording via Web Speech API`
 - `chore: remove copilot-specific artifacts from repo`
 
+### Workflow (PR-based)
+
+Все изменения — через ветки и Pull Request:
+
+1. `git checkout -b feature/xxx` или `fix/xxx`
+2. Изменения + коммиты
+3. `git push origin feature/xxx`
+4. Создать PR в main
+5. CI проходит (lint, test, build) → мёрдж
+6. После мёрджа в main — деплой (deploy.yml)
+
+**Прямой пуш в main запрещён.** Исключение: hotfix (с пометкой `fix:`).
+
 ### Что НЕ коммитить
 `.clj-kondo/`, `.lsp/`, `.omo/`, `.github/`, `.vscode/` — в `.gitignore`.
 
