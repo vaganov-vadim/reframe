@@ -18,22 +18,29 @@ interface ChartPoint {
   delta: number | null;
 }
 
+function toDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function AnxietyChart() {
   const sessions = getSessions();
 
-  // Build last 7 days map using ISO date keys (reliable grouping)
+  // Build last 7 days map using local date keys
   const dayMap: Record<string, { before: number[]; after: number[] }> = {};
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     d.setHours(0, 0, 0, 0);
-    const key = d.toISOString().split('T')[0];
+    const key = toDateKey(d);
     dayMap[key] = { before: [], after: [] };
   }
 
   // Group sessions by day using ISO date key
   sessions.forEach((s) => {
-    const dayKey = new Date(s.date).toISOString().split('T')[0];
+    const dayKey = toDateKey(new Date(s.date));
     if (dayMap[dayKey]) {
       dayMap[dayKey].before.push(s.anxietyBefore);
       dayMap[dayKey].after.push(s.anxietyAfter);
