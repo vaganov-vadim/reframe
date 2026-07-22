@@ -10,5 +10,5 @@ test('shows progress chart with session data', async ({ page }) => {
     localStorage.setItem('reframe_sessions', JSON.stringify(sessions));
   });
   await page.goto('/progress');
-  await expect(page.getByText('Последние 7 дней')).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText('Последние сессии')).toBeVisible({ timeout: 3000 });
 });
