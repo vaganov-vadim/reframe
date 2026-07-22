@@ -8,6 +8,7 @@ export interface SpeechRecognitionResult {
   start: () => void;
   stop: () => void;
   cancel: () => void;
+  getFinalText: () => string | null;
 }
 
 export function sanitizeText(text: string): string | null {
@@ -94,6 +95,10 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
     setError(null);
   }, []);
 
+  const getFinalText = useCallback((): string | null => {
+    return sanitizeText(finalTranscript.current);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -101,5 +106,5 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
     };
   }, []);
 
-  return { text, isListening, error, isSupported, start, stop, cancel };
+  return { text, isListening, error, isSupported, start, stop, cancel, getFinalText };
 }
