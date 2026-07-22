@@ -120,11 +120,11 @@ export function AnxietyChart() {
               fontSize: '13px',
               padding: '8px 12px',
             }}
-            formatter={(value: number, name: string) => [
+            formatter={(value, name) => [
               <span style={{ color: name === 'До' ? 'var(--error)' : 'var(--success)' }}>
-                {value}
+                {String(value)}
               </span>,
-              name,
+              String(name),
             ]}
           />
           <Legend
