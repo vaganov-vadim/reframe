@@ -6,20 +6,22 @@ const AnxietyChart = lazy(() =>
 
 export function ProgressTab() {
   return (
-    <Suspense
-      fallback={
-        <div
-          style={{
-            padding: 'var(--space-lg)',
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-          }}
-        >
-          Загрузка...
-        </div>
-      }
-    >
-      <AnxietyChart />
-    </Suspense>
+    <div style={{ margin: '0 calc(-1 * var(--space-md))' }}>
+      <Suspense
+        fallback={
+          <div
+            style={{
+              padding: 'var(--space-lg)',
+              textAlign: 'center',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            Загрузка...
+          </div>
+        }
+      >
+        <AnxietyChart />
+      </Suspense>
+    </div>
   );
 }
