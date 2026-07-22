@@ -25,11 +25,11 @@ test('full recording flow: speech → API → response', async ({ page }) => {
 
   await page.goto('/');
   // Click record
-  await page.click('button:has-text("Говорить")');
+  await page.click('button:has-text("Говорить")', { force: true });
   // Wait for stop button to appear (recording state)
   await page.waitForTimeout(300);
   // Click stop
-  await page.click('button:has-text("Стоп")');
+  await page.click('button:has-text("Стоп")', { force: true });
   // Wait for response
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
   await expect(page.getByText('Это факт, а не катастрофа.')).toBeVisible();

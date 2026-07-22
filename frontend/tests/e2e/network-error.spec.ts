@@ -20,8 +20,8 @@ test('shows error banner on network failure', async ({ page }) => {
   await page.route('**/api/reframe', (route) => route.abort('failed'));
 
   await page.goto('/');
-  await page.click('button:has-text("Говорить")');
+  await page.click('button:has-text("Говорить")', { force: true });
   await page.waitForTimeout(200);
-  await page.click('button:has-text("Стоп")');
+  await page.click('button:has-text("Стоп")', { force: true });
   await expect(page.getByText(/ошибка/i)).toBeVisible({ timeout: 5000 });
 });

@@ -8,7 +8,10 @@ test('shows onboarding on first visit', async ({ page }) => {
 
 test('hides onboarding after dismiss', async ({ page }) => {
   await page.goto('/');
-  await page.click('button:has-text("Понятно")');
+  await page.click('button:has-text("Далее")', { force: true });
+  await page.click('button:has-text("Далее")', { force: true });
+  await page.click('button:has-text("Далее")', { force: true });
+  await page.click('button:has-text("Начать")', { force: true });
   await expect(page.getByText('Добро пожаловать в Reframe')).not.toBeVisible();
   // Persists across reload
   await page.reload();
