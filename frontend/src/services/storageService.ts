@@ -1,14 +1,9 @@
-const STORAGE_KEY = 'reframe_sessions';
+import type { Session } from '../types/session';
+import { STORAGE_KEYS } from '../types/session';
 
-export interface Session {
-  id: string;
-  date: string;
-  distortion: string;
-  anxietyBefore: number;
-  anxietyAfter: number;
-  delta: number;
-  reframing: string;
-}
+const STORAGE_KEY = STORAGE_KEYS.sessions;
+
+export type { Session };
 
 export function getSessions(): Session[] {
   try {

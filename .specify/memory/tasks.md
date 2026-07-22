@@ -106,19 +106,19 @@
 
 ## Phase 8 — E2E-тесты (Playwright)
 
-- [ ] 8.1 Playwright install + config (`playwright.config.ts`)
-- [ ] 8.2 Тест: тема (тёмная ↔ светлая, localStorage)
-- [ ] 8.3 Тест: главный экран (слайдер, кнопка, BrowserFallback)
-- [ ] 8.4 Тест: онбординг (первый запуск, повторный)
-- [ ] 8.5 Тест: флоу записи (мок Speech API + мок LLM → ответ)
-- [ ] 8.6 Тест: ошибка сети (fetch 500 → ErrorBanner)
-- [ ] 8.7 Тест: таймаут LLM (задержка → предупреждение)
-- [ ] 8.8 Тест: сохранение → история (localStorage + HistoryTab)
-- [ ] 8.9 Тест: график + пустые состояния (ProgressTab, HistoryTab)
+- [x] 8.1 Playwright install + config (`playwright.config.ts`)
+- [x] 8.2 Тест: тема (тёмная ↔ светлая, localStorage)
+- [x] 8.3 Тест: главный экран (слайдер, кнопка, BrowserFallback)
+- [x] 8.4 Тест: онбординг (первый запуск, повторный)
+- [x] 8.5 Тест: флоу записи (мок Speech API + мок LLM → ответ)
+- [x] 8.6 Тест: ошибка сети (fetch 500 → ErrorBanner)
+- [x] 8.7 Тест: таймаут LLM (задержка → предупреждение)
+- [x] 8.8 Тест: сохранение → история (localStorage + HistoryTab)
+- [x] 8.9 Тест: график + пустые состояния (ProgressTab, HistoryTab)
 
 ---
 
-## Итого: ~55 задач, 8 фаз
+## Итого: 55 задач выполнено, 8 фаз
 
 ```
 
