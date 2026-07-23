@@ -147,12 +147,12 @@ Reframe — приватный голосовой КПТ-дневник для �
 
 ## User Stories
 
-As a stressed professional, I want to speak about what's bothering me and get a neutral, reframed perspective so that I can distance myself from emotionally charged situations.
+Как профессионал в стрессе, я хочу рассказать о том, что меня тревожит, и получить нейтральный, переосмысленный взгляд на ситуацию.
 
-As a privacy-conscious user, I want all my data to stay on my device so that I can speak freely without fear of my thoughts being stored or analyzed elsewhere.
+Как пользователь, ценящий приватность, я хочу чтобы все мои данные оставались на устройстве — без страха что мысли будут храниться где-то ещё.
 
-As a user tracking my mental health, I want to see my anxiety level before and after each session and view progress over time so that I can measure the effectiveness of the reframing technique.
+Как пользователь, следящий за ментальным здоровьем, я хочу видеть уровень тревоги до и после сессии и отслеживать прогресс.
 
-As a mobile user, I want the interface to work well on my phone so that I can use the diary whenever stress hits, not just at my desk.
+Как мобильный пользователь, я хочу чтобы интерфейс работал на телефоне — чтобы вести дневник где угодно.
 
-As a first-time user, I want a brief introduction to how the app works so that I can start using it immediately without confusion.
+Как новый пользователь, я хочу краткое введение чтобы начать пользоваться сразу.
