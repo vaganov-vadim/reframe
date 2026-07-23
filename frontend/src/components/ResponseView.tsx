@@ -1,14 +1,25 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ReframeResponse } from '../hooks/useSSE';
+import { DistortionInfo } from './DistortionInfo';
 
 export function DistortionList({
   distortions,
 }: {
   distortions: ReframeResponse['distortions'];
 }) {
+  const [selectedDistortion, setSelectedDistortion] = useState<string | null>(null);
+
   if (!distortions || distortions.length === 0) return null;
 
   return (
     <div style={{ padding: 'var(--space-md)' }}>
+      {selectedDistortion && (
+        <DistortionInfo
+          type={selectedDistortion}
+          onClose={() => setSelectedDistortion(null)}
+        />
+      )}
       <h3
         style={{
           fontSize: '13px',
@@ -78,15 +89,39 @@ export function DistortionList({
             >
               Искажение
             </div>
-            <div
-              style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'var(--accent)',
-                marginBottom: 'var(--space-sm)',
-              }}
-            >
-              {d.type}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 'var(--space-sm)' }}>
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'var(--accent)',
+                }}
+              >
+                {d.type}
+              </span>
+              <button
+                onClick={() => setSelectedDistortion(d.type)}
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '50%',
+                  width: '22px',
+                  height: '22px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                  minHeight: 'auto',
+                  fontSize: '12px',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                title="Что это за искажение?"
+              >
+                ℹ️
+              </button>
             </div>
             <div
               style={{
@@ -148,6 +183,8 @@ export function ResponseView({
   data: ReframeResponse | null;
   loading: boolean;
 }) {
+  const navigate = useNavigate();
+
   if (loading && !data) {
     return (
       <div
@@ -233,6 +270,28 @@ export function ResponseView({
         >
           <span style={{ opacity: 0.5 }}>Повторяющийся паттерн: </span>
           {data.pattern}
+        </div>
+      )}
+
+      {data.distortions && data.distortions.length > 0 && (
+        <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>
+          <button
+            onClick={() => navigate('/distortions')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--accent)',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              padding: 'var(--space-sm)',
+              minHeight: 'auto',
+              textDecoration: 'underline',
+              textUnderlineOffset: '3px',
+            }}
+          >
+            Узнать больше об искажениях →
+          </button>
         </div>
       )}
     </div>

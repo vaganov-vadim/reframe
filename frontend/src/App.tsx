@@ -5,6 +5,7 @@ import { HistoryTab } from './components/HistoryTab';
 import { ProgressTab } from './components/ProgressTab';
 import { ThemeToggle } from './components/ThemeToggle';
 import { OnboardingOverlay } from './components/OnboardingOverlay';
+import { DistortionReference } from './components/DistortionReference';
 import { RecordingProvider } from './contexts/RecordingContext';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<MainScreen />} />
         <Route path="/history" element={<HistoryTab />} />
         <Route path="/progress" element={<ProgressTab />} />
+        <Route path="/distortions" element={<DistortionReference />} />
       </Routes>
       <TabBar />
     </div>
