@@ -228,6 +228,7 @@ export function MainScreen() {
       verticalArrowReframing: deepData?.reframing ?? undefined,
     });
     dispatch({ type: 'SAVE' });
+    setTimeout(() => dispatch({ type: 'RESET' }), 2000);
   }, [data, deepData, state.anxietyBefore, state.anxietyAfter]);
 
   if (!isSupported) {
@@ -272,7 +273,7 @@ export function MainScreen() {
           <AnxietySlider
             value={state.anxietyBefore}
             onChange={(v) => dispatch({ type: 'SET_ANXIETY_BEFORE', value: v })}
-            disabled={state.phase === 'done'}
+            disabled={false}
           />
           {state.anxietyBefore >= 9 && state.phase === 'rating-before' && (
             <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>
@@ -301,21 +302,7 @@ export function MainScreen() {
               <p style={{ color: 'var(--success)', fontSize: '16px' }}>
                 Сессия сохранена ✓
               </p>
-              <button
-                onClick={() => dispatch({ type: 'RESET' })}
-                style={{
-                  marginTop: 'var(--space-md)',
-                  background: 'var(--accent)',
-                  color: 'var(--bg-primary)',
-                  border: 'none',
-                  padding: 'var(--space-sm) var(--space-lg)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Новая сессия
-              </button>
+
             </div>
           )}
         </>
