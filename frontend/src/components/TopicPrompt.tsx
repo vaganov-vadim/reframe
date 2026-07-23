@@ -23,7 +23,7 @@ export function TopicPrompt() {
       <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 var(--space-xs) 0' }}>
         О чём сегодня?
       </p>
-      <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>
+      <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontStyle: 'italic', margin: 0, lineHeight: 1.5, minHeight: '45px' }}>
         «{topic.text}»
       </p>
     </div>
