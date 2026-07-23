@@ -42,6 +42,7 @@ type Action =
   | { type: 'DEEP_RESULT_RECEIVED' }
   | { type: 'SAVE' }
   | { type: 'ERROR'; message: string }
+  | { type: 'DEEP_ERROR'; message: string }
   | { type: 'DISMISS_ERROR' }
   | { type: 'RESET' };
 
@@ -69,6 +70,8 @@ function reducer(state: MainState, action: Action): MainState {
       return { ...state, phase: 'done' };
     case 'ERROR':
       return { ...state, error: action.message, phase: 'rating-before' };
+    case 'DEEP_ERROR':
+      return { ...state, error: action.message, phase: 'result' };
     case 'DISMISS_ERROR':
       return { ...state, error: null };
     case 'RESET':
@@ -157,7 +160,7 @@ export function MainScreen() {
           sendDeepText(deepText, surfaceThoughtRef.current)
             .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }));
         } else {
-          dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+          dispatch({ type: 'DEEP_ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
         }
       }
     }
