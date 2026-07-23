@@ -19,3 +19,4 @@ pom.xml.asc
 !.github/workflows/
 .vscode/
 .playwright-mcp/
+opencode.jsonc
