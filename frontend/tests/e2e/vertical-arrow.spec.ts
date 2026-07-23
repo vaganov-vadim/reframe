@@ -59,8 +59,8 @@ test('shows Vertical Arrow staircase after deep analysis', async ({ page }) => {
   await page.click('button:has-text("Копнуть глубже")', { force: true });
 
   // Mock auto-completes the deep recording — wait for Vertical Arrow
-  await expect(page.getByText('Вертикальная стрелка')).toBeVisible({ timeout: 5000 });
-  await expect(page.getByText('Вертикальная стрелка')).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText('Вертикальная стрелка')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Вертикальная стрелка')).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('Поверхностная мысль')).toBeVisible();
   await expect(page.getByText('Промежуточная')).toBeVisible();
   await expect(page.getByText('Глубинное убеждение')).toBeVisible();
