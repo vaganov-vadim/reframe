@@ -29,6 +29,7 @@ interface MainState {
   anxietyBefore: number;
   anxietyAfter: number;
   error: string | null;
+  retryId: number;
 }
 
 type Action =
@@ -46,6 +47,7 @@ type Action =
   | { type: 'ERROR'; message: string }
   | { type: 'DEEP_ERROR'; message: string }
   | { type: 'DISMISS_ERROR' }
+  | { type: 'RETRY' }
   | { type: 'RESET' };
 
 function reducer(state: MainState, action: Action): MainState {
@@ -71,17 +73,20 @@ function reducer(state: MainState, action: Action): MainState {
     case 'SAVE':
       return { ...state, phase: 'done' };
     case 'ERROR':
-      return { ...state, error: action.message, phase: 'rating-before' };
+      return { ...state, error: action.message, phase: state.phase === 'analyzing' ? 'result' : 'rating-before' };
     case 'DEEP_ERROR':
       return { ...state, error: action.message, phase: 'result' };
     case 'DISMISS_ERROR':
       return { ...state, error: null };
+    case 'RETRY':
+      return { ...state, phase: 'analyzing', error: null, retryId: state.retryId + 1 };
     case 'RESET':
       return {
         phase: 'rating-before',
         anxietyBefore: 5,
         anxietyAfter: 5,
         error: null,
+        retryId: 0,
       };
     default:
       return state;
@@ -94,6 +99,7 @@ export function MainScreen() {
     anxietyBefore: 5,
     anxietyAfter: 5,
     error: null,
+    retryId: 0,
   });
 
   const [showBreathing, setShowBreathing] = useState(false);
@@ -119,6 +125,8 @@ export function MainScreen() {
 
   const surfaceThoughtRef = useRef<string | null>(null);
   const deepResultRef = useRef<HTMLDivElement>(null);
+  const lastTextRef = useRef<string | null>(null);
+  const lastSurfaceRef = useRef<string | null>(null);
 
   const handleStart = useCallback(() => {
     dispatch({ type: 'START_RECORDING' });
@@ -152,17 +160,26 @@ export function MainScreen() {
         const finalText = getFinalText();
         if (finalText) {
           surfaceThoughtRef.current = finalText;
+          lastTextRef.current = finalText;
           dispatch({ type: 'STOP_RECORDING' });
-          sendText(finalText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+          sendText(finalText)
+            .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
+            .catch(() => {
+              dispatch({ type: 'ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+            });
         } else {
           dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
         }
       } else if (state.phase === 'deep-recording') {
         const deepText = getFinalText();
         if (deepText && surfaceThoughtRef.current) {
+          lastSurfaceRef.current = deepText;
           dispatch({ type: 'DEEP_ANALYZE' });
           sendDeepText(deepText, surfaceThoughtRef.current)
-            .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }));
+            .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
+            .catch(() => {
+              dispatch({ type: 'DEEP_ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+            });
         } else {
           dispatch({ type: 'DEEP_ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
         }
@@ -179,6 +196,17 @@ export function MainScreen() {
       }, 100);
     }
   }, [state.phase]);
+
+  // RETRY: re-send last text when retryId changes
+  useEffect(() => {
+    if (state.retryId > 0 && lastTextRef.current) {
+      sendText(lastTextRef.current)
+        .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
+        .catch(() => {
+          dispatch({ type: 'ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+        });
+    }
+  }, [state.retryId]);
 
   const handleCancel = useCallback(() => {
     cancel();
@@ -234,41 +262,33 @@ export function MainScreen() {
 
       <ErrorBanner
         message={state.error || speechError || apiError}
-        onRetry={() => dispatch({ type: 'RESET' })}
+        onRetry={() => dispatch({ type: 'RETRY' })}
         onDismiss={() => dispatch({ type: 'DISMISS_ERROR' })}
       />
 
       {(state.phase === 'rating-before' || state.phase === 'done') && (
         <>
           {showBreathing && <BreathingExercise onClose={() => setShowBreathing(false)} />}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-sm)' }}>
-            <div style={{ flex: 1 }}>
-              <AnxietySlider
-                value={state.anxietyBefore}
-                onChange={(v) => dispatch({ type: 'SET_ANXIETY_BEFORE', value: v })}
-                disabled={state.phase === 'done'}
-              />
-            </div>
-            {state.anxietyBefore >= 9 && state.phase !== 'done' && (
-              <button
-                onClick={() => setShowBreathing(true)}
-                style={{
-                  background: 'var(--accent)',
-                  color: 'var(--bg-primary)',
-                  border: 'none',
-                  padding: 'var(--space-sm) var(--space-md)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  borderRadius: 'var(--border-radius-sm)',
-                  minWidth: 'fit-content',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Помощь
+          <AnxietySlider
+            value={state.anxietyBefore}
+            onChange={(v) => dispatch({ type: 'SET_ANXIETY_BEFORE', value: v })}
+            disabled={state.phase === 'done'}
+          />
+          {state.anxietyBefore >= 9 && state.phase === 'rating-before' && (
+            <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>
+              <button onClick={() => setShowBreathing(true)} style={{
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '20px',
+                padding: 'var(--space-xs) var(--space-lg)',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}>
+                Помощь — дыхательное упражнение
               </button>
-            )}
-          </div>
+            </div>
+          )}
           {state.phase === 'rating-before' && <TopicPrompt />}
           <RecordButton
             state={state.phase === 'done' ? 'idle' : 'idle'}

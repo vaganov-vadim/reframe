@@ -31,6 +31,9 @@ export function AnxietySlider({
           display: 'flex',
           justifyContent: 'space-between',
           marginBottom: 'var(--space-md)',
+          maxWidth: '380px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
         }}
       >
         {MARKS.map((m) => (
