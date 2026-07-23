@@ -123,21 +123,21 @@
 
 ## Phase 9 — Vertical Arrow (Бёрнс)
 
-- [ ] 9.1 Backend: Vertical Arrow prompt variant в prompt.clj
-- [ ] 9.2 Backend: поддержка deeper-режима в handler.clj
-- [ ] 9.3 Frontend: кнопка «Копнуть глубже» в MainScreen
-- [ ] 9.4 Frontend: VerticalArrow компонент (визуальная лестница)
-- [ ] 9.5 Frontend: интеграция флоу в MainScreen useReducer
-- [ ] 9.6 Frontend: стилизация под navy/amber дизайн
-- [ ] 9.7 E2E: тест Vertical Arrow флоу
+- [x] 9.1 Backend: Vertical Arrow prompt variant в prompt.clj
+- [x] 9.2 Backend: поддержка deeper-режима в handler.clj
+- [x] 9.3 Frontend: кнопка «Копнуть глубже» в MainScreen
+- [x] 9.4 Frontend: VerticalArrow компонент (визуальная лестница)
+- [x] 9.5 Frontend: интеграция флоу в MainScreen useReducer
+- [x] 9.6 Frontend: стилизация под navy/amber дизайн
+- [x] 9.7 E2E: тест Vertical Arrow флоу
 
 ---
 
-## Итого: 65 задач выполнено, 9 фаз
+## Итого: 72 задачи выполнено, 9 фаз
 
 ```
 
-Phase 1 (8) → Phase 2 (8) ∥ Phase 3 (6) → Phase 4 (8) → Phase 5 (6) → Phase 6 (5) → Phase 7 (5) → Phase 8 (9)
+Phase 1 (8) → Phase 2 (8) ∥ Phase 3 (6) → Phase 4 (8) → Phase 5 (6) → Phase 6 (5) → Phase 7 (5) → Phase 8 (9) → Phase 9 (7)
                     ↑                   ↑
                E2E после 2          E2E после 4, 5, 6, 8
 ```

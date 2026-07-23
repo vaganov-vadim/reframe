@@ -603,7 +603,7 @@ Pre-push hook: `vitest run` (быстрее, чем на pre-commit, чтобы 
 
 ### Бэкенд
 
-Бэкенд в lefthook не включён. Pre-commit gates для бэкенда — ручные (`lein test`).
+Бэкенд включён в lefthook (pre-push: `lein test`).
 
 ---
 
@@ -677,7 +677,7 @@ stages:
 │   ├── / → SPA статика (/var/www/reframe/dist)
 │   └── /api/ → reverse proxy localhost:3000
 ├── systemd: reframe-backend.service (Clojure uberjar, порт 3000)
-└── Let's Encrypt: отложен до post-MVP (MVP на IP)
+└── SSL: Let's Encrypt + nginx HTTPS (домен reframe.vaganov-vadim.ru)
 ```
 
 ### nginx config
@@ -732,10 +732,10 @@ WantedBy=multi-user.target
 Деплой — отдельная job внутри `.github/workflows/ci.yml`. Триггер: push в main (после прохождения lint, test, build, e2e).
 Отдельного `deploy.yml` нет.
 
-### Post-MVP (SSL)
-- certbot + Let's Encrypt для домена
+### SSL
+- certbot + Let's Encrypt для домена reframe.vaganov-vadim.ru
 - nginx: редирект HTTP → HTTPS
-- Авто-обновление сертификатов
+- Авто-обновление сертификатов (реализовано)
 
 ---
 
