@@ -354,15 +354,18 @@ export function MainScreen() {
 
       {state.phase === 'deep-recording' && (
         <>
-          <div style={{
-            textAlign: 'center',
-            padding: 'var(--space-xl) var(--space-md) var(--space-lg)',
-          }}>
+          <div style={{ textAlign: 'center', padding: 'var(--space-xl) var(--space-md) var(--space-sm)' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 var(--space-sm) 0' }}>
+              Вы сказали:
+            </p>
+            <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontStyle: 'italic', margin: '0 0 var(--space-lg) 0', lineHeight: 1.5 }}>
+              «{surfaceThoughtRef.current ?? ''}»
+            </p>
             <p style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: 500, margin: '0 0 var(--space-xs) 0' }}>
-              Копнуть глубже
+              Что эта мысль говорит о вас?
             </p>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-              Что эта мысль говорит о вас? Скажите одно предложение.
+              Скажите одно предложение.
             </p>
           </div>
           <RecordButton
