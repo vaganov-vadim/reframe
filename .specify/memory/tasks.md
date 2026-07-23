@@ -97,7 +97,7 @@
 > Зависит от: Phase 6 (все фичи готовы).
 
 - [x] 7.1 `deploy.sh`: сборка фронта → uberjar → rsync/scp → systemctl restart.
-- [x] 7.2 `.github/workflows/deploy.yml`: push to main → деплой на VDS.
+- [x] 7.2 Deploy job в `.github/workflows/ci.yml`: push to main → деплой на VDS.
 - [x] 7.3 nginx config на VDS: SPA статика + reverse proxy `/api/` → localhost:3000.
 - [x] 7.4 systemd unit: `reframe-backend.service` (restart always, EnvironmentFile).
 - [x] 7.5 End-to-end smoke test: открыть приложение по IP, записать голос, получить ответ.
@@ -133,7 +133,7 @@
 
 ---
 
-## Итого: 72 задачи выполнено, 9 фаз
+## Итого: 65 задач выполнено, 9 фаз
 
 ```
 
