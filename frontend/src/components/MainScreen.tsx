@@ -111,6 +111,7 @@ export function MainScreen() {
   } = useSSE();
 
   const surfaceThoughtRef = useRef<string | null>(null);
+  const deepResultRef = useRef<HTMLDivElement>(null);
 
   const handleStart = useCallback(() => {
     dispatch({ type: 'START_RECORDING' });
@@ -162,6 +163,15 @@ export function MainScreen() {
     }
     prevListening.current = isListening;
   }, [isListening, state.phase, getFinalText, sendText, sendDeepText]);
+
+  // Auto-scroll to Vertical Arrow when deep result appears
+  useEffect(() => {
+    if (state.phase === 'deep-result' && deepResultRef.current) {
+      setTimeout(() => {
+        deepResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [state.phase]);
 
   const handleCancel = useCallback(() => {
     cancel();
@@ -344,8 +354,16 @@ export function MainScreen() {
 
       {state.phase === 'deep-recording' && (
         <>
-          <div style={{ textAlign: 'center', padding: 'var(--space-lg) var(--space-md) 0', color: 'var(--text-primary)', fontSize: '16px' }}>
-            Что эта мысль говорит о вас?
+          <div style={{
+            textAlign: 'center',
+            padding: 'var(--space-xl) var(--space-md) var(--space-lg)',
+          }}>
+            <p style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: 500, margin: '0 0 var(--space-xs) 0' }}>
+              Копнуть глубже
+            </p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
+              Что эта мысль говорит о вас? Скажите одно предложение.
+            </p>
           </div>
           <RecordButton
             state="recording"
@@ -379,11 +397,13 @@ export function MainScreen() {
       {state.phase === 'deep-result' && (
         <>
           <ResponseView data={data} loading={false} />
-          <VerticalArrow
-            levels={deepData?.levels ?? null}
-            reframing={deepData?.reframing}
-            question={deepData?.question}
-          />
+          <div ref={deepResultRef}>
+            <VerticalArrow
+              levels={deepData?.levels ?? null}
+              reframing={deepData?.reframing}
+              question={deepData?.question}
+            />
+          </div>
           <PostRatingSlider
             value={state.anxietyAfter}
             onChange={(v) => dispatch({ type: 'SET_ANXIETY_AFTER', value: v })}
