@@ -19,7 +19,7 @@ export function TopicPrompt() {
   const [topic] = useState(() => TOPICS[Math.floor(Math.random() * TOPICS.length)]);
 
   return (
-    <div style={{ textAlign: 'center' as const, padding: '0 var(--space-md) var(--space-md)' }}>
+    <div style={{ textAlign: 'center' as const, padding: '0 var(--space-md) var(--space-md)', maxWidth: '280px', margin: '0 auto' }}>
       <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 var(--space-xs) 0' }}>
         О чём сегодня?
       </p>
