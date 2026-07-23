@@ -28,11 +28,12 @@ body {
 
 #root {
   width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .app {
   width: 100%;
-  max-width: 480px;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
