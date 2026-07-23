@@ -117,4 +117,5 @@ https://reframe.vaganov-vadim.ru
 - [Конституция проекта](.specify/memory/constitution.md) — принципы и границы
 - [Спецификация](.specify/memory/spec.md) — функциональные требования
 - [Технический план](.specify/memory/plan.md) — архитектура и детали
+- [План развития](ROADMAP.md) — roadmap проекта
 - [AI-процесс](AGENTS.md) — как AI-агенты работают с проектом
