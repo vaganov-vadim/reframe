@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef, useEffect } from 'react';
+import { useReducer, useCallback, useRef, useEffect, useState } from 'react';
 import { useRecording } from '../contexts/RecordingContext';
 import { useSSE } from '../hooks/useSSE';
 import { AnxietySlider } from './AnxietySlider';
@@ -9,6 +9,8 @@ import { VerticalArrow } from './VerticalArrow';
 import { PostRatingSlider } from './PostRatingSlider';
 import { DeltaDisplay } from './DeltaDisplay';
 import { ErrorBanner } from './ErrorBanner';
+import { TopicPrompt } from './TopicPrompt';
+import { BreathingExercise } from './BreathingExercise';
 import { startSession, completeSession } from '../services/sessionService';
 
 type Phase =
@@ -93,6 +95,8 @@ export function MainScreen() {
     anxietyAfter: 5,
     error: null,
   });
+
+  const [showBreathing, setShowBreathing] = useState(false);
 
   const {
     text,
@@ -236,11 +240,36 @@ export function MainScreen() {
 
       {(state.phase === 'rating-before' || state.phase === 'done') && (
         <>
-          <AnxietySlider
-            value={state.anxietyBefore}
-            onChange={(v) => dispatch({ type: 'SET_ANXIETY_BEFORE', value: v })}
-            disabled={state.phase === 'done'}
-          />
+          {showBreathing && <BreathingExercise onClose={() => setShowBreathing(false)} />}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-sm)' }}>
+            <div style={{ flex: 1 }}>
+              <AnxietySlider
+                value={state.anxietyBefore}
+                onChange={(v) => dispatch({ type: 'SET_ANXIETY_BEFORE', value: v })}
+                disabled={state.phase === 'done'}
+              />
+            </div>
+            {state.anxietyBefore >= 9 && state.phase !== 'done' && (
+              <button
+                onClick={() => setShowBreathing(true)}
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--bg-primary)',
+                  border: 'none',
+                  padding: 'var(--space-sm) var(--space-md)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  borderRadius: 'var(--border-radius-sm)',
+                  minWidth: 'fit-content',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Помощь
+              </button>
+            )}
+          </div>
+          {state.phase === 'rating-before' && <TopicPrompt />}
           <RecordButton
             state={state.phase === 'done' ? 'idle' : 'idle'}
             onStart={handleStart}
