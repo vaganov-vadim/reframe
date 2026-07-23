@@ -9,6 +9,7 @@
 }
 
 html {
+  scrollbar-gutter: stable;
   font-family: var(--font-family);
   font-size: var(--font-size-base);
   line-height: var(--line-height);
