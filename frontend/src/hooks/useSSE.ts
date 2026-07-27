@@ -35,6 +35,22 @@ export interface SSEState {
 
 const API_TIMEOUT = 10000; // 10s
 
+/** Map HTTP status to user-facing error message per spec §7 */
+function errorMessageForStatus(status: number): string {
+  switch (status) {
+    case 400:
+      return 'Текст не может быть пустым.';
+    case 429:
+      return 'Слишком много запросов. Подождите минуту.';
+    case 500:
+    case 502:
+    case 504:
+      return 'Не удалось получить ответ. Попробуйте через минуту.';
+    default:
+      return `Ошибка сервера: ${status}`;
+  }
+}
+
 export function parseSSEData(line: string): unknown {
   if (!line.startsWith('data: ')) return null;
   const json = line.slice(6);
@@ -75,7 +91,7 @@ export function useSSE() {
           ...prev,
           loading: false,
           data: null,
-          error: `Ошибка сервера: ${response.status}`,
+          error: errorMessageForStatus(response.status),
         }));
         return;
       }
@@ -118,7 +134,16 @@ export function useSSE() {
           }
         }
       }
-      setState((prev) => ({ ...prev, loading: false }));
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        data: prev.data?.reframing || prev.data?.distortions?.length
+          ? prev.data
+          : null,
+        error: prev.data?.reframing || prev.data?.distortions?.length
+          ? null
+          : 'Неожиданная структура ответа.',
+      }));
     } catch (err: unknown) {
       const error = err as { name?: string };
       if (error.name === 'TimeoutError' || error.name === 'AbortError') {
@@ -168,7 +193,7 @@ export function useSSE() {
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: `Ошибка сервера: ${response.status}`,
+          error: errorMessageForStatus(response.status),
         }));
         return;
       }

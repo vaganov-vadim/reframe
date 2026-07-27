@@ -7,7 +7,7 @@ interface ErrorBannerProps {
 export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
   if (!message) return null;
 
-  const isRateLimit = message.includes('429') || message.includes('limit');
+  const isRateLimit = message.includes('429') || message.includes('limit') || message.includes('Слишком много запросов');
   const msg = isRateLimit
     ? 'Слишком много запросов. Подождите минуту.'
     : message;
@@ -27,7 +27,7 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
     >
       <p style={{ fontSize: '14px', color: 'var(--error)', margin: 0 }}>{msg}</p>
       <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'flex-end' }}>
-        {onRetry && (
+        {onRetry && !isRateLimit && (
           <button
             onClick={onRetry}
             style={{
