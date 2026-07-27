@@ -129,3 +129,68 @@ test('Test 5: no Speech API shows browser fallback', async ({ page }) => {
   await expect(page.getByText(/голосовой ввод доступен в chrome/i)).toBeVisible();
   await expect(page.getByText(/откройте приложение в chrome/i)).toBeVisible();
 });
+
+// ─── Test 6: Timeout (504) — route hangs beyond 10s client timeout ──────
+
+test('Test 6: request timeout shows server error with retry', async ({ page }) => {
+  await mockSpeechWithText()({ page });
+
+  // Hang for 15s — client-side AbortSignal.timeout(10000) fires first
+  await page.route('**/api/reframe', async (_route) => {
+    await new Promise((r) => setTimeout(r, 15000));
+  });
+
+  await page.goto('/');
+  await page.click('button:has-text("Говорить")', { force: true });
+  await page.waitForTimeout(200);
+  await page.click('button:has-text("Стоп")', { force: true });
+
+  await expect(page.getByText(/не удалось получить ответ/i)).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
+});
+
+// ─── Test 7: Partial SSE response — stream closes mid-JSON ──────────────
+
+test('Test 7: partial SSE response shows structure error', async ({ page }) => {
+  await mockSpeechWithText()({ page });
+
+  // SSE that closes before JSON is complete
+  await page.route('**/api/reframe', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: 'data: {"reframing": "hello',
+    });
+  });
+
+  await page.goto('/');
+  await page.click('button:has-text("Говорить")', { force: true });
+  await page.waitForTimeout(200);
+  await page.click('button:has-text("Стоп")', { force: true });
+
+  await expect(page.getByText(/неожиданная структура ответа/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
+});
+
+// ─── Test 8: Bad SSE structure — JSON without reframing/error ───────────
+
+test('Test 8: SSE with unrecognised payload shows structure error', async ({ page }) => {
+  await mockSpeechWithText()({ page });
+
+  // SSE that parses as valid JSON but lacks expected keys
+  await page.route('**/api/reframe', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: 'data: {"garbage":true}\n\n',
+    });
+  });
+
+  await page.goto('/');
+  await page.click('button:has-text("Говорить")', { force: true });
+  await page.waitForTimeout(200);
+  await page.click('button:has-text("Стоп")', { force: true });
+
+  await expect(page.getByText(/неожиданная структура ответа/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
+});
