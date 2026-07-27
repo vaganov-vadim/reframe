@@ -183,6 +183,7 @@ export function ProgressTab() {
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
             marginBottom: 'var(--space-sm)',
+            textAlign: 'center',
           }}
         >
           Частые искажения
