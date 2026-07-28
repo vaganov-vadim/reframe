@@ -100,7 +100,7 @@ export function DistortionList({
                 {d.type}
               </span>
               <button
-                onClick={() => setSelectedDistortion(d.type)}
+                onClick={() => setSelectedDistortion(selectedDistortion === d.type ? null : d.type)}
                 style={{
                   background: 'var(--bg-secondary)',
                   border: '1px solid var(--border)',
