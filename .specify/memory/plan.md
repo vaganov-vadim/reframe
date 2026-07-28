@@ -219,14 +219,12 @@ LLM provider configuration (server-side env vars):
 - `LLM_API_URL` — эндпоинт (по умолчанию DeepSeek)
 - `LLM_MODEL` — модель (по умолчанию deepseek-chat)
 - `LLM_MAX_RETRIES` — количество повторов при timeout/5xx (по умолчанию 3)
-- `LLM_RETRY_BACKOFF_MS` — базовая задержка между повторами в ms (по умолчанию 1000)
 
-Retry logic: при ошибке HTTP или таймауте — повтор с линейным увеличением задержки
-(backoff-ms × attempt), до max-retries попыток. Конфигурация через Aero (`config.edn`):
+
+Retry logic: при ошибке HTTP или таймауте — повтор без задержки, до max-retries попыток. Конфигурация через Aero (`config.edn`):
 
 ```clojure
-{:llm {:max-retries      #long #or [#env LLM_MAX_RETRIES 3]
-       :retry-backoff-ms #long #or [#env LLM_RETRY_BACKOFF_MS 1000]}}
+{:llm {:max-retries #long #or [#env LLM_MAX_RETRIES 3]}}
 ```
 
 Timeout: 10s на полный ответ. При превышении — вернуть `{"error": "timeout"}`.

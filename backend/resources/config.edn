@@ -4,6 +4,5 @@
   :llm        {:api-key          #env LLM_API_KEY
                :api-url          #or [#env LLM_API_URL "https://api.deepseek.com/v1/chat/completions"]
                :model            #or [#env LLM_MODEL "deepseek-chat"]
-               :max-retries      #long #or [#env LLM_MAX_RETRIES 3]
-               :retry-backoff-ms #long #or [#env LLM_RETRY_BACKOFF_MS 1000]
+                :max-retries      #long #or [#env LLM_MAX_RETRIES 3]
                :mock-enabled     #or [#env REFRAME_MOCK_LLM "false"]}}
