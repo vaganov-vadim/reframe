@@ -47,8 +47,8 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
   return (
     <div
       style={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--error)',
+        background: isRateLimit ? 'rgba(232, 168, 80, 0.1)' : 'var(--bg-elevated)',
+        border: isRateLimit ? '1px solid var(--accent)' : '1px solid var(--error)',
         borderRadius: 'var(--border-radius)',
         padding: 'var(--space-md)',
         margin: 'var(--space-md)',
@@ -58,7 +58,7 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-        <p style={{ fontSize: '14px', color: 'var(--error)', margin: 0, flex: 1 }}>{displayMessage}</p>
+        <p style={{ fontSize: '14px', color: isRateLimit ? 'var(--accent)' : 'var(--error)', margin: 0, flex: 1 }}>{displayMessage}</p>
         {isRateLimit && (
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
             {countdown > 0 ? `Ещё ${countdown}с` : 'Можно продолжить'}
@@ -82,7 +82,7 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
             Повторить
           </button>
         )}
-        {onDismiss && (
+        {onDismiss && !isRateLimit && (
           <button
             onClick={onDismiss}
             style={{
