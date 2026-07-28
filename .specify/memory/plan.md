@@ -745,6 +745,15 @@ WantedBy=multi-user.target
 
 ---
 
+## Мониторинг
+
+- **Системный**: Beszel (Docker, hub + agent), `/monitoring/` через nginx
+- **Прикладной**: `/api/health` (JSON, внутренний), статус-панель `/status` (SPA)
+- **Алертинг**: cron → health check → Telegram бот (каждую минуту)
+- **Метрики**: CPU, RAM, диск, запросы, ошибки, LLM статус, uptime
+
+---
+
 ## Complexity Tracking
 
 > На данный момент нарушений конституции нет. Все решения укладываются в минималистичный стек.

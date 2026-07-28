@@ -5,13 +5,38 @@
             [clojure.string :as str]
             [reframe.prompt :as prompt]
             [reframe.rate-limiter :as rate-limiter]
-            [reframe.llm-client :as llm-client]))
+            [reframe.llm-client :as llm-client])
+  (:import [java.lang.management ManagementFactory]))
 
 ;; ─── Constants ──────────────────────────────────────────────────────────────
 
 (def ^:private json-content-type "application/json")
 (def ^:private sse-content-type  "text/event-stream")
 (def ^:private max-text-length   3000)
+
+;; ─── Health tracking ────────────────────────────────────────────────────────
+
+(def ^:private start-time
+  "Server start time in milliseconds (epoch)."
+  (.getStartTime (ManagementFactory/getRuntimeMXBean)))
+
+;; Atom tracking reframe requests since server start.
+(defonce ^:private request-counter (atom 0))
+
+;; Atom tracking error responses (5xx + rate limits) since server start.
+(defonce ^:private error-counter (atom 0))
+
+(defn- format-uptime
+  "Formats uptime as human-readable string (e.g., '24h', '5h 30m', '2m')."
+  [ms]
+  (let [total-minutes (quot ms 60000)
+        days          (quot total-minutes 1440)
+        hours         (rem (quot total-minutes 60) 24)
+        minutes       (rem total-minutes 60)]
+    (cond
+      (pos? days)  (str days "d " hours "h")
+      (pos? hours) (str hours "h " minutes "m")
+      :else        (str minutes "m"))))
 
 ;; ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -46,6 +71,22 @@
   [_request]
   (json-body 200 {:status "ok" :service "reframe-backend"}))
 
+(defn health-handler
+  "GET /api/health — returns server health status including LLM connectivity,
+   uptime, requests, errors, and JVM memory."
+  [config _request]
+  (let [uptime-ms       (- (System/currentTimeMillis) start-time)
+        llm-configured  (boolean (get-in config [:llm :api-key]))
+        mock-enabled    (= "true" (get-in config [:llm :mock-enabled]))
+        runtime         (Runtime/getRuntime)
+        mem-used-mb     (str (quot (- (.totalMemory runtime) (.freeMemory runtime)) 1048576) "MB")]
+    (json-body 200 {:status   "ok"
+                    :llm      (if (or llm-configured mock-enabled) "connected" "no_key")
+                    :uptime   (format-uptime uptime-ms)
+                    :requests @request-counter
+                    :errors   @error-counter
+                    :memory   mem-used-mb})))
+
 (defn- reframe-handler
   "POST /api/reframe — validate, rate limit, call LLM, return SSE stream.
    Supports :mode param in body-params — when \"deeper\", uses build-deeper-prompt
@@ -73,23 +114,26 @@
 
       ;; ── Rate limiting ─────────────────────────────────────────────────
       (not (rate-limiter/allow-request? request))
-      (json-body 429 {:error "Rate limit exceeded"} "Retry-After" "60")
+      (do (swap! error-counter inc)
+          (json-body 429 {:error "Rate limit exceeded"} "Retry-After" "60"))
 
-      ;; ── LLM call ─────────────────────────────────────────────────────
-      :else
-      (try
-        (let [llm-prompt (if (= "deeper" mode)
-                          (prompt/build-deeper-prompt surface text)
-                          (prompt/build-prompt text))
-               llm-result (llm-client/call-llm config llm-prompt)
-              parsed     (try (json/parse-string llm-result)
-                              (catch Exception _ llm-result))]
-          (sse-body (if (map? parsed) parsed {:result llm-result})))
-        (catch Exception e
-          (let [ex-type (-> e ex-data :type)]
-            (if (= :llm-timeout ex-type)
-              (json-body 504 {:error "LLM timeout"})
-              (json-body 502 {:error "LLM API error"}))))))))
+       ;; ── LLM call ─────────────────────────────────────────────────────
+       :else
+       (try
+         (let [llm-prompt (if (= "deeper" mode)
+                           (prompt/build-deeper-prompt surface text)
+                           (prompt/build-prompt text))
+                llm-result (llm-client/call-llm config llm-prompt)
+               parsed     (try (json/parse-string llm-result)
+                               (catch Exception _ llm-result))]
+           (swap! request-counter inc)
+           (sse-body (if (map? parsed) parsed {:result llm-result})))
+         (catch Exception e
+           (let [ex-type (-> e ex-data :type)]
+             (swap! error-counter inc)
+             (if (= :llm-timeout ex-type)
+               (json-body 504 {:error "LLM timeout"})
+               (json-body 502 {:error "LLM API error"}))))))))
 
 ;; ─── Main dispatcher ────────────────────────────────────────────────────────
 
@@ -106,6 +150,10 @@
       ;; GET / — health check
       (and (= :get method) (= "/" uri))
       (home-handler request)
+
+      ;; GET /api/health — monitoring health endpoint
+      (and (= :get method) (= "/api/health" uri))
+      (health-handler config request)
 
       ;; /api/reframe — POST only
       (= "/api/reframe" uri)
