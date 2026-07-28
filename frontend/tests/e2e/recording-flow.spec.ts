@@ -30,6 +30,8 @@ test('full recording flow: speech → API → response', async ({ page }) => {
   await page.waitForTimeout(300);
   // Click stop
   await page.click('button:has-text("Стоп")', { force: true });
+  // Click send in review phase
+  await page.click('button:has-text("Отправить")', { force: true });
   // Wait for response
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
   await expect(page.getByText('Это факт, а не катастрофа.')).toBeVisible();

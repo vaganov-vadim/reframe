@@ -25,6 +25,7 @@ test('shows warning on LLM timeout', async ({ page }) => {
   await page.click('button:has-text("Говорить")', { force: true });
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
+  await page.click('button:has-text("Отправить")', { force: true });
   // After 10s timeout, error should appear
   await expect(page.getByText(/не получилось/i)).toBeVisible({ timeout: 15000 });
 });

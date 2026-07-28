@@ -23,5 +23,6 @@ test('shows error banner on network failure', async ({ page }) => {
   await page.click('button:has-text("Говорить")', { force: true });
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
+  await page.click('button:has-text("Отправить")', { force: true });
   await expect(page.getByText(/нет связи/i)).toBeVisible({ timeout: 5000 });
 });

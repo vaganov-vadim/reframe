@@ -52,6 +52,10 @@ test('shows Vertical Arrow staircase after deep analysis', async ({ page }) => {
   // Start recording — mock auto-completes after 100ms
   await page.click('button:has-text("Говорить")', { force: true });
 
+  // Wait for review phase, then send
+  await page.waitForTimeout(200);
+  await page.click('button:has-text("Отправить")', { force: true });
+
   // Wait for reframing result (mock fires onresult + onend automatically)
   await expect(page.getByText('Не всё так страшно.')).toBeVisible({ timeout: 5000 });
 

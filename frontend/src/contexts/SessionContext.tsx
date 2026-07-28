@@ -9,7 +9,9 @@ function sessionReducer(state: MainState, action: Action): MainState {
     case 'START_RECORDING':
       return { ...state, phase: 'recording', error: null };
     case 'STOP_RECORDING':
-      return { ...state, phase: 'analyzing' };
+      return { ...state, phase: 'review' };
+    case 'ANALYZE':
+      return { ...state, phase: 'analyzing', error: null };
     case 'CANCEL_RECORDING':
       return { ...state, phase: 'rating-before', error: null };
     case 'RESULT_RECEIVED':
@@ -28,7 +30,7 @@ function sessionReducer(state: MainState, action: Action): MainState {
       return {
         ...state,
         error: action.message,
-        phase: state.phase === 'analyzing' ? 'result' : 'rating-before',
+        phase: state.phase === 'analyzing' || state.phase === 'review' ? 'result' : 'rating-before',
       };
     case 'DEEP_ERROR':
       return { ...state, error: action.message, phase: 'result' };

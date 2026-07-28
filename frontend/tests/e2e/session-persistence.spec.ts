@@ -51,6 +51,7 @@ test('session persists when navigating to distortions and back', async ({ page }
   await page.click('button:has-text("Говорить")', { force: true });
   await page.waitForTimeout(300);
   await page.click('button:has-text("Стоп")', { force: true });
+  await page.click('button:has-text("Отправить")', { force: true });
 
   // Wait for the result to appear
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
