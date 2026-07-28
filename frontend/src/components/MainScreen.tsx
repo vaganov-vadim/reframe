@@ -316,6 +316,9 @@ export function MainScreen() {
                   outline: 'none',
                 }}
               />
+              <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-secondary)', margin: 'var(--space-sm) 0 0' }}>
+                Совет: для голосового ввода откройте приложение в Chrome
+              </p>
               <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
                 <button
                   onClick={() => {
