@@ -8,10 +8,12 @@ import { OnboardingOverlay } from './components/OnboardingOverlay';
 import { DistortionReference } from './components/DistortionReference';
 import { StatusPage } from './components/StatusPage';
 import { RecordingProvider } from './contexts/RecordingContext';
+import { SessionProvider } from './contexts/SessionContext';
 
 function App() {
   return (
     <RecordingProvider>
+    <SessionProvider>
     <div className="app">
       <OnboardingOverlay />
       <ThemeToggle />
@@ -24,6 +26,7 @@ function App() {
       </Routes>
       <TabBar />
     </div>
+    </SessionProvider>
     </RecordingProvider>
   );
 }
