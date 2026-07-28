@@ -166,10 +166,10 @@ export function MainScreen() {
           sendText(finalText)
             .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
             .catch(() => {
-              dispatch({ type: 'ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+              dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
             });
         } else {
-          dispatch({ type: 'ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+          dispatch({ type: 'ERROR', message: 'Не расслышал. Попробуем ещё раз?' });
         }
       } else if (state.phase === 'deep-recording') {
         const deepText = getFinalText();
@@ -179,10 +179,10 @@ export function MainScreen() {
           sendDeepText(deepText, surfaceThoughtRef.current)
             .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
             .catch(() => {
-              dispatch({ type: 'DEEP_ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+              dispatch({ type: 'DEEP_ERROR', message: 'Не получилось. Попробуем через минуту?' });
             });
         } else {
-          dispatch({ type: 'DEEP_ERROR', message: 'Не удалось распознать речь. Попробуйте ещё раз.' });
+          dispatch({ type: 'DEEP_ERROR', message: 'Не расслышал. Попробуем ещё раз?' });
         }
       }
     }
@@ -204,7 +204,7 @@ export function MainScreen() {
       sendText(lastTextRef.current)
         .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
         .catch(() => {
-          dispatch({ type: 'ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+          dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
         });
     }
   }, [state.retryId]);
@@ -261,7 +261,7 @@ export function MainScreen() {
       />
 
       {(state.phase === 'rating-before' || state.phase === 'done') && (
-        <>
+        <div className="phase-enter" key="idle">
           {showBreathing && <BreathingExercise onClose={() => setShowBreathing(false)} />}
           <AnxietySlider
             value={state.anxietyBefore}
@@ -325,7 +325,7 @@ export function MainScreen() {
                       sendText(manualText.trim())
                         .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
                         .catch(() => {
-                          dispatch({ type: 'ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+                          dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
                         });
                     }
                   }}
@@ -356,11 +356,11 @@ export function MainScreen() {
 
             </div>
           )}
-        </>
+        </div>
       )}
 
       {state.phase === 'recording' && (
-        <>
+        <div className="phase-enter" key="recording">
           <RecordButton
             state="recording"
             onStart={handleStart}
@@ -381,17 +381,19 @@ export function MainScreen() {
             textAlign: 'center' as const,
             transition: 'color 0.3s',
           }}>
-            {text || 'Говорите...'}
+            {text || 'Я слушаю...'}
           </div>
-        </>
+        </div>
       )}
 
       {(state.phase === 'analyzing' || state.phase === 'result') && (
+        <div className="phase-enter" key="response">
         <ResponseView data={data} loading={loading} />
+        </div>
       )}
 
       {state.phase === 'result' && data && (
-        <>
+        <div className="phase-enter" key="post-result">
           <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-md)' }}>
             <button
               onClick={handleDeepStart}
@@ -439,11 +441,11 @@ export function MainScreen() {
               Сохранить сессию
             </button>
           </div>
-        </>
+        </div>
       )}
 
       {state.phase === 'deep-recording' && (
-        <>
+        <div className="phase-enter" key="deep-recording">
           <div style={{ textAlign: 'center', padding: 'var(--space-xl) var(--space-md) var(--space-sm)' }}>
             <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 var(--space-sm) 0' }}>
               Вы сказали:
@@ -478,17 +480,19 @@ export function MainScreen() {
             textAlign: 'center' as const,
             transition: 'color 0.3s',
           }}>
-            {text || 'Скажите одно предложение...'}
+            {text || 'Я слушаю...'}
           </div>
-        </>
-      )}
+        </div>
+      )}  
 
       {state.phase === 'deep-analyzing' && (
+        <div className="phase-enter" key="deep-analyzing">
         <VerticalArrow levels={null} loading={true} />
+        </div>
       )}
 
       {state.phase === 'deep-result' && (
-        <>
+        <div className="phase-enter" key="deep-result">
           <ResponseView data={data} loading={false} />
           <div ref={deepResultRef}>
             <VerticalArrow
@@ -523,7 +527,7 @@ export function MainScreen() {
               Сохранить сессию
             </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

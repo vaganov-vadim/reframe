@@ -179,10 +179,10 @@ export function HistoryTab() {
           color: 'var(--text-secondary)',
         }}
       >
-        <p style={{ fontSize: '18px', marginBottom: 'var(--space-sm)' }}>📋</p>
+        <p style={{ fontSize: '18px', marginBottom: 'var(--space-sm)' }}>🌿</p>
         <p>Здесь появятся твои сессии.</p>
-        <p style={{ fontSize: '14px', marginTop: 'var(--space-xs)' }}>
-          Начни с первой — это легко.
+        <p style={{ fontSize: '14px', marginTop: 'var(--space-xs)', opacity: 0.7 }}>
+          Каждый разговор — шаг к ясности.
         </p>
       </div>
     );

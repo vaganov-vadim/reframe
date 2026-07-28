@@ -91,6 +91,31 @@ Animations (defined in tokens.css):
 
 ---
 
+## Micro-interactions & Tone of Voice (spec §4c)
+
+### Animations (tokens.css + global.css)
+- `@keyframes fadeIn` — phase transitions (0.3s, opacity + translateY(8px))
+- `@keyframes loading-dot` — sequential dot pulse for meditative loading
+- `.phase-enter` — wrapper class for phase containers with fadeIn
+- `.stagger-0/.stagger-1/.stagger-2` — animation-delay classes for sequential result reveal
+
+### Tone of Voice Map
+All user-facing strings updated to empathic, jargon-free style:
+
+| Before | After |
+|---|---|
+| «Не удалось распознать речь. Попробуйте ещё раз.» | «Не расслышал. Попробуем ещё раз?» |
+| «Анализирую...» | «Смотрю на ситуацию...» |
+| «Ошибка сети. Проверьте подключение.» | «Кажется, нет связи. Проверим?» |
+| «Говорите...» | «Я слушаю...» |
+| «Не удалось получить ответ. Попробуйте через минуту.» | «Не получилось. Попробуем через минуту?» |
+| «Ответ получен не полностью.» | «Услышал не всё. Но вот что есть:» |
+| «Слишком много запросов. Подождите минуту.» | «Многовато запросов. Давай подождём минуту.» |
+
+Files: MainScreen.tsx, ResponseView.tsx, useSpeechRecognition.ts, useSSE.ts, HistoryTab.tsx, ProgressTab.tsx, ErrorBanner.tsx
+
+---
+
 ## Performance Targets
 
 | Показатель | Цель MVP | Измерение |

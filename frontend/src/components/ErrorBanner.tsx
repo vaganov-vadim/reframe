@@ -7,9 +7,9 @@ interface ErrorBannerProps {
 export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
   if (!message) return null;
 
-  const isRateLimit = message.includes('429') || message.includes('limit') || message.includes('Слишком много запросов');
+  const isRateLimit = message.includes('429') || message.includes('limit') || message.includes('Слишком много запросов') || message.includes('Многовато запросов');
   const msg = isRateLimit
-    ? 'Слишком много запросов. Подождите минуту.'
+    ? 'Многовато запросов. Давай подождём минуту.'
     : message;
 
   return (
