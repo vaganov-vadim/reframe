@@ -81,21 +81,24 @@
     (get-in response [:body :choices 0 :message :content])))
 
 (defn- call-with-retry
-  "Call LLM with retry on transient failures. Max 3 attempts, exponential backoff."
+  "Call LLM with retry on transient failures. Configurable via llm-config:
+   :max-retries (default 3), :retry-backoff-ms (default 1000).
+   Uses linear backoff: backoff-ms × attempt number."
   [llm-config prompt]
-  (loop [attempt 1
-         max-attempts 3]
-    (let [result (try
-                   {:value (real-call-llm llm-config prompt)}
-                   (catch Exception e
-                     {:error e}))]
-      (if-let [v (:value result)]
-        v
-        (if (< attempt max-attempts)
-          (do
-            (Thread/sleep (* 1000 attempt)) ;; 1s, 2s backoff
-            (recur (inc attempt) max-attempts))
-          (throw (:error result)))))))
+  (let [max-retries (or (:max-retries llm-config) 3)
+        backoff-ms  (or (:retry-backoff-ms llm-config) 1000)]
+    (loop [attempt 1]
+      (let [result (try
+                     {:value (real-call-llm llm-config prompt)}
+                     (catch Exception e
+                       {:error e}))]
+        (if-let [v (:value result)]
+          v
+          (if (< attempt max-retries)
+            (do
+              (Thread/sleep (* backoff-ms attempt))
+              (recur (inc attempt)))
+            (throw (:error result))))))))
 
 ;; ─── Public API ─────────────────────────────────────────────────────────────
 
