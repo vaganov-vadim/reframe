@@ -39,6 +39,7 @@ export interface Session {
 export type Phase =
   | 'rating-before'
   | 'recording'
+  | 'review'
   | 'analyzing'
   | 'result'
   | 'deep-recording'

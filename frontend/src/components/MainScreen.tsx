@@ -94,11 +94,6 @@ export function MainScreen() {
           dispatch({ type: 'SET_SURFACE_THOUGHT', text: finalText });
           dispatch({ type: 'SET_LAST_TEXT', text: finalText });
           dispatch({ type: 'STOP_RECORDING' });
-          sendText(finalText)
-            .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
-            .catch(() => {
-              dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
-            });
         } else {
           dispatch({ type: 'ERROR', message: 'Не расслышал. Попробуем ещё раз?' });
         }
@@ -313,6 +308,56 @@ export function MainScreen() {
             transition: 'color 0.3s',
           }}>
             {text || 'Я слушаю...'}
+          </div>
+        </div>
+      )}
+
+      {state.phase === 'review' && (
+        <div className="phase-enter" key="review">
+          <div style={{ padding: 'var(--space-md)' }}>
+            <div style={{
+              background: 'var(--bg-elevated)',
+              borderRadius: 'var(--border-radius-sm)',
+              padding: 'var(--space-md)',
+              marginBottom: 'var(--space-md)',
+              border: '1px solid var(--border)',
+              fontSize: '15px',
+              lineHeight: 1.6,
+              color: 'var(--text-primary)',
+            }}>
+              {state.lastText}
+            </div>
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+              <button onClick={() => {
+                dispatch({ type: 'ANALYZE' });
+                sendText(state.lastText!).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+              }} style={{
+                background: 'var(--accent)',
+                color: 'var(--bg-primary)',
+                border: 'none',
+                padding: 'var(--space-sm) var(--space-lg)',
+                fontSize: '14px',
+                fontWeight: 600,
+                borderRadius: 'var(--border-radius-sm)',
+                cursor: 'pointer',
+              }}>
+                Отправить
+              </button>
+              <button onClick={() => {
+                dispatch({ type: 'START_RECORDING' });
+                start();
+              }} style={{
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+                padding: 'var(--space-sm) var(--space-lg)',
+                fontSize: '14px',
+                borderRadius: 'var(--border-radius-sm)',
+                cursor: 'pointer',
+              }}>
+                Записать заново
+              </button>
+            </div>
           </div>
         </div>
       )}

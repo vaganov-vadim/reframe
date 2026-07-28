@@ -14,13 +14,13 @@ Reframe — приватный голосовой КПТ-дневник для �
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x (strict), Clojure (latest stable)
+**Language/Version**: TypeScript 6.0 (strict), Clojure (latest stable)
 **Primary Dependencies**: React, Vite, Vitest, Playwright, Kit (Ring + Reitit + malli)
 **Storage**: localStorage (браузер), без серверной БД
 **Testing**: Vitest (unit), Playwright (E2E)
 **Target Platform**: Веб-браузер (desktop + mobile), бэкенд на JVM
 **Project Type**: Full-stack web application (SPA + thin proxy backend)
-**Performance Goals**: TTI ≤ 2s, LLM first token ≤ 1s, full response ≤ 5s (целевой)
+**Performance Goals**: TTI ≤ 2s, полный ответ ≤ 10s (целевой)
 **Constraints**: Бэкенд без БД и без логирования контента, offline-first невозможен (LLM требует сеть)
 **Scale/Scope**: MVP — один пользователь, одно устройство, одна сессия, до ~100 записей
 
@@ -30,7 +30,7 @@ Reframe — приватный голосовой КПТ-дневник для �
 
 | Слой | Технология |
 |---|---|
-| Фронтенд | TypeScript 5.x (strict), React 19, Vite 6 |
+| Фронтенд | TypeScript 6.0 (strict), React 19.2, Vite 8 |
 | Хранение | localStorage (все пользовательские данные) |
 | State | React Context + useReducer |
 | Unit-тесты | Vitest (environment: jsdom) |
@@ -40,7 +40,7 @@ Reframe — приватный голосовой КПТ-дневник для �
 | Бэкенд | Clojure + Kit (Ring, Reitit, malli) |
 | HTTP-сервер | http-kit (Ring adapter, встроен в Kit) |
 | HTTP-клиент | clj-http (вызов LLM API) |
-| Потоковая передача | core.async channel → ответ клиенту |
+| HTTP-клиент | ответ клиенту (один JSON-объект) |
 | API | REST + JSON |
 | Голосовой ввод | Web Speech API (SpeechRecognition) |
 
@@ -120,8 +120,7 @@ Files: MainScreen.tsx, ResponseView.tsx, useSpeechRecognition.ts, useSSE.ts, His
 
 | Показатель | Цель MVP | Измерение |
 |---|---|---|
-| Первый токен LLM | ≤ 1 секунда | Время от запроса до первого фрагмента ответа |
-| Полный ответ LLM | ≤ 5 секунд (целевой) | Время от запроса до полного ответа LLM |
+| Полный ответ LLM | ≤ 10 секунд (целевой) | Время от запроса до полного ответа LLM |
 | Time to Interactive | ≤ 2 секунды | Lighthouse TTI |
 | Распознавание речи | ≤ 2 секунды после остановки записи | Web Speech API onresult |
 | Сохранение сессии | ≤ 50ms | localStorage setItem |
@@ -317,7 +316,7 @@ Clojure handler (handler.clj)
     ├── Rate limit check (token bucket, 3 req/min)
     ├── Prompt formatting (prompt.clj — Burns methodology)
     ├── LLM API call (clj-http → DeepSeek/LLM provider)
-    └── Ответ клиенту (core.async channel)
+    └── Ответ клиенту (один JSON-объект)
     ↓
 Frontend: POST /api/reframe → fetch → parse JSON
     ├── Parse JSON: {distortions, reframing, question, pattern}
@@ -339,7 +338,7 @@ DeltaDisplay: anxietyBefore - anxietyAfter
 ### Custom Hooks
 
 - `useSpeechRecognition.ts` — React-хук (обёртка над Web Speech API): start/stop/cancel, browser support check, recognition events
-- `useSSE.ts` — React-хук (потоковый клиент): connect via POST /api/reframe + fetch, parse streaming JSON, handle disconnect/timeout
+- `useSSE.ts` — React-хук: connect via POST /api/reframe + fetch, parse JSON response, handle disconnect/timeout
 
 ---
 
@@ -361,8 +360,8 @@ src/services/
   [kit "2.0"]
   ;; HTTP client for LLM API calls
   [clj-http "3.13.0"]
-  ;; Async ответ via core.async
-  [org.clojure/core.async "1.6.681"]
+;; JSON ответ
+[org.clojure/core.async "1.6.681"]
   ;; JSON encoding (Cheshire)
   [cheshire "5.13.0"]
   ;; Configuration from env vars (rate limit, etc.)
@@ -522,8 +521,8 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 
 **Phase 4 — Голос + Ответ**
 - speechService.ts: Web Speech API integration
-- useSSE.ts: POST /api/reframe, fetch + ReadableStream
-- ResponseView: DistortionList + ReframingText (потоковый рендеринг)
+- useSSE.ts: POST /api/reframe, fetch → JSON response
+- ResponseView: DistortionList + ReframingText
 - PostRatingSlider + DeltaDisplay
 - BrowserFallback: заглушка для браузеров без Web Speech API
 - RecordingIndicator: визуальная обратная связь при записи
@@ -552,7 +551,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 |---|---|---|
 | I. Приватность | ✅ | localStorage, бэкенд без БД |
 | II. Простота | ✅ | Один экран, 2–3 действия |
-| III. Скорость | ✅ | Потоковая передача, lazy loading |
+| III. Скорость | ✅ | Быстрый ответ LLM, lazy loading |
 | IV. Человекоцентричность | ✅ | Тёплая палитра, 48px зоны, тёмная тема |
 | V. TDD | ✅ | Vitest + Playwright |
 | VI. Контракт-Фёрст | ✅ | API-контракт на бэкенде |
@@ -586,7 +585,7 @@ reframe/
 │
 ├── backend/                   # Clojure + Kit — тонкий прокси
 │   ├── src/
-│   │   ├── handler.clj        # HTTP-обработчик: принять → промпт → LLM → stream
+│   │   ├── handler.clj        # HTTP-обработчик: принять → промпт → LLM → JSON
 │   │   └── prompt.clj         # Форматирование КПТ-промптов (Бёрнс)
 │   ├── test/
 │   │   └── handler_test.clj   # Тесты прокси-слоя
