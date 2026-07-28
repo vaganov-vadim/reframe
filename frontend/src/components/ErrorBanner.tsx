@@ -47,8 +47,8 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
   return (
     <div
       style={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--error)',
+        background: isRateLimit ? 'rgba(232, 168, 80, 0.1)' : 'var(--bg-elevated)',
+        border: isRateLimit ? '1px solid var(--accent)' : '1px solid var(--error)',
         borderRadius: 'var(--border-radius)',
         padding: 'var(--space-md)',
         margin: 'var(--space-md)',
@@ -82,7 +82,7 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
             Повторить
           </button>
         )}
-        {onDismiss && (
+        {onDismiss && !isRateLimit && (
           <button
             onClick={onDismiss}
             style={{
