@@ -41,7 +41,7 @@ function errorMessageForStatus(status: number): string {
     case 400:
       return 'Текст не может быть пустым.';
     case 429:
-      return 'Многовато запросов. Давай подождём минуту.';
+      return 'Пауза на минуту. Пока можно осмыслить результат.';
     case 500:
     case 502:
     case 504:
