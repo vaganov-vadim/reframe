@@ -272,7 +272,7 @@ App (ThemeProvider + Router)
 │
 ├── ThemeToggle             # переключатель тёмная/светлая
 ├── ErrorBanner             # ошибки сети / LLM
-└── BrowserFallback         # заглушка для браузеров без Web Speech API
+└── TextInput               # текстовое поле + кнопка «Отправить» (браузеры без Speech API)
 ```
 
 ---

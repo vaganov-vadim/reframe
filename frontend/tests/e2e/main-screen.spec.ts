@@ -7,12 +7,12 @@ test('shows anxiety slider and record button', async ({ page }) => {
   await expect(page.getByRole('button', { name: /говорить/i })).toBeVisible();
 });
 
-test('shows BrowserFallback when Speech API missing', async ({ page }) => {
-  // Remove SpeechRecognition to simulate non-Chrome
+test('shows text input when Speech API missing', async ({ page }) => {
   await page.addInitScript(() => {
     delete (window as Record<string, unknown>).SpeechRecognition;
     delete (window as Record<string, unknown>).webkitSpeechRecognition;
   });
   await page.goto('/');
-  await expect(page.getByText(/голосовой ввод доступен в chrome/i)).toBeVisible();
+  await expect(page.getByPlaceholder('Опишите, что вас тревожит...')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Отправить' })).toBeVisible();
 });

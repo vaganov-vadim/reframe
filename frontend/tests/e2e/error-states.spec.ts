@@ -114,20 +114,16 @@ test('Test 4: empty transcript shows speech error and returns to start', async (
   await expect(page.getByRole('button', { name: /говорить/i })).toBeVisible();
 });
 
-// ─── Test 5: Browser without Speech API → BrowserFallback ──────────────
+// ─── Test 5: Browser without Speech API → text input ──────────────
 
-test('Test 5: no Speech API shows browser fallback', async ({ page }) => {
-  // Do NOT mock SpeechRecognition — browser won't have it
+test('Test 5: no Speech API shows text input instead of voice button', async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem('reframe_onboarding', 'true');
-    // Ensure SpeechRecognition is removed
     delete (window as Record<string, unknown>).SpeechRecognition;
     delete (window as Record<string, unknown>).webkitSpeechRecognition;
   });
 
   await page.goto('/');
-  await expect(page.getByText(/голосовой ввод доступен в chrome/i)).toBeVisible();
-  await expect(page.getByText(/откройте приложение в chrome/i)).toBeVisible();
+  await expect(page.getByPlaceholder('Опишите, что вас тревожит...')).toBeVisible();
 });
 
 // ─── Test 6: Timeout (504) — route hangs beyond 10s client timeout ──────
