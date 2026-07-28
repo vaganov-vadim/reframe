@@ -3,7 +3,7 @@ import { useRecording } from '../contexts/RecordingContext';
 import { useSSE } from '../hooks/useSSE';
 import { AnxietySlider } from './AnxietySlider';
 import { RecordButton } from './RecordButton';
-import { BrowserFallback } from './BrowserFallback';
+
 import { ResponseView } from './ResponseView';
 import { VerticalArrow } from './VerticalArrow';
 import { PostRatingSlider } from './PostRatingSlider';
@@ -103,6 +103,7 @@ export function MainScreen() {
   });
 
   const [showBreathing, setShowBreathing] = useState(false);
+  const [manualText, setManualText] = useState('');
 
   const {
     text,
@@ -231,14 +232,6 @@ export function MainScreen() {
     setTimeout(() => dispatch({ type: 'RESET' }), 2000);
   }, [data, deepData, state.anxietyBefore, state.anxietyAfter]);
 
-  if (!isSupported) {
-    return (
-      <div>
-        <BrowserFallback />
-      </div>
-    );
-  }
-
   return (
     <div>
       <div style={{ textAlign: 'center', padding: 'var(--space-lg) 0 var(--space-md)' }}>
@@ -291,12 +284,70 @@ export function MainScreen() {
             </div>
           )}
           {state.phase === 'rating-before' && <TopicPrompt />}
-          <RecordButton
-            state={state.phase === 'done' ? 'idle' : 'idle'}
-            onStart={handleStart}
-            onStop={handleStop}
-            onCancel={handleCancel}
-          />
+          {isSupported ? (
+            <RecordButton
+              state={state.phase === 'done' ? 'idle' : 'idle'}
+              onStart={handleStart}
+              onStop={handleStop}
+              onCancel={handleCancel}
+            />
+          ) : (
+            <div style={{ padding: 'var(--space-md)' }}>
+              <textarea
+                value={manualText}
+                onChange={(e) => setManualText(e.target.value)}
+                placeholder="Опишите, что вас тревожит..."
+                maxLength={3000}
+                rows={5}
+                style={{
+                  width: '100%',
+                  maxWidth: '380px',
+                  margin: '0 auto',
+                  display: 'block',
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  padding: 'var(--space-md)',
+                  fontSize: '15px',
+                  lineHeight: 1.6,
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  outline: 'none',
+                }}
+              />
+              <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
+                <button
+                  onClick={() => {
+                    if (manualText.trim()) {
+                      surfaceThoughtRef.current = manualText.trim();
+                      dispatch({ type: 'STOP_RECORDING' });
+                      sendText(manualText.trim())
+                        .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
+                        .catch(() => {
+                          dispatch({ type: 'ERROR', message: 'Не удалось получить ответ. Попробуйте через минуту.' });
+                        });
+                    }
+                  }}
+                  disabled={!manualText.trim()}
+                  style={{
+                    width: '100%',
+                    maxWidth: '320px',
+                    background: manualText.trim() ? 'var(--accent)' : 'var(--bg-elevated)',
+                    color: manualText.trim() ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                    border: 'none',
+                    padding: 'var(--space-md)',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    borderRadius: 'var(--border-radius-sm)',
+                    cursor: manualText.trim() ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Отправить
+                </button>
+              </div>
+            </div>
+          )}
           {state.phase === 'done' && (
             <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
               <p style={{ color: 'var(--success)', fontSize: '16px' }}>
