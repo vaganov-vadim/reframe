@@ -211,12 +211,15 @@ export function ProgressTab() {
                   background: 'var(--bg-elevated)',
                   borderRadius: 'var(--border-radius-sm)',
                   border: '1px solid var(--border)',
-                }}
-              >
-                {d.type}
-                <span style={{ fontSize: '10px', marginLeft: '4px', opacity: 0.7 }}>
-                  ×{d.count}
-                </span>
+                  textAlign: 'center',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                }}>
+  {d.type}
+  <span style={{ fontSize: '10px', opacity: 0.7 }}>
+    ×{d.count}
+  </span>
               </span>
             );
           })}
