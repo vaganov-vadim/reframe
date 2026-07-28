@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 interface ErrorBannerProps {
   message: string | null;
   onRetry?: () => void;
@@ -5,12 +7,36 @@ interface ErrorBannerProps {
 }
 
 export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
-  if (!message) return null;
+  const [countdown, setCountdown] = useState(0);
+  const isRateLimit = message?.includes('Пауза') ?? false;
 
-  const isRateLimit = message.includes('429') || message.includes('limit') || message.includes('Слишком много запросов');
-  const msg = isRateLimit
-    ? 'Слишком много запросов. Подождите минуту.'
-    : message;
+  useEffect(() => {
+    if (!isRateLimit) {
+      setCountdown(0);
+      return;
+    }
+
+    setCountdown(60);
+    const id = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, [isRateLimit, message]);
+
+  useEffect(() => {
+    if (countdown === 0 && isRateLimit && onDismiss) {
+      onDismiss();
+    }
+  }, [countdown, isRateLimit, onDismiss]);
+
+  if (!message) return null;
 
   return (
     <div
@@ -25,7 +51,14 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
         gap: 'var(--space-sm)',
       }}
     >
-      <p style={{ fontSize: '14px', color: 'var(--error)', margin: 0 }}>{msg}</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--error)', margin: 0, flex: 1 }}>{message}</p>
+        {isRateLimit && (
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+            {countdown > 0 ? `Ещё ${countdown}с` : 'Можно продолжить'}
+          </span>
+        )}
+      </div>
       <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'flex-end' }}>
         {onRetry && !isRateLimit && (
           <button
