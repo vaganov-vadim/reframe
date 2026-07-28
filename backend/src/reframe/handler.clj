@@ -113,7 +113,7 @@
       (json-body 400 {:error "Deeper mode requires 'surface' field"})
 
       ;; ── Rate limiting ─────────────────────────────────────────────────
-      (not (rate-limiter/allow-request? request))
+      (not (rate-limiter/check-request? request))
       (do (swap! error-counter inc)
           (json-body 429 {:error "Rate limit exceeded"} "Retry-After" "60"))
 
@@ -126,6 +126,8 @@
                 llm-result (llm-client/call-llm config llm-prompt)
                parsed     (try (json/parse-string llm-result)
                                (catch Exception _ llm-result))]
+           ;; Only consume token on successful LLM call
+           (rate-limiter/consume-request! request)
            (swap! request-counter inc)
            (sse-body (if (map? parsed) parsed {:result llm-result})))
          (catch Exception e

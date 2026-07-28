@@ -82,6 +82,42 @@
       (is (= 429 (:status response)))
       (is (contains? (set (keys (:headers response))) "Retry-After")))))
 
+(deftest post-reframe-failed-llm-does-not-consume-token
+  (testing "Failed LLM call does NOT consume rate limit token"
+    ;; Consume 2 tokens via handler (successful calls)
+    (llm-client/set-mock-mode! :fixture)
+    (dotimes [_ 2]
+      ((handler/app test-config) {:request-method :post
+                                   :uri "/api/reframe"
+                                   :body (json-body {:text "test"})}))
+    ;; 1 token remaining. Now trigger an error — should NOT consume.
+    (llm-client/set-mock-mode! :error)
+    (let [error-response ((handler/app test-config) {:request-method :post
+                                                       :uri "/api/reframe"
+                                                       :body (json-body {:text "test"})})]
+      (is (= 502 (:status error-response))))
+    ;; Token should still be available for a successful call.
+    (llm-client/set-mock-mode! :fixture)
+    (let [success-response ((handler/app test-config) {:request-method :post
+                                                         :uri "/api/reframe"
+                                                         :body (json-body {:text "test"})})]
+      (is (= 200 (:status success-response))))))
+
+(deftest post-reframe-successful-llm-consumes-token
+  (testing "Successful LLM call does consume a rate limit token"
+    (llm-client/set-mock-mode! :fixture)
+    ;; Use all 3 tokens
+    (dotimes [_ 3]
+      (let [resp ((handler/app test-config) {:request-method :post
+                                               :uri "/api/reframe"
+                                               :body (json-body {:text "test"})})]
+        (is (= 200 (:status resp)))))
+    ;; 4th call should be rate-limited
+    (let [response ((handler/app test-config) {:request-method :post
+                                                 :uri "/api/reframe"
+                                                 :body (json-body {:text "test"})})]
+      (is (= 429 (:status response))))))
+
 ;; ─── POST /api/reframe — LLM errors ────────────────────────────────────────
 
 (deftest post-reframe-llm-timeout
