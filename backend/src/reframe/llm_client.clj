@@ -80,6 +80,23 @@
                     :as              :json})]
     (get-in response [:body :choices 0 :message :content])))
 
+(defn- call-with-retry
+  "Call LLM with retry on transient failures. Max 3 attempts, exponential backoff."
+  [llm-config prompt]
+  (loop [attempt 1
+         max-attempts 3]
+    (let [result (try
+                   {:value (real-call-llm llm-config prompt)}
+                   (catch Exception e
+                     {:error e}))]
+      (if-let [v (:value result)]
+        v
+        (if (< attempt max-attempts)
+          (do
+            (Thread/sleep (* 1000 attempt)) ;; 1s, 2s backoff
+            (recur (inc attempt) max-attempts))
+          (throw (:error result)))))))
+
 ;; ─── Public API ─────────────────────────────────────────────────────────────
 
 (defn call-llm
@@ -98,4 +115,4 @@
     (if (or (= "true" mock-enabled)
             (nil? api-key))
       (mock-call-llm prompt)
-      (real-call-llm llm-config prompt))))
+       (call-with-retry llm-config prompt))))
