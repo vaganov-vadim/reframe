@@ -221,8 +221,8 @@ LLM provider configuration (server-side env vars):
 - `LLM_MAX_RETRIES` — количество повторов при timeout/5xx (по умолчанию 3)
 - `LLM_RETRY_BACKOFF_MS` — базовая задержка между повторами в ms (по умолчанию 2000)
 
-Retry logic: при ошибке HTTP или таймауте — повтор с линейным увеличением задержки
-(backoff-ms × attempt), до max-retries попыток. Конфигурация через Aero (`config.edn`):
+
+Retry logic: при ошибке HTTP или таймауте — повтор без задержки, до max-retries попыток. Конфигурация через Aero (`config.edn`):
 
 ```clojure
 {:llm {:max-retries      #long #or [#env LLM_MAX_RETRIES 5]
