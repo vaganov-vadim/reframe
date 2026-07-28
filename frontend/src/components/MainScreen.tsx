@@ -1,6 +1,8 @@
-import { useReducer, useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import { useRecording } from '../contexts/RecordingContext';
+import { useSession } from '../contexts/SessionContext';
 import { useSSE } from '../hooks/useSSE';
+import type { ReframeResponse, DeepResponse } from '../types/session';
 import { AnxietySlider } from './AnxietySlider';
 import { RecordButton } from './RecordButton';
 
@@ -13,94 +15,8 @@ import { TopicPrompt } from './TopicPrompt';
 import { BreathingExercise } from './BreathingExercise';
 import { startSession, completeSession } from '../services/sessionService';
 
-type Phase =
-  | 'rating-before'
-  | 'recording'
-  | 'analyzing'
-  | 'result'
-  | 'deep-recording'
-  | 'deep-analyzing'
-  | 'deep-result'
-  | 'rating-after'
-  | 'done';
-
-interface MainState {
-  phase: Phase;
-  anxietyBefore: number;
-  anxietyAfter: number;
-  error: string | null;
-  retryId: number;
-}
-
-type Action =
-  | { type: 'SET_ANXIETY_BEFORE'; value: number }
-  | { type: 'START_RECORDING' }
-  | { type: 'STOP_RECORDING' }
-  | { type: 'CANCEL_RECORDING' }
-  | { type: 'ANALYZE' }
-  | { type: 'RESULT_RECEIVED' }
-  | { type: 'SET_ANXIETY_AFTER'; value: number }
-  | { type: 'START_DEEP' }
-  | { type: 'DEEP_ANALYZE' }
-  | { type: 'DEEP_RESULT_RECEIVED' }
-  | { type: 'SAVE' }
-  | { type: 'ERROR'; message: string }
-  | { type: 'DEEP_ERROR'; message: string }
-  | { type: 'DISMISS_ERROR' }
-  | { type: 'RETRY' }
-  | { type: 'RESET' };
-
-function reducer(state: MainState, action: Action): MainState {
-  switch (action.type) {
-    case 'SET_ANXIETY_BEFORE':
-      return { ...state, anxietyBefore: action.value };
-    case 'START_RECORDING':
-      return { ...state, phase: 'recording', error: null };
-    case 'STOP_RECORDING':
-      return { ...state, phase: 'analyzing' };
-    case 'CANCEL_RECORDING':
-      return { ...state, phase: 'rating-before', error: null };
-    case 'RESULT_RECEIVED':
-      return { ...state, phase: 'result' };
-    case 'SET_ANXIETY_AFTER':
-      return { ...state, anxietyAfter: action.value };
-    case 'START_DEEP':
-      return { ...state, phase: 'deep-recording' };
-    case 'DEEP_ANALYZE':
-      return { ...state, phase: 'deep-analyzing' };
-    case 'DEEP_RESULT_RECEIVED':
-      return { ...state, phase: 'deep-result' };
-    case 'SAVE':
-      return { ...state, phase: 'done' };
-    case 'ERROR':
-      return { ...state, error: action.message, phase: state.phase === 'analyzing' ? 'result' : 'rating-before' };
-    case 'DEEP_ERROR':
-      return { ...state, error: action.message, phase: 'result' };
-    case 'DISMISS_ERROR':
-      return { ...state, error: null };
-    case 'RETRY':
-      return { ...state, phase: 'analyzing', error: null, retryId: state.retryId + 1 };
-    case 'RESET':
-      return {
-        phase: 'rating-before',
-        anxietyBefore: 5,
-        anxietyAfter: 5,
-        error: null,
-        retryId: 0,
-      };
-    default:
-      return state;
-  }
-}
-
 export function MainScreen() {
-  const [state, dispatch] = useReducer(reducer, {
-    phase: 'rating-before',
-    anxietyBefore: 5,
-    anxietyAfter: 5,
-    error: null,
-    retryId: 0,
-  });
+  const { state, dispatch } = useSession();
 
   const [showBreathing, setShowBreathing] = useState(false);
   const [manualText, setManualText] = useState('');
@@ -116,23 +32,38 @@ export function MainScreen() {
     cancel,
   } = useRecording();
   const {
-    data,
+    data: sseData,
     loading,
-    deepData,
+    deepData: sseDeepData,
     error: apiError,
     sendText,
     sendDeepText,
   } = useSSE();
 
-  const surfaceThoughtRef = useRef<string | null>(null);
   const deepResultRef = useRef<HTMLDivElement>(null);
-  const lastTextRef = useRef<string | null>(null);
   const lastSurfaceRef = useRef<string | null>(null);
+
+  // Persist SSE results to session context when they arrive
+  useEffect(() => {
+    if (sseData) {
+      dispatch({ type: 'STORE_RESULT', data: sseData });
+    }
+  }, [sseData, dispatch]);
+
+  useEffect(() => {
+    if (sseDeepData) {
+      dispatch({ type: 'STORE_DEEP_RESULT', data: sseDeepData });
+    }
+  }, [sseDeepData, dispatch]);
+
+  // Use persisted data (survives navigation) falling back to live SSE data
+  const displayData: ReframeResponse | null = state.data || sseData;
+  const displayDeepData: DeepResponse | null = state.deepData || sseDeepData;
 
   const handleStart = useCallback(() => {
     dispatch({ type: 'START_RECORDING' });
     start();
-  }, [start]);
+  }, [start, dispatch]);
 
   const handleStop = useCallback(() => {
     stop();
@@ -144,7 +75,7 @@ export function MainScreen() {
   const handleDeepStart = useCallback(() => {
     dispatch({ type: 'START_DEEP' });
     start();
-  }, [start]);
+  }, [start, dispatch]);
 
   const handleDeepStop = useCallback(() => {
     stop();
@@ -160,8 +91,8 @@ export function MainScreen() {
       if (state.phase === 'recording') {
         const finalText = getFinalText();
         if (finalText) {
-          surfaceThoughtRef.current = finalText;
-          lastTextRef.current = finalText;
+          dispatch({ type: 'SET_SURFACE_THOUGHT', text: finalText });
+          dispatch({ type: 'SET_LAST_TEXT', text: finalText });
           dispatch({ type: 'STOP_RECORDING' });
           sendText(finalText)
             .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
@@ -173,10 +104,10 @@ export function MainScreen() {
         }
       } else if (state.phase === 'deep-recording') {
         const deepText = getFinalText();
-        if (deepText && surfaceThoughtRef.current) {
+        if (deepText && state.surfaceThought) {
           lastSurfaceRef.current = deepText;
           dispatch({ type: 'DEEP_ANALYZE' });
-          sendDeepText(deepText, surfaceThoughtRef.current)
+          sendDeepText(deepText, state.surfaceThought)
             .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
             .catch(() => {
               dispatch({ type: 'DEEP_ERROR', message: 'Не получилось. Попробуем через минуту?' });
@@ -187,7 +118,7 @@ export function MainScreen() {
       }
     }
     prevListening.current = isListening;
-  }, [isListening, state.phase, getFinalText, sendText, sendDeepText]);
+  }, [isListening, state.phase, state.surfaceThought, getFinalText, sendText, sendDeepText, dispatch]);
 
   // Auto-scroll to Vertical Arrow when deep result appears
   useEffect(() => {
@@ -200,37 +131,37 @@ export function MainScreen() {
 
   // RETRY: re-send last text when retryId changes
   useEffect(() => {
-    if (state.retryId > 0 && lastTextRef.current) {
-      sendText(lastTextRef.current)
+    if (state.retryId > 0 && state.lastText) {
+      sendText(state.lastText)
         .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
         .catch(() => {
           dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
         });
     }
-  }, [state.retryId]);
+  }, [state.retryId, state.lastText, sendText, dispatch]);
 
   const handleCancel = useCallback(() => {
     cancel();
     dispatch({ type: 'CANCEL_RECORDING' });
-  }, [cancel]);
+  }, [cancel, dispatch]);
 
   const handleDeepCancel = useCallback(() => {
     cancel();
     dispatch({ type: 'RESULT_RECEIVED' });
-  }, [cancel]);
+  }, [cancel, dispatch]);
 
   const handleSave = useCallback(() => {
     const inProgress = startSession(state.anxietyBefore);
     completeSession(inProgress, state.anxietyAfter, {
-      distortions: data?.distortions ?? [],
-      reframing: data?.reframing ?? '',
-      question: data?.question ?? '',
-      verticalArrowLevels: deepData?.levels ?? undefined,
-      verticalArrowReframing: deepData?.reframing ?? undefined,
+      distortions: state.data?.distortions ?? [],
+      reframing: state.data?.reframing ?? '',
+      question: state.data?.question ?? '',
+      verticalArrowLevels: state.deepData?.levels ?? undefined,
+      verticalArrowReframing: state.deepData?.reframing ?? undefined,
     });
     dispatch({ type: 'SAVE' });
     setTimeout(() => dispatch({ type: 'RESET' }), 2000);
-  }, [data, deepData, state.anxietyBefore, state.anxietyAfter]);
+  }, [state.data, state.deepData, state.anxietyBefore, state.anxietyAfter, dispatch]);
 
   return (
     <div>
@@ -320,7 +251,7 @@ export function MainScreen() {
                 <button
                   onClick={() => {
                     if (manualText.trim()) {
-                      surfaceThoughtRef.current = manualText.trim();
+                      dispatch({ type: 'SET_SURFACE_THOUGHT', text: manualText.trim() });
                       dispatch({ type: 'STOP_RECORDING' });
                       sendText(manualText.trim())
                         .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
@@ -388,11 +319,11 @@ export function MainScreen() {
 
       {(state.phase === 'analyzing' || state.phase === 'result') && (
         <div className="phase-enter" key="response">
-        <ResponseView data={data} loading={loading} />
+        <ResponseView data={displayData} loading={loading} />
         </div>
       )}
 
-      {state.phase === 'result' && data && (
+      {state.phase === 'result' && displayData && (
         <div className="phase-enter" key="post-result">
           <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-md)' }}>
             <button
@@ -451,7 +382,7 @@ export function MainScreen() {
               Вы сказали:
             </p>
             <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontStyle: 'italic', margin: '0 0 var(--space-lg) 0', lineHeight: 1.5 }}>
-              «{surfaceThoughtRef.current ?? ''}»
+              &laquo;{state.surfaceThought ?? ''}&raquo;
             </p>
             <p style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: 500, margin: '0 0 var(--space-xs) 0' }}>
               Что эта мысль говорит о вас?
@@ -483,7 +414,7 @@ export function MainScreen() {
             {text || 'Я слушаю...'}
           </div>
         </div>
-      )}  
+      )}
 
       {state.phase === 'deep-analyzing' && (
         <div className="phase-enter" key="deep-analyzing">
@@ -493,12 +424,12 @@ export function MainScreen() {
 
       {state.phase === 'deep-result' && (
         <div className="phase-enter" key="deep-result">
-          <ResponseView data={data} loading={false} />
+          <ResponseView data={displayData} loading={false} />
           <div ref={deepResultRef}>
             <VerticalArrow
-              levels={deepData?.levels ?? null}
-              reframing={deepData?.reframing}
-              question={deepData?.question}
+              levels={displayDeepData?.levels ?? null}
+              reframing={displayDeepData?.reframing}
+              question={displayDeepData?.question}
             />
           </div>
           <PostRatingSlider

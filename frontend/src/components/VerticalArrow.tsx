@@ -1,4 +1,4 @@
-import type { VerticalArrowLevel } from '../hooks/useSSE';
+import type { VerticalArrowLevel } from '../types/session';
 
 export function VerticalArrow({
   levels,
