@@ -195,19 +195,12 @@ export function ResponseView({
           fontSize: '15px',
         }}
       >
-        <div
-          style={{
-            display: 'inline-block',
-            width: '24px',
-            height: '24px',
-            borderRadius: '50%',
-            border: '2px solid var(--border)',
-            borderTopColor: 'var(--accent)',
-            animation: 'spin 0.8s linear infinite',
-            marginBottom: 'var(--space-md)',
-          }}
-        />
-        <p>Анализирую...</p>
+        <div className="loading-dots">
+          <div className="loading-dot" />
+          <div className="loading-dot" />
+          <div className="loading-dot" />
+        </div>
+        <p>Смотрю на ситуацию...</p>
       </div>
     );
   }
@@ -216,11 +209,16 @@ export function ResponseView({
 
   return (
     <div>
-      <DistortionList distortions={data.distortions} />
-      <ReframingText text={data.reframing} />
+      <div className="stagger-0">
+        <DistortionList distortions={data.distortions} />
+      </div>
+      <div className="stagger-1">
+        <ReframingText text={data.reframing} />
+      </div>
 
       {data.question && (
         <div
+          className="stagger-2"
           style={{
             padding: 'var(--space-md)',
             margin: '0 var(--space-md) var(--space-md)',

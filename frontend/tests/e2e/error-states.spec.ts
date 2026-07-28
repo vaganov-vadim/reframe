@@ -51,7 +51,7 @@ test('Test 1: network error shows ErrorBanner with retry', async ({ page }) => {
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
 
-  await expect(page.getByText(/ошибка сети/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/нет связи/i)).toBeVisible({ timeout: 5000 });
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 });
 
@@ -70,7 +70,7 @@ test('Test 2: LLM error 502 shows ErrorBanner with retry', async ({ page }) => {
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
 
-  await expect(page.getByText(/не удалось получить ответ/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/не получилось/i)).toBeVisible({ timeout: 5000 });
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 });
 
@@ -94,7 +94,7 @@ test('Test 3: rate limit 429 shows warning without retry button', async ({ page 
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
 
-  await expect(page.getByText(/слишком много запросов/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/многовато запросов/i)).toBeVisible({ timeout: 5000 });
   // Rate-limit → no retry button
   await expect(page.getByRole('button', { name: 'Повторить' })).not.toBeVisible();
 });
@@ -109,7 +109,7 @@ test('Test 4: empty transcript shows speech error and returns to start', async (
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
 
-  await expect(page.getByText(/не удалось распознать речь/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/не расслышал/i)).toBeVisible({ timeout: 5000 });
   // Should be back at the start — record button visible
   await expect(page.getByRole('button', { name: /говорить/i })).toBeVisible();
 });
@@ -141,7 +141,7 @@ test('Test 6: request timeout shows server error with retry', async ({ page }) =
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
 
-  await expect(page.getByText(/не удалось получить ответ/i)).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText(/не получилось/i)).toBeVisible({ timeout: 15000 });
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 });
 

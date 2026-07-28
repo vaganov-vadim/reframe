@@ -64,7 +64,7 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
-        setError('Не удалось распознать речь. Попробуйте ещё раз.');
+        setError('Не расслышал. Попробуем ещё раз?');
       }
       setIsListening(false);
     };

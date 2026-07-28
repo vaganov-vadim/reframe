@@ -41,11 +41,11 @@ function errorMessageForStatus(status: number): string {
     case 400:
       return 'Текст не может быть пустым.';
     case 429:
-      return 'Слишком много запросов. Подождите минуту.';
+      return 'Многовато запросов. Давай подождём минуту.';
     case 500:
     case 502:
     case 504:
-      return 'Не удалось получить ответ. Попробуйте через минуту.';
+      return 'Не получилось. Попробуем через минуту?';
     default:
       return `Ошибка сервера: ${status}`;
   }
@@ -152,15 +152,15 @@ export function useSSE() {
           loading: false,
           data: prev.data,
           error: prev.data
-            ? 'Ответ получен не полностью.'
-            : 'Не удалось получить ответ. Попробуйте через минуту.',
+            ? 'Услышал не всё. Но вот что есть:'
+            : 'Не получилось. Попробуем через минуту?',
         }));
       } else {
         setState((prev) => ({
           ...prev,
           loading: false,
           data: null,
-          error: 'Ошибка сети. Проверьте подключение.',
+          error: 'Кажется, нет связи. Проверим?',
         }));
       }
     }
@@ -241,13 +241,13 @@ export function useSSE() {
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: 'Не удалось получить ответ. Попробуйте через минуту.',
+          error: 'Не получилось. Попробуем через минуту?',
         }));
       } else {
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: 'Ошибка сети. Проверьте подключение.',
+          error: 'Кажется, нет связи. Проверим?',
         }));
       }
     }
