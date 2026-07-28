@@ -211,7 +211,7 @@ test('Test 7: partial SSE response shows structure error', async ({ page }) => {
   await page.click('button:has-text("Стоп")', { force: true });
   await page.click('button:has-text("Отправить")', { force: true });
 
-  await expect(page.getByText(/неожиданная структура ответа/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/Ответ пришёл не до конца/i)).toBeVisible({ timeout: 5000 });
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 });
 
@@ -235,6 +235,6 @@ test('Test 8: SSE with unrecognised payload shows structure error', async ({ pag
   await page.click('button:has-text("Стоп")', { force: true });
   await page.click('button:has-text("Отправить")', { force: true });
 
-  await expect(page.getByText(/неожиданная структура ответа/i)).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText(/Ответ пришёл не до конца/i)).toBeVisible({ timeout: 5000 });
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 });

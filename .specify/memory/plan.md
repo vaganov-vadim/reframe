@@ -232,7 +232,7 @@ Timeout: 10s на полный ответ. При превышении — ве�
 
 Конфигурация через Aero (`config.edn`):
 ```clojure
-{:rate-limit {:requests-per-minute #long #or [#env REFRAME_RATE_LIMIT 3]
+{:rate-limit {:requests-per-minute #long #or [#env REFRAME_RATE_LIMIT 5]
               :algorithm :token-bucket}}
 ```
 Меняется через env var `REFRAME_RATE_LIMIT` без перекомпиляции.
