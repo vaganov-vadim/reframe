@@ -74,12 +74,12 @@ test('Test 2: LLM error 502 shows ErrorBanner with retry', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 });
 
-// ─── Test 3: Rate limit (429) → ErrorBanner, NO retry button ──────────────
+// ─── Test 3: Rate limit (429) → countdown from Retry-After ────────────────
 
-test('Test 3: rate limit 429 shows warning without retry button', async ({ page }) => {
+test('Test 3: rate limit 429 shows countdown from Retry-After header', async ({ page }) => {
   await mockSpeechWithText()({ page });
 
-  // Return 429 Too Many Requests
+  // Return 429 Too Many Requests with Retry-After: 60
   await page.route('**/api/reframe', async (route) => {
     await route.fulfill({
       status: 429,
@@ -94,9 +94,50 @@ test('Test 3: rate limit 429 shows warning without retry button', async ({ page 
   await page.waitForTimeout(200);
   await page.click('button:has-text("Стоп")', { force: true });
 
-  await expect(page.getByText(/многовато запросов/i)).toBeVisible({ timeout: 5000 });
-  // Rate-limit → no retry button
+  // Should show empathetic pause message
+  await expect(page.getByText(/пауза/i)).toBeVisible({ timeout: 5000 });
+  // Countdown should start at 60 (from Retry-After header)
+  await expect(page.getByText(/ещё 60с/i)).toBeVisible({ timeout: 2000 });
+  // Rate-limit → no retry button during countdown
   await expect(page.getByRole('button', { name: 'Повторить' })).not.toBeVisible();
+});
+
+// ─── Test 3b: Dynamic Retry-After (30s) + auto-dismiss after countdown ───
+
+test('rate limit shows dynamic countdown from Retry-After header', async ({ page }) => {
+  // Mock SpeechRecognition (must be before goto)
+  await page.addInitScript(() => {
+    localStorage.setItem('reframe_onboarding', 'true');
+    class MockRecognition {
+      continuous = true; interimResults = true; lang = 'ru-RU';
+      onresult: ((event: { resultIndex: number; results: { isFinal: boolean; 0: { transcript: string } }[] }) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      onend: ((event: Event) => void) | null = null;
+      start() { setTimeout(() => { this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript: 'test' } }] }); }, 50); }
+      stop() { this.onend?.(); }
+      abort() {}
+    }
+    (window as Record<string, unknown>).SpeechRecognition = MockRecognition;
+  });
+
+  // Return 429 with Retry-After: 30 (different from default 60)
+  await page.route('**/api/reframe', async (route) => {
+    await route.fulfill({
+      status: 429,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': '30' },
+      body: JSON.stringify({ error: 'Rate limit exceeded' }),
+    });
+  });
+
+  await page.goto('/');
+  await page.click('button:has-text("Говорить")', { force: true });
+  await page.waitForTimeout(200);
+  await page.click('button:has-text("Стоп")', { force: true });
+
+  // Should show rate limit message with countdown starting from 30
+  await expect(page.getByText(/пауза/i)).toBeVisible({ timeout: 5000 });
+  // Countdown should show a number ≤ 30 (not 60)
+  await expect(page.getByText(/ещё \d+с/i)).toBeVisible({ timeout: 2000 });
 });
 
 // ─── Test 4: Empty text after recording → error, return to start ──────────

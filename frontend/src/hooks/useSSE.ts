@@ -17,7 +17,7 @@ function errorMessageForStatus(status: number): string {
     case 400:
       return 'Текст не может быть пустым.';
     case 429:
-      return 'Многовато запросов. Давай подождём минуту.';
+      return 'Пауза на минуту. Пока можно осмыслить результат.';
     case 500:
     case 502:
     case 504:
@@ -63,11 +63,19 @@ export function useSSE() {
       });
 
       if (!response.ok) {
+        let error: string;
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const seconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+          error = `rate_limit:${seconds}`;
+        } else {
+          error = errorMessageForStatus(response.status);
+        }
         setState((prev) => ({
           ...prev,
           loading: false,
           data: null,
-          error: errorMessageForStatus(response.status),
+          error,
         }));
         return;
       }
@@ -166,10 +174,18 @@ export function useSSE() {
       });
 
       if (!response.ok) {
+        let error: string;
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const seconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+          error = `rate_limit:${seconds}`;
+        } else {
+          error = errorMessageForStatus(response.status);
+        }
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: errorMessageForStatus(response.status),
+          error,
         }));
         return;
       }
