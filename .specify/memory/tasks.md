@@ -131,13 +131,22 @@
 - [x] 9.6 Frontend: стилизация под navy/amber дизайн
 - [x] 9.7 E2E: тест Vertical Arrow флоу
 
+## Phase 10 — Мониторинг и статус
+
+- [x] 10.1 Beszel: установка hub + agent через Docker
+- [x] 10.2 nginx: прокси /monitoring/ → Beszel, /api/health защита
+- [x] 10.3 Health endpoint: /api/health с LLM статусом, счётчиками, памятью
+- [x] 10.4 Статус-панель: /status в SPA с карточками метрик
+- [x] 10.5 Telegram алертинг: cron → health check → бот
+- [x] 10.6 Документация: MONITORING.md
+
 ---
 
-## Итого: 65 задач выполнено, 9 фаз
+## Итого: 71 задач выполнено, 10 фаз
 
 ```
 
-Phase 1 (8) → Phase 2 (8) ∥ Phase 3 (6) → Phase 4 (8) → Phase 5 (6) → Phase 6 (5) → Phase 7 (5) → Phase 8 (9) → Phase 9 (7)
+Phase 1 (8) → Phase 2 (8) ∥ Phase 3 (6) → Phase 4 (8) → Phase 5 (6) → Phase 6 (5) → Phase 7 (5) → Phase 8 (9) → Phase 9 (7) → Phase 10 (6)
                     ↑                   ↑
                E2E после 2          E2E после 4, 5, 6, 8
 ```
