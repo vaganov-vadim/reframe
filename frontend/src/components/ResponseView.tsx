@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { ReframeResponse } from '../hooks/useSSE';
+import type { ReframeResponse } from '../types/session';
 import { DistortionInfo } from './DistortionInfo';
 
 export function DistortionList({

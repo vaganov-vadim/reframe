@@ -1,31 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
+import type { ReframeResponse, DeepResponse } from '../types/session';
 
-export interface Distortion {
-  type: string;
-  thought: string;
-  why: string;
-}
-
-export interface VerticalArrowLevel {
-  thought: string;
-  label: string;
-}
-
-export interface DeepResponse {
-  levels: VerticalArrowLevel[];
-  reframing: string;
-  question?: string;
-}
-
-export interface ReframeResponse {
-  distortions?: Distortion[];
-  levels?: VerticalArrowLevel[];
-  reframing: string;
-  question: string;
-  pattern?: string;
-}
-
-export interface SSEState {
+interface SSEState {
   loading: boolean;
   data: ReframeResponse | null;
   error: string | null;
