@@ -15,7 +15,7 @@ const API_TIMEOUT = 10000; // 10s
 function errorMessageForStatus(status: number): string {
   switch (status) {
     case 400:
-      return 'Текст не может быть пустым.';
+      return 'Ничего не услышал. Попробуем ещё раз?';
     case 429:
       return 'Пауза на минуту. Пока можно осмыслить результат.';
     case 500:
@@ -86,7 +86,7 @@ export function useSSE() {
           ...prev,
           loading: false,
           data: null,
-          error: 'Streaming не поддерживается',
+          error: 'Что-то с соединением. Попробуем снова?',
         }));
         return;
       }
@@ -126,7 +126,7 @@ export function useSSE() {
           : null,
         error: prev.data?.reframing || prev.data?.distortions?.length
           ? null
-          : 'Неожиданная структура ответа.',
+          : 'Ответ пришёл не до конца. Но вот что есть.',
       }));
     } catch (err: unknown) {
       const error = err as { name?: string };
@@ -195,7 +195,7 @@ export function useSSE() {
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: 'Streaming не поддерживается',
+          error: 'Что-то с соединением. Попробуем снова?',
         }));
         return;
       }

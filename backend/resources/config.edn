@@ -1,5 +1,5 @@
 {:server     {:port #long #or [#env REFRAME_PORT 3000]}
- :rate-limit {:requests-per-minute #long #or [#env REFRAME_RATE_LIMIT 3]
+ :rate-limit {:requests-per-minute #long #or [#env REFRAME_RATE_LIMIT 5]
               :algorithm           :token-bucket}
  :llm        {:api-key      #env LLM_API_KEY
               :api-url      #or [#env LLM_API_URL "https://api.deepseek.com/v1/chat/completions"]

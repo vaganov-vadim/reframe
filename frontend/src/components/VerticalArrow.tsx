@@ -33,7 +33,7 @@ export function VerticalArrow({
             marginBottom: 'var(--space-md)',
           }}
         />
-        <p>Углубляю анализ...</p>
+        <p>Смотрю на ситуацию...</p>
       </div>
     );
   }

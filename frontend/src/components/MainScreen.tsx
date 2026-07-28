@@ -433,7 +433,7 @@ export function MainScreen() {
               Что эта мысль говорит о вас?
             </p>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-              Скажите одно предложение.
+              Слушаю...
             </p>
           </div>
           <RecordButton
