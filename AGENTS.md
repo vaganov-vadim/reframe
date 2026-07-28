@@ -63,7 +63,7 @@ constitution → specify → plan → tasks → implement
 | Unit-тесты | Vitest |
 | E2E-тесты | Playwright |
 | Бэкенд | Clojure + Kit (прокси + промпт-инжиниринг) |
-| API | REST + SSE streaming |
+| API | REST + JSON |
 
 ## Ключевые правила
 
@@ -159,7 +159,7 @@ type(scope): краткое описание в повелительном на�
 3. `git push origin feature/xxx`
 4. Создать PR в main
 5. CI проходит (lint, test, build) → мёрдж
-6. После мёрджа в main — деплой (deploy.yml)
+6. После мёрджа в main — деплой (ci.yml deploy job)
 
 **Прямой пуш в main запрещён.** Исключение: hotfix (с пометкой `fix:`).
 

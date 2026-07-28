@@ -57,11 +57,11 @@ Chrome → React SPA → POST /api/reframe → Clojure прокси → LLM API 
 
 | Слой | Технология |
 |------|-----------|
-| Фронтенд | TypeScript 5.x (strict) + React 19 + Vite |
+| Фронтенд | TypeScript 6.0 (strict) + React 19.2 + Vite 8 |
 | Хранение | localStorage |
 | Бэкенд | Clojure + Kit |
 | LLM | DeepSeek (заменяем) |
-| Тесты | Vitest (23 unit) + Playwright (11 E2E) |
+| Тесты | Vitest (19 unit) + Playwright (27 E2E) |
 
 ## Ключевые фичи
 
