@@ -104,8 +104,9 @@ export function MainScreen() {
           dispatch({ type: 'DEEP_ANALYZE' });
           sendDeepText(deepText, state.surfaceThought)
             .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
-            .catch(() => {
-              dispatch({ type: 'DEEP_ERROR', message: 'Не получилось. Попробуем через минуту?' });
+            .catch((err: unknown) => {
+              const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+              dispatch({ type: 'DEEP_ERROR', message });
             });
         } else {
           dispatch({ type: 'DEEP_ERROR', message: 'Не расслышал. Попробуем ещё раз?' });

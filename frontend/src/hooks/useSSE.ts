@@ -187,17 +187,18 @@ export function useSSE() {
           deepLoading: false,
           error,
         }));
-        return;
+        throw new Error(error);
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
+        const msg = 'Streaming не поддерживается';
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: 'Что-то с соединением. Попробуем снова?',
+          error: msg,
         }));
-        return;
+        throw new Error(msg);
       }
 
       const decoder = new TextDecoder();
@@ -214,12 +215,13 @@ export function useSSE() {
         for (const line of lines) {
           const parsed = parseSSEData(line);
           if (parsed && typeof parsed === 'object' && 'error' in (parsed as Record<string, unknown>)) {
+            const sseError = (parsed as Record<string, string>).error;
             setState((prev) => ({
               ...prev,
               deepLoading: false,
-              error: (parsed as Record<string, string>).error,
+              error: sseError,
             }));
-            return;
+            throw new Error(sseError);
           }
           if (parsed && typeof parsed === 'object' && 'levels' in (parsed as Record<string, unknown>)) {
             setState((prev) => ({ ...prev, deepData: parsed as DeepResponse }));
@@ -229,19 +231,26 @@ export function useSSE() {
       setState((prev) => ({ ...prev, deepLoading: false }));
     } catch (err: unknown) {
       const error = err as { name?: string };
+      // Only handle network/timeout errors here; HTTP errors already handled above
       if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        const msg = 'Не получилось. Попробуем через минуту?';
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: 'Не получилось. Попробуем через минуту?',
+          error: msg,
         }));
-      } else {
+        throw new Error(msg, { cause: err });
+      } else if (error.name === 'TypeError') {
+        const msg = 'Кажется, нет связи. Проверим?';
         setState((prev) => ({
           ...prev,
           deepLoading: false,
-          error: 'Кажется, нет связи. Проверим?',
+          error: msg,
         }));
+        throw new Error(msg, { cause: err });
       }
+      // For HTTP errors (regular Error), SSE state already set above — just propagate
+      throw err;
     }
   }, []);
 
