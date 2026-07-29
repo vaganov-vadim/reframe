@@ -68,12 +68,8 @@ function createInitialState(): MainState {
     const saved = localStorage.getItem(STORAGE_KEYS.sessionState);
     if (saved) {
       const parsed = JSON.parse(saved) as Partial<MainState>;
-      // Only restore if phase indicates an active session
-      if (
-        parsed.phase &&
-        parsed.phase !== 'rating-before' &&
-        parsed.phase !== 'done'
-      ) {
+      // Only restore if user was in a result phase (already received LLM response)
+      if (parsed.phase && (parsed.phase === 'result' || parsed.phase === 'deep-result')) {
         return {
           phase: parsed.phase as Phase,
           anxietyBefore: parsed.anxietyBefore ?? 5,
@@ -111,12 +107,15 @@ const SessionContext = createContext<{
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(sessionReducer, undefined, createInitialState);
 
-  // Persist state to localStorage on every change
+  // Persist state to localStorage — only persist result phases, not intermediate states
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.sessionState, JSON.stringify(state));
-    } catch {
-      // Storage full or unavailable — degrade gracefully
+    const persistablePhases: Phase[] = ['result', 'deep-result', 'done'];
+    if (persistablePhases.includes(state.phase)) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.sessionState, JSON.stringify(state));
+      } catch {
+        // Storage full or unavailable — degrade gracefully
+      }
     }
   }, [state]);
 
