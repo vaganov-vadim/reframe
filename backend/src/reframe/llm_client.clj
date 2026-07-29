@@ -67,20 +67,22 @@
   "Make an actual HTTP request to the LLM API using clj-http.
    Config is the `:llm` sub-map from Aero config."
   [llm-config prompt]
-  (let [api-url  (:api-url llm-config)
-        api-key  (:api-key llm-config)
-        model    (:model llm-config)
-        start-ms (System/currentTimeMillis)
-        response (http/post api-url
-                   {:headers     {"Authorization" (str "Bearer " api-key)
-                                  "Content-Type"  "application/json"}
-                    :body        (json/generate-string
-                                   {:model    model
-                                    :messages [{:role "system" :content prompt}
-                                               {:role "user"   :content prompt}]})
-                    :socket-timeout 25000
-                    :conn-timeout    5000
-                    :as              :json})
+  (let [api-url       (:api-url llm-config)
+        api-key       (:api-key llm-config)
+        model         (:model llm-config)
+        socket-timeout (or (:socket-timeout-ms llm-config) 30000)
+        conn-timeout   (or (:conn-timeout-ms llm-config) 5000)
+        start-ms      (System/currentTimeMillis)
+        response      (http/post api-url
+                        {:headers     {"Authorization" (str "Bearer " api-key)
+                                       "Content-Type"  "application/json"}
+                         :body        (json/generate-string
+                                        {:model    model
+                                         :messages [{:role "system" :content prompt}
+                                                    {:role "user"   :content prompt}]})
+                         :socket-timeout socket-timeout
+                         :conn-timeout   conn-timeout
+                         :as              :json})
         elapsed  (- (System/currentTimeMillis) start-ms)]
     (timbre/debug "LLM call completed in" elapsed "ms")
     (get-in response [:body :choices 0 :message :content])))
