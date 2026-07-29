@@ -3,6 +3,7 @@
    Mock mode rotates through: error → timeout → fixture responses."
   (:require [clj-http.client :as http]
             [clojure.string :as str]
+            [clojure.core.async :refer [alts!! timeout]]
             [cheshire.core :as json]))
 
 ;; ─── Mock infrastructure ────────────────────────────────────────────────────
@@ -82,9 +83,11 @@
 
 (defn- call-with-retry
   "Call LLM with retry on transient failures. Configurable via llm-config:
-   :max-retries (default 3). Retries immediately without delay."
+   :max-retries (default 3) and :retry-backoff-ms (default 1000).
+   Uses core.async parking timeout between retries."
   [llm-config prompt]
-  (let [max-retries (or (:max-retries llm-config) 3)]
+  (let [max-retries  (or (:max-retries llm-config) 3)
+        backoff-ms   (or (:retry-backoff-ms llm-config) 1000)]
     (loop [attempt 1]
       (let [result (try
                      {:value (real-call-llm llm-config prompt)}
@@ -93,7 +96,8 @@
         (if-let [v (:value result)]
           v
           (if (< attempt max-retries)
-            (recur (inc attempt))
+            (do (alts!! [(timeout (* backoff-ms attempt))])
+                (recur (inc attempt)))
             (throw (:error result))))))))
 
 ;; ─── Public API ─────────────────────────────────────────────────────────────
