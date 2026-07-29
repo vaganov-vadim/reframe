@@ -11,6 +11,7 @@ import { VerticalArrow } from './VerticalArrow';
 import { PostRatingSlider } from './PostRatingSlider';
 import { DeltaDisplay } from './DeltaDisplay';
 import { ErrorBanner } from './ErrorBanner';
+import { TextInput } from './TextInput';
 import { TopicPrompt } from './TopicPrompt';
 import { BreathingExercise } from './BreathingExercise';
 import { startSession, completeSession } from '../services/sessionService';
@@ -19,9 +20,6 @@ export function MainScreen() {
   const { state, dispatch } = useSession();
 
   const [showBreathing, setShowBreathing] = useState(false);
-  const [manualText, setManualText] = useState('');
-  const [manualDeepText, setManualDeepText] = useState('');
-  const [sending, setSending] = useState(false);
 
   const {
     text,
@@ -164,7 +162,6 @@ export function MainScreen() {
     dispatch({ type: 'SAVE' });
     setTimeout(() => {
       setShowBreathing(false);
-      setManualText('');
       dispatch({ type: 'RESET' });
     }, 2000);
   }, [state.data, state.deepData, state.anxietyBefore, state.anxietyAfter, dispatch]);
@@ -230,62 +227,15 @@ export function MainScreen() {
               onCancel={handleCancel}
             />
           ) : (
-            <div style={{ padding: 'var(--space-md)' }}>
-              <textarea
-                value={manualText}
-                onChange={(e) => setManualText(e.target.value)}
-                placeholder="Опишите, что вас тревожит..."
-                maxLength={3000}
-                rows={5}
-                style={{
-                  width: '100%',
-                  maxWidth: '380px',
-                  margin: '0 auto',
-                  display: 'block',
-                  background: 'var(--bg-elevated)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--border-radius-sm)',
-                  padding: 'var(--space-md)',
-                  fontSize: '15px',
-                  lineHeight: 1.6,
-                  fontFamily: 'inherit',
-                  resize: 'vertical',
-                  outline: 'none',
-                }}
-              />
-              <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
-                <button
-                  onClick={() => {
-                    if (!manualText.trim() || sending) return;
-                    setSending(true);
-                    dispatch({ type: 'SET_SURFACE_THOUGHT', text: manualText.trim() });
-                    dispatch({ type: 'ANALYZE' });
-                    sendText(manualText.trim())
-                      .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
-                      .catch(() => {
-                        dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
-                      })
-                      .finally(() => setSending(false));
-                  }}
-                  disabled={!manualText.trim() || sending}
-                  style={{
-                    width: '100%',
-                    maxWidth: '320px',
-                    background: manualText.trim() ? 'var(--accent)' : 'var(--bg-elevated)',
-                    color: manualText.trim() ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                    border: 'none',
-                    padding: 'var(--space-md)',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    borderRadius: 'var(--border-radius-sm)',
-                    cursor: manualText.trim() ? 'pointer' : 'not-allowed',
-                  }}
-                >
-                  Отправить
-                </button>
-              </div>
-            </div>
+            <TextInput
+              placeholder="Опишите, что вас тревожит..."
+              submitLabel="Отправить"
+              onSubmit={(text) => {
+                dispatch({ type: 'SET_SURFACE_THOUGHT', text });
+                dispatch({ type: 'ANALYZE' });
+                sendText(text).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+              }}
+            />
           )}
           {state.phase === 'done' && (
             <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
@@ -457,61 +407,21 @@ export function MainScreen() {
               onCancel={handleDeepCancel}
             />
           ) : (
-            <div style={{ padding: 'var(--space-md)' }}>
-              <textarea
-                value={manualDeepText}
-                onChange={(e) => setManualDeepText(e.target.value)}
-                placeholder="Напишите одно предложение..."
-                maxLength={3000}
-                rows={3}
-                style={{
-                  width: '100%',
-                  maxWidth: '380px',
-                  margin: '0 auto',
-                  display: 'block',
-                  background: 'var(--bg-elevated)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--border-radius-sm)',
-                  padding: 'var(--space-md)',
-                  fontSize: '15px',
-                  lineHeight: 1.6,
-                  fontFamily: 'inherit',
-                  resize: 'vertical',
-                  outline: 'none',
-                }}
-              />
-              <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
-                <button
-                  onClick={() => {
-                    if (manualDeepText.trim() && state.surfaceThought) {
-                      dispatch({ type: 'DEEP_ANALYZE' });
-                      sendDeepText(manualDeepText.trim(), state.surfaceThought)
-                        .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
-                        .catch((err: unknown) => {
-                          const msg = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
-                          dispatch({ type: 'DEEP_ERROR', message: msg });
-                        });
-                    }
-                  }}
-                  disabled={!manualDeepText.trim()}
-                  style={{
-                    width: '100%',
-                    maxWidth: '320px',
-                    background: manualDeepText.trim() ? 'var(--accent)' : 'var(--bg-elevated)',
-                    color: manualDeepText.trim() ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                    border: 'none',
-                    padding: 'var(--space-md)',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    borderRadius: 'var(--border-radius-sm)',
-                    cursor: manualDeepText.trim() ? 'pointer' : 'not-allowed',
-                  }}
-                >
-                  Отправить
-                </button>
-              </div>
-            </div>
+            <TextInput
+              placeholder="Напишите одно предложение..."
+              submitLabel="Отправить"
+              onSubmit={(text) => {
+                if (state.surfaceThought) {
+                  dispatch({ type: 'DEEP_ANALYZE' });
+                  sendDeepText(text, state.surfaceThought)
+                    .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
+                    .catch((err: unknown) => {
+                      const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+                      dispatch({ type: 'DEEP_ERROR', message });
+                    });
+                }
+              }}
+            />
           )}
           <div style={{
             margin: 'var(--space-md) auto',
