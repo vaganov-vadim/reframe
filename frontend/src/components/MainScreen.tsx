@@ -4,12 +4,14 @@ import { useSession } from '../contexts/SessionContext';
 import { useSSE } from '../hooks/useSSE';
 import type { ReframeResponse, DeepResponse } from '../types/session';
 import { AnxietySlider } from './AnxietySlider';
-import { InputMethod } from './InputMethod';
+import { RecordButton } from './RecordButton';
+
 import { ResponseView } from './ResponseView';
 import { VerticalArrow } from './VerticalArrow';
 import { PostRatingSlider } from './PostRatingSlider';
 import { DeltaDisplay } from './DeltaDisplay';
 import { ErrorBanner } from './ErrorBanner';
+import { TextInput } from './TextInput';
 import { TopicPrompt } from './TopicPrompt';
 import { BreathingExercise } from './BreathingExercise';
 import { startSession, completeSession } from '../services/sessionService';
@@ -19,7 +21,16 @@ export function MainScreen() {
 
   const [showBreathing, setShowBreathing] = useState(false);
 
-  const { error: speechError } = useRecording();
+  const {
+    text,
+    isListening,
+    getFinalText,
+    error: speechError,
+    isSupported,
+    start,
+    stop,
+    cancel,
+  } = useRecording();
   const {
     data: sseData,
     loading,
@@ -30,7 +41,7 @@ export function MainScreen() {
   } = useSSE();
 
   const deepResultRef = useRef<HTMLDivElement>(null);
-  const sendingRef = useRef(false);
+  const lastSurfaceRef = useRef<string | null>(null);
 
   // Persist SSE results to session context when they arrive
   useEffect(() => {
@@ -49,6 +60,63 @@ export function MainScreen() {
   const displayData: ReframeResponse | null = state.data || sseData;
   const displayDeepData: DeepResponse | null = state.deepData || sseDeepData;
 
+  const handleStart = useCallback(() => {
+    if (state.phase === 'recording' || state.phase === 'deep-recording') return; // already recording
+    dispatch({ type: 'START_RECORDING' });
+    start();
+  }, [start, dispatch, state.phase]);
+
+  const handleStop = useCallback(() => {
+    stop();
+    // Phase stays 'recording' until useEffect fires.
+    // Do NOT read text here — recognition.stop() is async,
+    // final transcript arrives after stop() returns.
+  }, [stop]);
+
+  const handleDeepStart = useCallback(() => {
+    dispatch({ type: 'START_DEEP' });
+    start();
+  }, [start, dispatch]);
+
+  const handleDeepStop = useCallback(() => {
+    stop();
+  }, [stop]);
+
+  // When recording stops (isListening goes true → false),
+  // check if we have text and should send it.
+  const prevListening = useRef(isListening);
+
+  useEffect(() => {
+    // Just transitioned from listening to not-listening
+    if (prevListening.current && !isListening) {
+      if (state.phase === 'recording') {
+        const finalText = getFinalText();
+        if (finalText) {
+          dispatch({ type: 'SET_SURFACE_THOUGHT', text: finalText });
+          dispatch({ type: 'SET_LAST_TEXT', text: finalText });
+          dispatch({ type: 'STOP_RECORDING' });
+        } else {
+          dispatch({ type: 'ERROR', message: 'Не расслышал. Попробуем ещё раз?' });
+        }
+      } else if (state.phase === 'deep-recording') {
+        const deepText = getFinalText();
+        if (deepText && state.surfaceThought) {
+          lastSurfaceRef.current = deepText;
+          dispatch({ type: 'DEEP_ANALYZE' });
+          sendDeepText(deepText, state.surfaceThought)
+            .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
+            .catch((err: unknown) => {
+              const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+              dispatch({ type: 'DEEP_ERROR', message });
+            });
+        } else {
+          dispatch({ type: 'DEEP_ERROR', message: 'Не расслышал. Попробуем ещё раз?' });
+        }
+      }
+    }
+    prevListening.current = isListening;
+  }, [isListening, state.phase, state.surfaceThought, getFinalText, sendText, sendDeepText, dispatch]);
+
   // Auto-scroll to Vertical Arrow when deep result appears
   useEffect(() => {
     if (state.phase === 'deep-result' && deepResultRef.current) {
@@ -59,6 +127,7 @@ export function MainScreen() {
   }, [state.phase]);
 
   // RETRY: re-send last text when retryId changes
+  const sendingRef = useRef(false);
   useEffect(() => {
     if (state.retryId > 0 && state.lastText && !sendingRef.current) {
       sendingRef.current = true;
@@ -70,6 +139,16 @@ export function MainScreen() {
         .finally(() => { sendingRef.current = false; });
     }
   }, [state.retryId, state.lastText, sendText, dispatch]);
+
+  const handleCancel = useCallback(() => {
+    cancel();
+    dispatch({ type: 'CANCEL_RECORDING' });
+  }, [cancel, dispatch]);
+
+  const handleDeepCancel = useCallback(() => {
+    cancel();
+    dispatch({ type: 'RESULT_RECEIVED' });
+  }, [cancel, dispatch]);
 
   const handleSave = useCallback(() => {
     const inProgress = startSession(state.anxietyBefore);
@@ -140,16 +219,22 @@ export function MainScreen() {
             </div>
           )}
           {state.phase === 'rating-before' && <TopicPrompt />}
-          {state.phase === 'rating-before' && (
-            <InputMethod
+          {isSupported ? (
+            <RecordButton
+              state={state.phase === 'done' ? 'idle' : 'idle'}
+              onStart={handleStart}
+              onStop={handleStop}
+              onCancel={handleCancel}
+            />
+          ) : (
+            <TextInput
+              placeholder="Опишите, что вас тревожит..."
+              submitLabel="Отправить"
               onSubmit={(text) => {
                 dispatch({ type: 'SET_SURFACE_THOUGHT', text });
-                dispatch({ type: 'SET_LAST_TEXT', text });
                 dispatch({ type: 'ANALYZE' });
                 sendText(text).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
               }}
-              recordingPrompt="Что вас тревожит?"
-              textPlaceholder="Опишите, что вас тревожит..."
             />
           )}
           {state.phase === 'done' && (
@@ -163,6 +248,83 @@ export function MainScreen() {
         </div>
       )}
 
+      {state.phase === 'recording' && (
+        <div className="phase-enter" key="recording">
+          <RecordButton
+            state="recording"
+            onStart={handleStart}
+            onStop={handleStop}
+            onCancel={handleCancel}
+          />
+          <div style={{
+            margin: 'var(--space-md) auto',
+            padding: 'var(--space-md) var(--space-lg)',
+            maxWidth: '360px',
+            minHeight: '60px',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--border-radius-sm)',
+            border: '1px solid var(--border)',
+            fontSize: '15px',
+            lineHeight: '1.6',
+            color: text ? 'var(--text-primary)' : 'var(--text-secondary)',
+            textAlign: 'center' as const,
+            transition: 'color 0.3s',
+          }}>
+            {text || 'Я слушаю...'}
+          </div>
+        </div>
+      )}
+
+      {state.phase === 'review' && (
+        <div className="phase-enter" key="review">
+          <div style={{ padding: 'var(--space-md)' }}>
+            <div style={{
+              background: 'var(--bg-elevated)',
+              borderRadius: 'var(--border-radius-sm)',
+              padding: 'var(--space-md)',
+              marginBottom: 'var(--space-md)',
+              border: '1px solid var(--border)',
+              fontSize: '15px',
+              lineHeight: 1.6,
+              color: 'var(--text-primary)',
+            }}>
+              {state.lastText}
+            </div>
+            <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+              <button onClick={() => {
+                dispatch({ type: 'ANALYZE' });
+                sendText(state.lastText!).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+              }} style={{
+                background: 'var(--accent)',
+                color: 'var(--bg-primary)',
+                border: 'none',
+                padding: 'var(--space-sm) var(--space-lg)',
+                fontSize: '14px',
+                fontWeight: 600,
+                borderRadius: 'var(--border-radius-sm)',
+                cursor: 'pointer',
+              }}>
+                Отправить
+              </button>
+              <button onClick={() => {
+                dispatch({ type: 'START_RECORDING' });
+                start();
+              }} style={{
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+                padding: 'var(--space-sm) var(--space-lg)',
+                fontSize: '14px',
+                borderRadius: 'var(--border-radius-sm)',
+                cursor: 'pointer',
+              }}>
+                Записать заново
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {(state.phase === 'analyzing' || state.phase === 'result') && (
         <div className="phase-enter" key="response">
         <ResponseView data={displayData} loading={loading} />
@@ -173,7 +335,7 @@ export function MainScreen() {
         <div className="phase-enter" key="post-result">
           <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-md)' }}>
             <button
-              onClick={() => dispatch({ type: 'START_DEEP' })}
+              onClick={handleDeepStart}
               style={{
                 width: '100%',
                 maxWidth: '320px',
@@ -223,22 +385,60 @@ export function MainScreen() {
 
       {state.phase === 'deep-recording' && (
         <div className="phase-enter" key="deep-recording">
-          <InputMethod
-            onSubmit={(text) => {
-              if (state.surfaceThought) {
-                dispatch({ type: 'DEEP_ANALYZE' });
-                sendDeepText(text, state.surfaceThought)
-                  .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
-                  .catch((err: unknown) => {
-                    const msg = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
-                    dispatch({ type: 'DEEP_ERROR', message: msg });
-                  });
-              }
-            }}
-            surfaceThought={state.surfaceThought ?? undefined}
-            recordingPrompt="Что эта мысль говорит о вас?"
-            textPlaceholder="Что эта мысль говорит о вас?"
-          />
+          <div style={{ textAlign: 'center', padding: 'var(--space-xl) var(--space-md) var(--space-sm)' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 var(--space-sm) 0' }}>
+              Вы сказали:
+            </p>
+            <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontStyle: 'italic', margin: '0 0 var(--space-lg) 0', lineHeight: 1.5 }}>
+              &laquo;{state.surfaceThought ?? ''}&raquo;
+            </p>
+            <p style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: 500, margin: '0 0 var(--space-xs) 0' }}>
+              Что эта мысль говорит о вас?
+            </p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
+              Я слушаю...
+            </p>
+          </div>
+          {isSupported ? (
+            <RecordButton
+              state="recording"
+              onStart={handleDeepStart}
+              onStop={handleDeepStop}
+              onCancel={handleDeepCancel}
+            />
+          ) : (
+            <TextInput
+              placeholder="Напишите одно предложение..."
+              submitLabel="Отправить"
+              onSubmit={(text) => {
+                if (state.surfaceThought) {
+                  dispatch({ type: 'DEEP_ANALYZE' });
+                  sendDeepText(text, state.surfaceThought)
+                    .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
+                    .catch((err: unknown) => {
+                      const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+                      dispatch({ type: 'DEEP_ERROR', message });
+                    });
+                }
+              }}
+            />
+          )}
+          <div style={{
+            margin: 'var(--space-md) auto',
+            padding: 'var(--space-md) var(--space-lg)',
+            maxWidth: '360px',
+            minHeight: '60px',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--border-radius-sm)',
+            border: '1px solid var(--border)',
+            fontSize: '15px',
+            lineHeight: '1.6',
+            color: text ? 'var(--text-primary)' : 'var(--text-secondary)',
+            textAlign: 'center' as const,
+            transition: 'color 0.3s',
+          }}>
+            {text || 'Я слушаю...'}
+          </div>
         </div>
       )}
 
