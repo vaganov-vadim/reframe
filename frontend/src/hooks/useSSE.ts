@@ -95,6 +95,7 @@ export function useSSE() {
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let hasData = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -117,6 +118,7 @@ export function useSSE() {
             return;
           }
           if (parsed && typeof parsed === 'object' && 'reframing' in (parsed as Record<string, unknown>)) {
+            hasData = true;
             setState((prev) => ({ ...prev, data: parsed as ReframeResponse }));
           }
         }
@@ -131,7 +133,7 @@ export function useSSE() {
           ? null
           : 'Ответ пришёл не до конца. Но вот что есть.',
       }));
-      if (!prev.data?.reframing && !prev.data?.distortions?.length) {
+      if (!hasData) {
         console.warn('[useSSE] Partial response — no reframing or distortions in stream');
       }
     } catch (err: unknown) {
