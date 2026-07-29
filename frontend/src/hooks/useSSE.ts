@@ -9,7 +9,7 @@ interface SSEState {
   deepData: DeepResponse | null;
 }
 
-const API_TIMEOUT = 10000; // 10s
+const API_TIMEOUT = 25000; // 25s — matches backend socket-timeout, DeepSeek Vertical Arrow takes ~15s
 
 /** Map HTTP status to user-facing error message per spec §7 */
 function errorMessageForStatus(status: number): string {
