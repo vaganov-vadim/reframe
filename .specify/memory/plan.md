@@ -20,7 +20,7 @@ Reframe — приватный голосовой КПТ-дневник для �
 **Testing**: Vitest (unit), Playwright (E2E)
 **Target Platform**: Веб-браузер (desktop + mobile), бэкенд на JVM
 **Project Type**: Full-stack web application (SPA + thin proxy backend)
-**Performance Goals**: TTI ≤ 2s, полный ответ ≤ 10s (целевой)
+**Performance Goals**: TTI ≤ 2s, ответ LLM ≤ 30s (см. Timeout chain)
 **Constraints**: Бэкенд без БД и без логирования контента, offline-first невозможен (LLM требует сеть)
 **Scale/Scope**: MVP — один пользователь, одно устройство, одна сессия, до ~100 записей
 
@@ -120,7 +120,7 @@ Files: MainScreen.tsx, ResponseView.tsx, useSpeechRecognition.ts, useSSE.ts, His
 
 | Показатель | Цель MVP | Измерение |
 |---|---|---|
-| Полный ответ LLM | ≤ 10 секунд (целевой) | Время от запроса до полного ответа LLM |
+| Полный ответ LLM | ≤ 30 секунд | Время от запроса до полного ответа (фронтенд 25с, бэкенд/nginx 30с) |
 | Time to Interactive | ≤ 2 секунды | Lighthouse TTI |
 | Распознавание речи | ≤ 2 секунды после остановки записи | Web Speech API onresult |
 | Сохранение сессии | ≤ 50ms | localStorage setItem |
@@ -229,7 +229,15 @@ Retry logic: при ошибке HTTP или таймауте — повтор �
        :retry-backoff-ms #long #or [#env LLM_RETRY_BACKOFF_MS 2000]}}
 ```
 
-Timeout: 10s на полный ответ. При превышении — вернуть `{"error": "timeout"}`.
+### Timeout chain
+
+| Слой | Таймаут | Конфигурация |
+|------|---------|-------------|
+| Frontend `fetch` | 25 с | `useSSE.ts` → `API_TIMEOUT` |
+| Nginx `proxy_read_timeout` | 30 с | `/etc/nginx/sites-enabled/reframe` |
+| Backend `socket-timeout` | 30 с | `config.edn` → `LLM_SOCKET_TIMEOUT_MS` |
+| Backend `conn-timeout` | 5 с | `config.edn` → `LLM_CONN_TIMEOUT_MS` |
+| Backend retry | 5 попыток, backoff 2 с | `config.edn` |
 
 ---
 
@@ -486,7 +494,7 @@ Mock switch: env `REFRAME_MOCK_LLM=true` → backend returns fixture instead of 
 
 ### Обработка ошибок
 - [ ] При отсутствии сети — ErrorBanner с кнопкой «Повторить»
-- [ ] При таймауте LLM — предупреждение через 10 секунд
+- [ ] При таймауте LLM — предупреждение через 25 секунд
 - [ ] При обрыве ответа — показана полученная часть + предупреждение
 - [ ] При ошибке распознавания речи — сообщение и возврат к началу
 - [ ] При 429 (rate limit) — сообщение «Слишком много запросов»
@@ -741,15 +749,20 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # API proxy
-    location /api/ {
+    # API proxy (only POST /api/reframe, everything else → 403)
+    location /api/reframe {
+        limit_except POST { deny all; }
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
-        proxy_read_timeout 15s;  # LLM может думать до 10s
+        proxy_read_timeout 30s;
+    }
+
+    location /api/ {
+        return 403;
     }
 }
 ```
