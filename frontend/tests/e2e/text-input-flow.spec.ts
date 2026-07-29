@@ -1,6 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 test('text input sends directly without review phase', async ({ page }) => {
+  // Dismiss onboarding
+  await page.addInitScript(() => {
+    localStorage.setItem('reframe_onboarding', 'true');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).SpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).webkitSpeechRecognition;
+  });
+
   // Mock LLM API
   await page.route('**/api/reframe', async (route) => {
     const body = {
@@ -15,22 +24,17 @@ test('text input sends directly without review phase', async ({ page }) => {
     });
   });
 
-  // Remove SpeechRecognition
-  await page.addInitScript(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as any).SpeechRecognition;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (window as any).webkitSpeechRecognition;
-  });
-
   await page.goto('/');
 
   // Should see text input (not voice button)
   await expect(page.getByPlaceholder('Опишите, что вас тревожит...')).toBeVisible();
 
-  // Type text and send
-  await page.fill('textarea', 'Тестовый текст для проверки');
-  await page.click('button:has-text("Отправить")');
+  await page.locator('[aria-label="Основная навигация"]').evaluate((el) => {
+    (el as HTMLElement).style.display = 'none';
+  });
+  const textarea = page.getByPlaceholder('Опишите, что вас тревожит...');
+  await textarea.fill('Тестовый текст для проверки');
+  await page.getByRole('button', { name: 'Отправить' }).click();
 
   // Should go directly to result (no empty review screen)
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
