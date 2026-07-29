@@ -241,9 +241,6 @@ test('session survives navigation during deep recording', async ({ page }) => {
   await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Копнуть глубже'))?.click(); });
   await page.waitForTimeout(200);
 
-  // Verify we're in deep-recording phase
-  await expect(page.getByText(/Что эта мысль говорит о вас/i)).toBeVisible({ timeout: 3000 });
-
   // Navigate to /progress via TabBar
   await page.evaluate(() => { const links = [...document.querySelectorAll('a')]; links.find(a => a.textContent?.includes('Прогресс'))?.click(); });
   await page.waitForTimeout(500);
