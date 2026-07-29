@@ -14,9 +14,12 @@ test('shows warning on LLM timeout', async ({ page }) => {
       abort() {}
     }
     (window as Record<string, unknown>).SpeechRecognition = MockRecognition;
+    // Override AbortSignal.timeout to force 5s timeout in tests
+    const origTimeout = AbortSignal.timeout.bind(AbortSignal);
+    (AbortSignal as unknown as Record<string, unknown>).timeout = (_ms: number) => origTimeout(5000);
   });
 
-  // Mock API with a delay that exceeds the 10s timeout
+  // Mock API with a delay that exceeds the forced 5s timeout
   await page.route('**/api/reframe', async (_route) => {
     await new Promise(r => setTimeout(r, 15000)); // never resolves before timeout
   });
@@ -26,6 +29,6 @@ test('shows warning on LLM timeout', async ({ page }) => {
   await page.waitForTimeout(200);
   await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
   await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
-  // After 10s timeout, error should appear
+  // After forced timeout, error should appear
   await expect(page.getByText(/не получилось/i)).toBeVisible({ timeout: 15000 });
 });

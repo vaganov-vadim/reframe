@@ -171,12 +171,18 @@ test('Test 5: no Speech API shows text input instead of voice button', async ({ 
   await expect(page.getByPlaceholder('Опишите, что вас тревожит...')).toBeVisible();
 });
 
-// ─── Test 6: Timeout (504) — route hangs beyond 10s client timeout ──────
+// ─── Test 6: Timeout (504) — route hangs beyond client timeout ──────
 
 test('Test 6: request timeout shows server error with retry', async ({ page }) => {
   await mockSpeechWithText()({ page });
 
-  // Hang for 15s — client-side AbortSignal.timeout(10000) fires first
+  // Override AbortSignal.timeout to force 5s timeout in tests
+  await page.addInitScript(() => {
+    const origTimeout = AbortSignal.timeout.bind(AbortSignal);
+    (AbortSignal as unknown as Record<string, unknown>).timeout = (_ms: number) => origTimeout(5000);
+  });
+
+  // Hang for 15s — forced 5s AbortSignal.timeout fires first
   await page.route('**/api/reframe', async (_route) => {
     await new Promise((r) => setTimeout(r, 15000));
   });
