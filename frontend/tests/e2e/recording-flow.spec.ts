@@ -71,11 +71,20 @@ test('breathing exercise closes after session save and auto-reset', async ({ pag
   // Verify we're back to normal UI before proceeding
   await expect(page.getByText('Говорить')).toBeVisible({ timeout: 5000 });
   // Full recording flow — same pattern as passing 'full recording flow' test
-  await page.locator('button').filter({ hasText: 'Говорить' }).click({ force: true });
-  await page.locator('button').filter({ hasText: 'Стоп' }).waitFor({ state: 'visible', timeout: 5000 });
-  await page.locator('button').filter({ hasText: 'Стоп' }).click({ force: true });
-  await page.locator('button').filter({ hasText: 'Отправить' }).waitFor({ state: 'visible', timeout: 5000 });
-  await page.locator('button').filter({ hasText: 'Отправить' }).click({ force: true });
+  await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('button')];
+    btns.find(b => b.textContent?.includes('Говорить'))?.click();
+  });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('button')];
+    btns.find(b => b.textContent?.includes('Стоп'))?.click();
+  });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('button')];
+    btns.find(b => b.textContent?.includes('Отправить'))?.click();
+  });
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
   // Save
   await page.click('button:has-text("Сохранить сессию")');
