@@ -29,6 +29,7 @@ export function MainScreen() {
     start,
     stop,
     cancel,
+    clearError,
   } = useRecording();
   const {
     data: sseData,
@@ -37,6 +38,7 @@ export function MainScreen() {
     error: apiError,
     sendText,
     sendDeepText,
+    dismissError,
   } = useSSE();
 
   const deepResultRef = useRef<HTMLDivElement>(null);
@@ -200,7 +202,11 @@ export function MainScreen() {
       <ErrorBanner
         message={state.error || speechError || apiError}
         onRetry={() => dispatch({ type: 'RETRY' })}
-        onDismiss={() => dispatch({ type: 'DISMISS_ERROR' })}
+        onDismiss={() => {
+          dispatch({ type: 'DISMISS_ERROR' });
+          dismissError();
+          clearError();
+        }}
       />
 
       {(state.phase === 'rating-before' || state.phase === 'recording' || state.phase === 'review') && (

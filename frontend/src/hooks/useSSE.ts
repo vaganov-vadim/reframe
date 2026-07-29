@@ -168,6 +168,10 @@ export function useSSE() {
     setState((prev) => ({ ...prev, deepData: null, deepLoading: false }));
   }, []);
 
+  const dismissError = useCallback(() => {
+    setState((prev) => ({ ...prev, error: null }));
+  }, []);
+
   const sendDeepText = useCallback(async (text: string, surface: string) => {
     setState((prev) => ({ ...prev, deepLoading: true, deepData: null, error: null }));
     abortRef.current = new AbortController();
@@ -269,5 +273,5 @@ export function useSSE() {
     }
   }, []);
 
-  return { ...state, sendText, sendDeepText, resetDeep, abort };
+  return { ...state, sendText, sendDeepText, resetDeep, dismissError, abort };
 }
