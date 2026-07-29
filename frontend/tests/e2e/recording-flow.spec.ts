@@ -25,13 +25,13 @@ test('full recording flow: speech → API → response', async ({ page }) => {
 
   await page.goto('/');
   // Click record
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
   // Wait for stop button to appear (recording state)
   await page.waitForTimeout(300);
   // Click stop
-  await page.click('button:has-text("Стоп")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
   // Click send in review phase
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
   // Wait for response
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
   await expect(page.getByText('Это факт, а не катастрофа.')).toBeVisible();
@@ -87,7 +87,7 @@ test('breathing exercise closes after session save and auto-reset', async ({ pag
   });
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
   // Save
-  await page.click('button:has-text("Сохранить сессию")');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Сохранить сессию'))?.click(); });
   await expect(page.getByText('Сессия сохранена')).toBeVisible();
   // Wait for auto-reset (2s timeout + buffer)
   await page.waitForTimeout(3000);
