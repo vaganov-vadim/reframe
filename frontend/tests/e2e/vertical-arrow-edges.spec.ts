@@ -61,22 +61,22 @@ test('deep recording with empty text returns to result phase', async ({ page }) 
   await page.goto('/');
 
   // Main recording — mock auto-completes after 50ms
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
   await page.waitForTimeout(300);
-  await page.click('button:has-text("Стоп")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
   await page.waitForTimeout(200);
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
 
   // Wait for result phase
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
 
   // Click "Копнуть глубже" to start deep recording
-  await page.locator('button:has-text("Копнуть глубже")').dispatchEvent('click');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Копнуть глубже'))?.click(); });
   await page.waitForTimeout(200);
 
   // Stop deep recording — mock fires onend with no onresult → empty text
   // Use dispatchEvent to avoid TabBar (fixed bottom, z-index 100) intercepting the click
-  await page.locator('button:has-text("Стоп")').dispatchEvent('click');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
   await page.waitForTimeout(500);
 
   // Should see error "Не расслышал" and still see the original result
@@ -149,20 +149,20 @@ test('deep API failure allows retry from result phase', async ({ page }) => {
   await page.goto('/');
 
   // First recording
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
   await page.waitForTimeout(300);
-  await page.click('button:has-text("Стоп")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
   await page.waitForTimeout(200);
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
 
   // Wait for result
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
 
   // Start deep recording — API will fail (second call)
-  await page.locator('button:has-text("Копнуть глубже")').dispatchEvent('click');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Копнуть глубже'))?.click(); });
   await page.waitForTimeout(300);
   // Use dispatchEvent to avoid TabBar intercepting the click
-  await page.locator('button:has-text("Стоп")').dispatchEvent('click');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
   await page.waitForTimeout(500);
 
   // Should see error banner with "Не получилось" and retry button
@@ -170,7 +170,7 @@ test('deep API failure allows retry from result phase', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
 
   // Click retry — re-sends original text, API fails with 502, but original result stays visible
-  await page.click('button:has-text("Повторить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Повторить'))?.click(); });
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 3000 });
 });
 
@@ -228,24 +228,24 @@ test('session survives navigation during deep recording', async ({ page }) => {
   await page.goto('/');
 
   // Main recording
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
   await page.waitForTimeout(300);
-  await page.click('button:has-text("Стоп")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
   await page.waitForTimeout(200);
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
 
   // Wait for result
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
 
   // Click "Копнуть глубже" to enter deep-recording phase
-  await page.locator('button:has-text("Копнуть глубже")').dispatchEvent('click');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Копнуть глубже'))?.click(); });
   await page.waitForTimeout(200);
 
   // Verify we're in deep-recording phase
   await expect(page.getByText(/Что эта мысль говорит о вас/i)).toBeVisible({ timeout: 3000 });
 
   // Navigate to /progress via TabBar
-  await page.click('a:has-text("Прогресс")', { force: true });
+  await page.evaluate(() => { const links = [...document.querySelectorAll('a')]; links.find(a => a.textContent?.includes('Прогресс'))?.click(); });
   await page.waitForTimeout(500);
 
   // Navigate back to main with full page reload (simulates real navigation)

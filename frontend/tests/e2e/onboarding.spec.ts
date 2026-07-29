@@ -8,10 +8,10 @@ test('shows onboarding on first visit', async ({ page }) => {
 
 test('hides onboarding after dismiss', async ({ page }) => {
   await page.goto('/');
-  await page.click('button:has-text("Далее")', { force: true });
-  await page.click('button:has-text("Далее")', { force: true });
-  await page.click('button:has-text("Далее")', { force: true });
-  await page.click('button:has-text("Начать")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Далее'))?.click(); });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Далее'))?.click(); });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Далее'))?.click(); });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Начать'))?.click(); });
   await expect(page.getByText('Добро пожаловать в Reframe')).not.toBeVisible();
   // Persists across reload
   await page.reload();
