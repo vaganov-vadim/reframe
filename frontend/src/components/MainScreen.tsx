@@ -161,7 +161,11 @@ export function MainScreen() {
       verticalArrowReframing: state.deepData?.reframing ?? undefined,
     });
     dispatch({ type: 'SAVE' });
-    setTimeout(() => dispatch({ type: 'RESET' }), 2000);
+    setTimeout(() => {
+      setShowBreathing(false);
+      setManualText('');
+      dispatch({ type: 'RESET' });
+    }, 2000);
   }, [state.data, state.deepData, state.anxietyBefore, state.anxietyAfter, dispatch]);
 
   return (
@@ -203,12 +207,13 @@ export function MainScreen() {
           {state.anxietyBefore >= 9 && state.phase === 'rating-before' && (
             <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>
               <button onClick={() => setShowBreathing(true)} style={{
-                background: 'transparent',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border)',
+                background: 'var(--accent-glow)',
+                color: 'var(--accent)',
+                border: '1px solid var(--accent)',
                 borderRadius: '20px',
                 padding: 'var(--space-xs) var(--space-lg)',
                 fontSize: '13px',
+                fontWeight: 500,
                 cursor: 'pointer',
               }}>
                 Помощь — дыхательное упражнение
