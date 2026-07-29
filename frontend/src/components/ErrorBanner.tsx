@@ -28,11 +28,12 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
     countdownStarted.current = true;
     const id = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) {
+        const current = prev ?? 0;
+        if (current <= 1) {
           clearInterval(id);
           return 0;
         }
-        return prev - 1;
+        return current - 1;
       });
     }, 1000);
 
