@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface ErrorBannerProps {
   message: string | null;
@@ -7,7 +7,8 @@ interface ErrorBannerProps {
 }
 
 export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
-  const [countdown, setCountdown] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownStarted = useRef(false);
 
   const rateLimitMatch = message?.match(/^rate_limit:(\d+)/);
   const isRateLimit = !!rateLimitMatch;
@@ -18,11 +19,13 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
 
   useEffect(() => {
     if (!isRateLimit) {
-      setCountdown(0);
+      setCountdown(null);
+      countdownStarted.current = false;
       return;
     }
 
     setCountdown(retrySeconds);
+    countdownStarted.current = true;
     const id = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -37,7 +40,7 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
   }, [isRateLimit, retrySeconds]);
 
   useEffect(() => {
-    if (countdown === 0 && isRateLimit && onDismiss) {
+    if (countdown === 0 && isRateLimit && onDismiss && countdownStarted.current) {
       onDismiss();
     }
   }, [countdown, isRateLimit, onDismiss]);
@@ -59,7 +62,7 @@ export function ErrorBanner({ message, onRetry, onDismiss }: ErrorBannerProps) {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
         <p style={{ fontSize: '14px', color: isRateLimit ? 'var(--accent)' : 'var(--error)', margin: 0, flex: 1 }}>{displayMessage}</p>
-        {isRateLimit && (
+        {isRateLimit && countdown !== null && (
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
             {countdown > 0 ? `Ещё ${countdown}с` : 'Можно продолжить'}
           </span>
