@@ -4,14 +4,13 @@ import { useSession } from '../contexts/SessionContext';
 import { useSSE } from '../hooks/useSSE';
 import type { ReframeResponse, DeepResponse } from '../types/session';
 import { AnxietySlider } from './AnxietySlider';
-import { RecordButton } from './RecordButton';
 
 import { ResponseView } from './ResponseView';
 import { VerticalArrow } from './VerticalArrow';
 import { PostRatingSlider } from './PostRatingSlider';
 import { DeltaDisplay } from './DeltaDisplay';
 import { ErrorBanner } from './ErrorBanner';
-import { TextInput } from './TextInput';
+import { InputMethod } from './InputMethod';
 import { TopicPrompt } from './TopicPrompt';
 import { BreathingExercise } from './BreathingExercise';
 import { startSession, completeSession } from '../services/sessionService';
@@ -150,6 +149,13 @@ export function MainScreen() {
     dispatch({ type: 'RESULT_RECEIVED' });
   }, [cancel, dispatch]);
 
+  const handleReviewSubmit = useCallback(() => {
+    if (state.lastText) {
+      dispatch({ type: 'ANALYZE' });
+      sendText(state.lastText).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+    }
+  }, [state.lastText, sendText, dispatch]);
+
   const handleSave = useCallback(() => {
     const inProgress = startSession(state.anxietyBefore);
     completeSession(inProgress, state.anxietyAfter, {
@@ -194,133 +200,67 @@ export function MainScreen() {
         onDismiss={() => dispatch({ type: 'DISMISS_ERROR' })}
       />
 
-      {(state.phase === 'rating-before' || state.phase === 'done') && (
-        <div className="phase-enter" key="idle">
-          {showBreathing && <BreathingExercise onClose={() => setShowBreathing(false)} />}
+      {(state.phase === 'rating-before' || state.phase === 'recording' || state.phase === 'review') && (
+        <div className="phase-enter" key="main-input">
+          {state.phase === 'rating-before' && (
+            <>
+              {showBreathing && <BreathingExercise onClose={() => setShowBreathing(false)} />}
+              <AnxietySlider
+                value={state.anxietyBefore}
+                onChange={(v) => dispatch({ type: 'SET_ANXIETY_BEFORE', value: v })}
+                disabled={false}
+              />
+              {state.anxietyBefore >= 9 && (
+                <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>
+                  <button onClick={() => setShowBreathing(true)} style={{
+                    background: 'var(--accent-glow)',
+                    color: 'var(--accent)',
+                    border: '1px solid var(--accent)',
+                    borderRadius: '20px',
+                    padding: 'var(--space-xs) var(--space-lg)',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}>
+                    Помощь — дыхательное упражнение
+                  </button>
+                </div>
+              )}
+              <TopicPrompt />
+            </>
+          )}
+          <InputMethod
+            isSupported={isSupported}
+            text={text}
+            isListening={isListening}
+            onStart={handleStart}
+            onStop={handleStop}
+            onCancel={handleCancel}
+            onTextSubmit={(t) => {
+              dispatch({ type: 'SET_SURFACE_THOUGHT', text: t });
+              dispatch({ type: 'ANALYZE' });
+              sendText(t).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
+            }}
+            reviewText={state.phase === 'review' ? (state.lastText ?? null) : null}
+            onReviewSubmit={handleReviewSubmit}
+            onRetry={() => { dispatch({ type: 'START_RECORDING' }); start(); }}
+            recordingPrompt="Что вас тревожит?"
+            textPlaceholder="Опишите, что вас тревожит..."
+          />
+        </div>
+      )}
+
+      {state.phase === 'done' && (
+        <div className="phase-enter" key="done">
           <AnxietySlider
             value={state.anxietyBefore}
             onChange={(v) => dispatch({ type: 'SET_ANXIETY_BEFORE', value: v })}
             disabled={false}
           />
-          {state.anxietyBefore >= 9 && state.phase === 'rating-before' && (
-            <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>
-              <button onClick={() => setShowBreathing(true)} style={{
-                background: 'var(--accent-glow)',
-                color: 'var(--accent)',
-                border: '1px solid var(--accent)',
-                borderRadius: '20px',
-                padding: 'var(--space-xs) var(--space-lg)',
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: 'pointer',
-              }}>
-                Помощь — дыхательное упражнение
-              </button>
-            </div>
-          )}
-          {state.phase === 'rating-before' && <TopicPrompt />}
-          {isSupported ? (
-            <RecordButton
-              state={state.phase === 'done' ? 'idle' : 'idle'}
-              onStart={handleStart}
-              onStop={handleStop}
-              onCancel={handleCancel}
-            />
-          ) : (
-            <TextInput
-              placeholder="Опишите, что вас тревожит..."
-              submitLabel="Отправить"
-              onSubmit={(text) => {
-                dispatch({ type: 'SET_SURFACE_THOUGHT', text });
-                dispatch({ type: 'ANALYZE' });
-                sendText(text).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
-              }}
-            />
-          )}
-          {state.phase === 'done' && (
-            <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
-              <p style={{ color: 'var(--success)', fontSize: '16px' }}>
-                Сессия сохранена ✓
-              </p>
-
-            </div>
-          )}
-        </div>
-      )}
-
-      {state.phase === 'recording' && (
-        <div className="phase-enter" key="recording">
-          <RecordButton
-            state="recording"
-            onStart={handleStart}
-            onStop={handleStop}
-            onCancel={handleCancel}
-          />
-          <div style={{
-            margin: 'var(--space-md) auto',
-            padding: 'var(--space-md) var(--space-lg)',
-            maxWidth: '360px',
-            minHeight: '60px',
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--border-radius-sm)',
-            border: '1px solid var(--border)',
-            fontSize: '15px',
-            lineHeight: '1.6',
-            color: text ? 'var(--text-primary)' : 'var(--text-secondary)',
-            textAlign: 'center' as const,
-            transition: 'color 0.3s',
-          }}>
-            {text || 'Я слушаю...'}
-          </div>
-        </div>
-      )}
-
-      {state.phase === 'review' && (
-        <div className="phase-enter" key="review">
-          <div style={{ padding: 'var(--space-md)' }}>
-            <div style={{
-              background: 'var(--bg-elevated)',
-              borderRadius: 'var(--border-radius-sm)',
-              padding: 'var(--space-md)',
-              marginBottom: 'var(--space-md)',
-              border: '1px solid var(--border)',
-              fontSize: '15px',
-              lineHeight: 1.6,
-              color: 'var(--text-primary)',
-            }}>
-              {state.lastText}
-            </div>
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
-              <button onClick={() => {
-                dispatch({ type: 'ANALYZE' });
-                sendText(state.lastText!).then(() => dispatch({ type: 'RESULT_RECEIVED' }));
-              }} style={{
-                background: 'var(--accent)',
-                color: 'var(--bg-primary)',
-                border: 'none',
-                padding: 'var(--space-sm) var(--space-lg)',
-                fontSize: '14px',
-                fontWeight: 600,
-                borderRadius: 'var(--border-radius-sm)',
-                cursor: 'pointer',
-              }}>
-                Отправить
-              </button>
-              <button onClick={() => {
-                dispatch({ type: 'START_RECORDING' });
-                start();
-              }} style={{
-                background: 'transparent',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border)',
-                padding: 'var(--space-sm) var(--space-lg)',
-                fontSize: '14px',
-                borderRadius: 'var(--border-radius-sm)',
-                cursor: 'pointer',
-              }}>
-                Записать заново
-              </button>
-            </div>
+          <div style={{ textAlign: 'center', padding: 'var(--space-md)' }}>
+            <p style={{ color: 'var(--success)', fontSize: '16px' }}>
+              Сессия сохранена ✓
+            </p>
           </div>
         </div>
       )}
@@ -385,60 +325,31 @@ export function MainScreen() {
 
       {state.phase === 'deep-recording' && (
         <div className="phase-enter" key="deep-recording">
-          <div style={{ textAlign: 'center', padding: 'var(--space-xl) var(--space-md) var(--space-sm)' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 var(--space-sm) 0' }}>
-              Вы сказали:
-            </p>
-            <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontStyle: 'italic', margin: '0 0 var(--space-lg) 0', lineHeight: 1.5 }}>
-              &laquo;{state.surfaceThought ?? ''}&raquo;
-            </p>
-            <p style={{ color: 'var(--text-primary)', fontSize: '17px', fontWeight: 500, margin: '0 0 var(--space-xs) 0' }}>
-              Что эта мысль говорит о вас?
-            </p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-              Я слушаю...
-            </p>
-          </div>
-          {isSupported ? (
-            <RecordButton
-              state="recording"
-              onStart={handleDeepStart}
-              onStop={handleDeepStop}
-              onCancel={handleDeepCancel}
-            />
-          ) : (
-            <TextInput
-              placeholder="Напишите одно предложение..."
-              submitLabel="Отправить"
-              onSubmit={(text) => {
-                if (state.surfaceThought) {
-                  dispatch({ type: 'DEEP_ANALYZE' });
-                  sendDeepText(text, state.surfaceThought)
-                    .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
-                    .catch((err: unknown) => {
-                      const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
-                      dispatch({ type: 'DEEP_ERROR', message });
-                    });
-                }
-              }}
-            />
-          )}
-          <div style={{
-            margin: 'var(--space-md) auto',
-            padding: 'var(--space-md) var(--space-lg)',
-            maxWidth: '360px',
-            minHeight: '60px',
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--border-radius-sm)',
-            border: '1px solid var(--border)',
-            fontSize: '15px',
-            lineHeight: '1.6',
-            color: text ? 'var(--text-primary)' : 'var(--text-secondary)',
-            textAlign: 'center' as const,
-            transition: 'color 0.3s',
-          }}>
-            {text || 'Я слушаю...'}
-          </div>
+          <InputMethod
+            isSupported={isSupported}
+            text={text}
+            isListening={isListening}
+            onStart={handleDeepStart}
+            onStop={handleDeepStop}
+            onCancel={handleDeepCancel}
+            onTextSubmit={(t) => {
+              if (state.surfaceThought) {
+                dispatch({ type: 'DEEP_ANALYZE' });
+                sendDeepText(t, state.surfaceThought)
+                  .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
+                  .catch((err: unknown) => {
+                    const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+                    dispatch({ type: 'DEEP_ERROR', message });
+                  });
+              }
+            }}
+            reviewText={null}
+            onReviewSubmit={() => {}}
+            onRetry={() => {}}
+            surfaceThought={state.surfaceThought ?? undefined}
+            recordingPrompt="Что эта мысль говорит о вас?"
+            textPlaceholder="Напишите одно предложение..."
+          />
         </div>
       )}
 
