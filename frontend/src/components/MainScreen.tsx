@@ -106,9 +106,11 @@ export function MainScreen() {
             .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
             .catch((err: unknown) => {
               const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+              console.error(`[MainScreen] DEEP_ERROR after voice deep recording — ${message}`, err);
               dispatch({ type: 'DEEP_ERROR', message });
             });
         } else {
+          console.warn('[MainScreen] DEEP_ERROR — no text after deep recording');
           dispatch({ type: 'DEEP_ERROR', message: 'Не расслышал. Попробуем ещё раз?' });
         }
       }
@@ -133,6 +135,7 @@ export function MainScreen() {
       sendText(state.lastText)
         .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
         .catch(() => {
+          console.error('[MainScreen] ERROR — retry failed');
           dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
         })
         .finally(() => { sendingRef.current = false; });
@@ -339,6 +342,7 @@ export function MainScreen() {
                   .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
                   .catch((err: unknown) => {
                     const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+                    console.error(`[MainScreen] DEEP_ERROR after deep text submit — ${message}`, err);
                     dispatch({ type: 'DEEP_ERROR', message });
                   });
               }

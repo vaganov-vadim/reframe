@@ -3,6 +3,8 @@
   (:gen-class)
   (:require [org.httpkit.server :as server]
             [reframe.handler :as handler]
+            [reframe.logging :as logging]
+            [taoensso.timbre :as timbre]
             [aero.core :as aero]))
 
 (defn- read-config
@@ -16,9 +18,9 @@
   "Starts the Reframe backend server.
    Reads port from config (default: 3000, override via REFRAME_PORT env var)."
   [& _]
+  (logging/init!)
   (let [config (read-config)
         port   (get-in config [:server :port] 3000)]
-    (println "Starting Reframe backend...")
-    (println (str "Server listening on http://localhost:" port))
+    (timbre/info "Starting Reframe backend on port" port)
     (server/run-server (handler/app config) {:port port})
-    (println "Server started. Press Ctrl+C to stop.")))
+    (timbre/info "Server started. Press Ctrl+C to stop.")))

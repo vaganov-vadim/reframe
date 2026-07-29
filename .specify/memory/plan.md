@@ -365,24 +365,31 @@ src/services/
 ## Clojure Backend Dependencies (project.clj)
 
 ```clojure
-:dependencies [
+: dependencies [
   ;; Kit framework (Ring + Reitit + malli included)
   [kit "2.0"]
   ;; HTTP client for LLM API calls
   [clj-http "3.13.0"]
-;; JSON ответ
-[org.clojure/core.async "1.6.681"]
+  ;; JSON ответ
+  [org.clojure/core.async "1.6.681"]
   ;; JSON encoding (Cheshire)
   [cheshire "5.13.0"]
+  ;; Logging with rotation
+  [com.taoensso/timbre "6.5.0"]
   ;; Configuration from env vars (rate limit, etc.)
   [aero "1.1.6"]
 ]
 ```
 
 Backend files:
+- `src/reframe/core.clj` — инициализация, старт сервера
 - `src/reframe/handler.clj` — HTTP routes, rate limiting, ответ клиенту
 - `src/reframe/prompt.clj` — system prompt text, Burns methodology
+- `src/reframe/llm_client.clj` — LLM API client, retry logic
+- `src/reframe/rate_limiter.clj` — token bucket per-IP rate limiting
+- `src/reframe/logging.clj` — timbre configuration, rotation, cleanup
 - `test/reframe/handler_test.clj` — proxy layer tests
+- `test/reframe/logging_test.clj` — logging initialization and rotation tests
 
 ---
 
@@ -785,6 +792,70 @@ WantedBy=multi-user.target
 - **Прикладной**: `/api/health` (JSON, внутренний), статус-панель `/status` (SPA)
 - **Алертинг**: cron → health check → Telegram бот (каждую минуту)
 - **Метрики**: CPU, RAM, диск, запросы, ошибки, LLM статус, uptime
+
+---
+
+## Операционное логирование (spec §7b)
+
+### Библиотека
+`com.taoensso/timbre` — Clojure-идиоматичное логирование с поддержкой множественных аппендеров.
+
+### Аппендеры
+| Аппендер | Уровень | Назначение |
+|---|---|---|
+| Console (stdout) | INFO+ | docker/systemd логи |
+| File | DEBUG+ | диагностика, `logs/reframe.YYYY-MM-DD.log` |
+
+### Ротация
+- Ежедневные файлы: имя содержит дату (`reframe.2026-07-29.log`)
+- Автоочистка при старте: удаление файлов старше 7 дней
+- Формат: `[LEVEL] ns — message {:kvs}\n<stacktrace>`
+
+### Что логируется (и НЕ логируется)
+
+| Логируется | НЕ логируется (конституция §I) |
+|---|---|
+| Тип ошибки, HTTP статус, причина | Текст пользователя |
+| Номер retry-попытки, задержка | Системный промпт |
+| Время ответа LLM (ms) | Ответ LLM |
+| Режим (mock/real), модель | Содержимое сессии |
+| Старт сервера, порт | IP пользователя |
+
+### Файлы
+- `backend/src/reframe/logging.clj` — конфигурация timbre, аппендеры, ротация
+- `backend/test/reframe/logging_test.clj` — тесты инициализации и ротации
+
+### Зависимости (project.clj)
+```clojure
+[com.taoensso/timbre "6.5.0"]
+```
+
+---
+
+## Клиентское логирование (spec §7c)
+
+Фронтенд пишет ошибки в `console.error`/`console.warn`. Без сбора, без отправки — только DevTools.
+
+### Что логируется
+
+| Событие | Уровень | Где |
+|---|---|---|
+| HTTP ошибка (non-2xx) | `console.error` | `useSSE.ts` → `sendText`/`sendDeepText` |
+| Отсутствие ReadableStream | `console.error` | `useSSE.ts` → проверка `response.body` |
+| SSE error event от бэкенда | `console.warn` | `useSSE.ts` → парсинг SSE |
+| Частичный ответ (неполный JSON) | `console.warn` | `useSSE.ts` → после стрима |
+| TimeoutError / AbortError | `console.error` | `useSSE.ts` → catch-блок |
+| TypeError (сеть недоступна) | `console.error` | `useSSE.ts` → catch-блок |
+| Error dispatch в MainScreen | `console.error` | `MainScreen.tsx` → обработчики ошибок |
+
+### Что НЕ логируется
+Текст пользователя, промпты, ответы LLM, содержимое сессии.
+
+### Формат
+```js
+console.error('[useSSE] HTTP 502 — LLM API error');
+console.warn('[useSSE] Partial response — incomplete data received');
+```
 
 ---
 
