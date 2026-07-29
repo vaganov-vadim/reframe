@@ -48,17 +48,17 @@ test('session persists when navigating to distortions and back', async ({ page }
   await page.goto('/');
 
   // Complete a recording session
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
   await page.waitForTimeout(300);
-  await page.click('button:has-text("Стоп")', { force: true });
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
 
   // Wait for the result to appear
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
   await expect(page.getByText('Не всё так страшно.')).toBeVisible();
 
   // Navigate to distortions reference page via "Узнать больше" link
-  await page.click('text=Узнать больше об искажениях');
+  await page.evaluate(() => { const els = [...document.querySelectorAll('a, button, span, div')]; els.find(el => el.textContent?.includes('Узнать больше об искажениях'))?.click(); });
   await expect(page.getByText('Когнитивные искажения')).toBeVisible({ timeout: 3000 });
 
   // Navigate back to main via full page reload

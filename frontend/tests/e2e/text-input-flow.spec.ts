@@ -82,7 +82,7 @@ test('manual text cleared after session save and auto-reset', async ({ page }) =
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
 
   // Save session
-  await page.click('button:has-text("Сохранить сессию")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Сохранить сессию'))?.click(); });
   await expect(page.getByText('Сессия сохранена')).toBeVisible();
 
   // Wait for auto-reset (~2s timeout + buffer)

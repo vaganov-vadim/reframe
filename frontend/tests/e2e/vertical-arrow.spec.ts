@@ -50,18 +50,18 @@ test('shows Vertical Arrow staircase after deep analysis', async ({ page }) => {
   await page.goto('/');
 
   // Start recording — mock auto-completes after 100ms
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
 
   // Wait for review phase, then send
   await page.waitForTimeout(200);
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
 
   // Wait for reframing result (mock fires onresult + onend automatically)
   await expect(page.getByText('Не всё так страшно.')).toBeVisible({ timeout: 5000 });
 
   // Click "Копнуть глубже" to start deep analysis
   // Use dispatchEvent to avoid TabBar (fixed bottom, z-index 100) intercepting the click
-  await page.locator('button:has-text("Копнуть глубже")').dispatchEvent('click');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Копнуть глубже'))?.click(); });
 
   // Mock auto-completes the deep recording — wait for Vertical Arrow
   await expect(page.getByText('Вертикальная стрелка')).toBeVisible({ timeout: 10000 });

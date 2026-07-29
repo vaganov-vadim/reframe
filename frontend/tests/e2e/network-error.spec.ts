@@ -20,9 +20,9 @@ test('shows error banner on network failure', async ({ page }) => {
   await page.route('**/api/reframe', (route) => route.abort('failed'));
 
   await page.goto('/');
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
   await page.waitForTimeout(200);
-  await page.click('button:has-text("Стоп")', { force: true });
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
   await expect(page.getByText(/нет связи/i)).toBeVisible({ timeout: 5000 });
 });
