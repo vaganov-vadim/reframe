@@ -1,7 +1,9 @@
 {:server     {:port #long #or [#env REFRAME_PORT 3000]}
  :rate-limit {:requests-per-minute #long #or [#env REFRAME_RATE_LIMIT 5]
               :algorithm           :token-bucket}
- :llm        {:api-key      #env LLM_API_KEY
-              :api-url      #or [#env LLM_API_URL "https://api.deepseek.com/v1/chat/completions"]
-              :model        #or [#env LLM_MODEL "deepseek-chat"]
-              :mock-enabled #or [#env REFRAME_MOCK_LLM "false"]}}
+  :llm        {:api-key          #env LLM_API_KEY
+               :api-url          #or [#env LLM_API_URL "https://api.deepseek.com/v1/chat/completions"]
+               :model            #or [#env LLM_MODEL "deepseek-chat"]
+                :max-retries      #long #or [#env LLM_MAX_RETRIES 5]
+                :retry-backoff-ms #long #or [#env LLM_RETRY_BACKOFF_MS 2000]
+               :mock-enabled     #or [#env REFRAME_MOCK_LLM "false"]}}

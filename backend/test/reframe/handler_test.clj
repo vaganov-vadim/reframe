@@ -187,3 +187,35 @@
   (testing "GET /nonexistent returns 404"
     (let [response ((handler/app test-config) {:request-method :get :uri "/nonexistent"})]
       (is (= 404 (:status response))))))
+
+;; ─── LLM retry logic ──────────────────────────────────────────────────────
+
+(deftest llm-retry-succeeds
+  (testing "Retry recovers from transient failure — succeeds on second attempt"
+    (let [attempts (atom 0)
+          mock-llm (fn [_ _]
+                     (swap! attempts inc)
+                     (if (= @attempts 1)
+                       (throw (Exception. "Transient error"))
+                       "success"))]
+      (is (= "success" (llm-client/call-with-retry {:max-retries 3 :retry-backoff-ms 1} mock-llm "test")))
+      (is (= 2 @attempts)))))
+
+(deftest llm-retry-exhausted
+  (testing "Retry gives up after max retries — throws the last exception"
+    (let [attempts (atom 0)
+          mock-llm (fn [_ _]
+                     (swap! attempts inc)
+                     (throw (Exception. "Persistent error")))]
+      (is (thrown? Exception (llm-client/call-with-retry {:max-retries 5 :retry-backoff-ms 1} mock-llm "test")))
+      (is (= 5 @attempts)))))
+
+(deftest llm-retry-reads-config
+  (testing "Config values for max-retries are read from llm-config"
+    (let [attempts (atom 0)
+          mock-llm (fn [_ _]
+                     (swap! attempts inc)
+                     (throw (Exception. "fail")))]
+      ;; With max-retries 1, should only attempt once
+      (is (thrown? Exception (llm-client/call-with-retry {:max-retries 1 :retry-backoff-ms 1} mock-llm "test")))
+      (is (= 1 @attempts)))))
