@@ -24,6 +24,7 @@ test('text input sends directly without review phase', async ({ page }) => {
     });
   });
 
+
   await page.goto('/');
 
   // Should see text input (not voice button)
