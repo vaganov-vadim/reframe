@@ -83,6 +83,25 @@ constitution → specify → plan → tasks → implement
 - **Pre-commit gates** — перед коммитом: `tsc --noEmit` (чисто), `eslint` (чисто), `vitest run` (зелено). Корневой `lefthook.yml` — авторитативный (`root: frontend`). `frontend/lefthook.yml` — дубликат без `root:`.
 - **Никакого мёртвого кода**, закомментированных блоков, TODO без issue
 
+### Pre-push checks (ОБЯЗАТЕЛЬНО перед пушем)
+
+Перед `git push` локально прогнать ВСЕ проверки:
+
+```bash
+# Фронтенд
+cd frontend
+npx tsc --noEmit          # типы чисты
+npx eslint .              # линтер чист
+npx vitest run            # unit-тесты зелёные
+npx playwright test       # E2E-тесты зелёные
+
+# Бэкенд
+cd ../backend
+lein test                 # backend-тесты зелёные
+```
+
+**Никаких пушей с красными тестами.** Если CI упал — чини локально, перепрогоняй все проверки, только потом пуш.
+
 ### Архитектура
 - **Бэкенд НЕ хранит данные** — ни тексты, ни логи с содержимым
 - **Фронтенд НЕ содержит API-ключей** и не обращается к LLM напрямую
