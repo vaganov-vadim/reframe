@@ -76,7 +76,7 @@
                                    {:model    model
                                     :messages [{:role "system" :content prompt}
                                                {:role "user"   :content prompt}]})
-                    :socket-timeout 10000
+                    :socket-timeout 25000
                     :conn-timeout    5000
                     :as              :json})]
     (get-in response [:body :choices 0 :message :content])))
