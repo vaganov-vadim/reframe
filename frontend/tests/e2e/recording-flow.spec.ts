@@ -59,24 +59,26 @@ test('breathing exercise closes after session save and auto-reset', async ({ pag
   });
 
   await page.goto('/');
-  // Set anxiety to 9
-  await page.evaluate(() => {
-    const slider = document.querySelector('input[type="range"]') as HTMLInputElement;
-    if (slider) { slider.value = '9'; slider.dispatchEvent(new Event('change', { bubbles: true })); }
-  });
+  // Set anxiety slider to 9
+  const slider = page.locator('input[type="range"]');
+  await slider.fill('9');
   await page.waitForTimeout(300);
   // Open breathing exercise
   await page.getByText('Помощь — дыхательное упражнение').click();
   await expect(page.getByText('Вдох')).toBeVisible();
-  // Keep it open — auto-reset after save should close it
-  // Full recording flow
-  await page.click('button:has-text("Говорить")', { force: true });
-  await page.waitForTimeout(300);
-  await page.click('button:has-text("Стоп")', { force: true });
-  await page.click('button:has-text("Отправить")', { force: true });
+  // Close breathing exercise overlay (it's fullscreen — blocks all UI)
+  await page.getByText('← Вернуться').click();
+  // Verify we're back to normal UI before proceeding
+  await expect(page.getByText('Говорить')).toBeVisible({ timeout: 5000 });
+  // Full recording flow — same pattern as passing 'full recording flow' test
+  await page.locator('button').filter({ hasText: 'Говорить' }).click({ force: true });
+  await page.locator('button').filter({ hasText: 'Стоп' }).waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('button').filter({ hasText: 'Стоп' }).click({ force: true });
+  await page.locator('button').filter({ hasText: 'Отправить' }).waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('button').filter({ hasText: 'Отправить' }).click({ force: true });
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
   // Save
-  await page.click('button:has-text("Сохранить сессию")', { force: true });
+  await page.click('button:has-text("Сохранить сессию")');
   await expect(page.getByText('Сессия сохранена')).toBeVisible();
   // Wait for auto-reset (2s timeout + buffer)
   await page.waitForTimeout(3000);
