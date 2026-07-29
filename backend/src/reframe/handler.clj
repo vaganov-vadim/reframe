@@ -5,7 +5,8 @@
             [clojure.string :as str]
             [reframe.prompt :as prompt]
             [reframe.rate-limiter :as rate-limiter]
-            [reframe.llm-client :as llm-client])
+            [reframe.llm-client :as llm-client]
+            [taoensso.timbre :as timbre])
   (:import [java.lang.management ManagementFactory]))
 
 ;; ─── Constants ──────────────────────────────────────────────────────────────
@@ -130,12 +131,17 @@
            (rate-limiter/consume-request! request)
            (swap! request-counter inc)
            (sse-body (if (map? parsed) parsed {:result llm-result})))
-         (catch Exception e
-           (let [ex-type (-> e ex-data :type)]
-             (swap! error-counter inc)
-             (if (= :llm-timeout ex-type)
-               (json-body 504 {:error "LLM timeout"})
-               (json-body 502 {:error "LLM API error"}))))))))
+          (catch Exception e
+            (let [ex-type (-> e ex-data :type)]
+              (swap! error-counter inc)
+              ;; Log the exception with cause chain but WITHOUT user text
+              (if (= :llm-timeout ex-type)
+                (do (timbre/error "LLM timeout — upstream did not respond in time"
+                                  {:error-counter @error-counter})
+                    (json-body 504 {:error "LLM timeout"}))
+                (do (timbre/error e "LLM API error — upstream returned error or connection failed"
+                                  {:error-counter @error-counter})
+                    (json-body 502 {:error "LLM API error"})))))))))
 
 ;; ─── Main dispatcher ────────────────────────────────────────────────────────
 

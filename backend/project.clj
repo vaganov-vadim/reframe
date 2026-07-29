@@ -12,7 +12,9 @@
                  ;; Async streaming via SSE
                  [org.clojure/core.async "1.6.681"]
                  ;; JSON encoding
-                 [cheshire "5.13.0"]]
+                 [cheshire "5.13.0"]
+                 ;; Structured logging with rotation
+                 [com.taoensso/timbre "6.5.0"]]
   :main reframe.core
   :aot [reframe.core]
   :profiles {:dev {:dependencies [[ring/ring-mock "0.4.0"]]}})
