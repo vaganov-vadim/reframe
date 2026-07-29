@@ -69,7 +69,12 @@ function createInitialState(): MainState {
     if (saved) {
       const parsed = JSON.parse(saved) as Partial<MainState>;
       // Only restore if user was in a result phase (already received LLM response)
-      if (parsed.phase && (parsed.phase === 'result' || parsed.phase === 'deep-result')) {
+      // or if they were analyzing but data already arrived (navigated away during LLM processing)
+      if (
+        parsed.phase === 'result' ||
+        parsed.phase === 'deep-result' ||
+        (parsed.phase === 'analyzing' && parsed.data)
+      ) {
         return {
           phase: parsed.phase as Phase,
           anxietyBefore: parsed.anxietyBefore ?? 5,
