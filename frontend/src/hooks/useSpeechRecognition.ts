@@ -42,6 +42,10 @@ export function useSpeechRecognition(): SpeechRecognitionResult {
 
   const start = useCallback(() => {
     if (!isSupported || !SpeechRecognitionAPI) return;
+    // Abort any existing recognition first
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch { /* abort may throw if already stopped */ }
+    }
     const recognition = new SpeechRecognitionAPI();
     recognition.lang = 'ru-RU';
     recognition.continuous = true;

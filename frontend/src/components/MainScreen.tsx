@@ -20,6 +20,7 @@ export function MainScreen() {
 
   const [showBreathing, setShowBreathing] = useState(false);
   const [manualText, setManualText] = useState('');
+  const [sending, setSending] = useState(false);
 
   const {
     text,
@@ -61,9 +62,10 @@ export function MainScreen() {
   const displayDeepData: DeepResponse | null = state.deepData || sseDeepData;
 
   const handleStart = useCallback(() => {
+    if (state.phase === 'recording' || state.phase === 'deep-recording') return; // already recording
     dispatch({ type: 'START_RECORDING' });
     start();
-  }, [start, dispatch]);
+  }, [start, dispatch, state.phase]);
 
   const handleStop = useCallback(() => {
     stop();
@@ -126,13 +128,16 @@ export function MainScreen() {
   }, [state.phase]);
 
   // RETRY: re-send last text when retryId changes
+  const sendingRef = useRef(false);
   useEffect(() => {
-    if (state.retryId > 0 && state.lastText) {
+    if (state.retryId > 0 && state.lastText && !sendingRef.current) {
+      sendingRef.current = true;
       sendText(state.lastText)
         .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
         .catch(() => {
           dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
-        });
+        })
+        .finally(() => { sendingRef.current = false; });
     }
   }, [state.retryId, state.lastText, sendText, dispatch]);
 
@@ -156,7 +161,11 @@ export function MainScreen() {
       verticalArrowReframing: state.deepData?.reframing ?? undefined,
     });
     dispatch({ type: 'SAVE' });
-    setTimeout(() => dispatch({ type: 'RESET' }), 2000);
+    setTimeout(() => {
+      setShowBreathing(false);
+      setManualText('');
+      dispatch({ type: 'RESET' });
+    }, 2000);
   }, [state.data, state.deepData, state.anxietyBefore, state.anxietyAfter, dispatch]);
 
   return (
@@ -198,12 +207,13 @@ export function MainScreen() {
           {state.anxietyBefore >= 9 && state.phase === 'rating-before' && (
             <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>
               <button onClick={() => setShowBreathing(true)} style={{
-                background: 'transparent',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border)',
+                background: 'var(--accent-glow)',
+                color: 'var(--accent)',
+                border: '1px solid var(--accent)',
                 borderRadius: '20px',
                 padding: 'var(--space-xs) var(--space-lg)',
                 fontSize: '13px',
+                fontWeight: 500,
                 cursor: 'pointer',
               }}>
                 Помощь — дыхательное упражнение
@@ -246,17 +256,18 @@ export function MainScreen() {
               <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
                 <button
                   onClick={() => {
-                    if (manualText.trim()) {
-                      dispatch({ type: 'SET_SURFACE_THOUGHT', text: manualText.trim() });
-                      dispatch({ type: 'ANALYZE' });
-                      sendText(manualText.trim())
-                        .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
-                        .catch(() => {
-                          dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
-                        });
-                    }
+                    if (!manualText.trim() || sending) return;
+                    setSending(true);
+                    dispatch({ type: 'SET_SURFACE_THOUGHT', text: manualText.trim() });
+                    dispatch({ type: 'ANALYZE' });
+                    sendText(manualText.trim())
+                      .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
+                      .catch(() => {
+                        dispatch({ type: 'ERROR', message: 'Не получилось. Попробуем через минуту?' });
+                      })
+                      .finally(() => setSending(false));
                   }}
-                  disabled={!manualText.trim()}
+                  disabled={!manualText.trim() || sending}
                   style={{
                     width: '100%',
                     maxWidth: '320px',
