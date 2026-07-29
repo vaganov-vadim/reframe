@@ -68,9 +68,7 @@ test('breathing exercise closes after session save and auto-reset', async ({ pag
   // Open breathing exercise
   await page.getByText('Помощь — дыхательное упражнение').click();
   await expect(page.getByText('Вдох')).toBeVisible();
-  // Close it
-  await page.getByRole('button', { name: 'Закрыть' }).click();
-  await page.waitForTimeout(200);
+  // Keep it open — auto-reset after save should close it
   // Full recording flow
   await page.click('button:has-text("Говорить")', { force: true });
   await page.waitForTimeout(300);
