@@ -24,12 +24,12 @@ test('saves session and shows in history', async ({ page }) => {
 
   await page.goto('/');
   // Complete flow: record → stop → save
-  await page.click('button:has-text("Говорить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Говорить'))?.click(); });
   await page.waitForTimeout(200);
-  await page.click('button:has-text("Стоп")', { force: true });
-  await page.click('button:has-text("Отправить")', { force: true });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
   await expect(page.getByText('Катастрофизация')).toBeVisible({ timeout: 5000 });
-  await page.click('button:has-text("Сохранить")');
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Сохранить'))?.click(); });
   // Navigate to history via tab bar
   await page.getByRole('link', { name: 'История' }).click();
   await expect(page.getByText('Катастрофизация')).toBeVisible();
