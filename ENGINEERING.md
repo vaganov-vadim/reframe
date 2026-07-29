@@ -61,7 +61,7 @@ Chrome → React SPA → POST /api/reframe → Clojure прокси → LLM API 
 | Хранение | localStorage |
 | Бэкенд | Clojure + Kit |
 | LLM | DeepSeek (заменяем) |
-| Тесты | Vitest (19 unit) + Playwright (27 E2E) |
+| Тесты | Vitest + Playwright |
 
 ## Ключевые фичи
 
