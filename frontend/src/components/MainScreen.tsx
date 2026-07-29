@@ -20,6 +20,7 @@ export function MainScreen() {
 
   const [showBreathing, setShowBreathing] = useState(false);
   const [manualText, setManualText] = useState('');
+  const [manualDeepText, setManualDeepText] = useState('');
   const [sending, setSending] = useState(false);
 
   const {
@@ -445,15 +446,73 @@ export function MainScreen() {
               Что эта мысль говорит о вас?
             </p>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-              Слушаю...
+              Я слушаю...
             </p>
           </div>
-          <RecordButton
-            state="recording"
-            onStart={handleDeepStart}
-            onStop={handleDeepStop}
-            onCancel={handleDeepCancel}
-          />
+          {isSupported ? (
+            <RecordButton
+              state="recording"
+              onStart={handleDeepStart}
+              onStop={handleDeepStop}
+              onCancel={handleDeepCancel}
+            />
+          ) : (
+            <div style={{ padding: 'var(--space-md)' }}>
+              <textarea
+                value={manualDeepText}
+                onChange={(e) => setManualDeepText(e.target.value)}
+                placeholder="Напишите одно предложение..."
+                maxLength={3000}
+                rows={3}
+                style={{
+                  width: '100%',
+                  maxWidth: '380px',
+                  margin: '0 auto',
+                  display: 'block',
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  padding: 'var(--space-md)',
+                  fontSize: '15px',
+                  lineHeight: 1.6,
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  outline: 'none',
+                }}
+              />
+              <div style={{ textAlign: 'center', marginTop: 'var(--space-md)' }}>
+                <button
+                  onClick={() => {
+                    if (manualDeepText.trim() && state.surfaceThought) {
+                      dispatch({ type: 'DEEP_ANALYZE' });
+                      sendDeepText(manualDeepText.trim(), state.surfaceThought)
+                        .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
+                        .catch((err: unknown) => {
+                          const msg = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+                          dispatch({ type: 'DEEP_ERROR', message: msg });
+                        });
+                    }
+                  }}
+                  disabled={!manualDeepText.trim()}
+                  style={{
+                    width: '100%',
+                    maxWidth: '320px',
+                    background: manualDeepText.trim() ? 'var(--accent)' : 'var(--bg-elevated)',
+                    color: manualDeepText.trim() ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                    border: 'none',
+                    padding: 'var(--space-md)',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    borderRadius: 'var(--border-radius-sm)',
+                    cursor: manualDeepText.trim() ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  Отправить
+                </button>
+              </div>
+            </div>
+          )}
           <div style={{
             margin: 'var(--space-md) auto',
             padding: 'var(--space-md) var(--space-lg)',
