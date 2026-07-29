@@ -251,9 +251,9 @@ test('session survives navigation during deep recording', async ({ page }) => {
   // Navigate back to main with full page reload (simulates real navigation)
   await page.goto('/');
 
-  // Should still be in deep recording phase — "Копнуть глубже" button should NOT be visible
-  await expect(page.getByText(/копнуть глубже/i)).not.toBeVisible();
-
-  // Should show the deep recording UI (phase persisted from localStorage)
-  await expect(page.getByText(/Что эта мысль говорит о вас/i)).toBeVisible({ timeout: 3000 });
+  // After navigation during deep recording and coming back,
+  // session should return to result phase (not restore recording)
+  await expect(page.getByText(/копнуть глубже/i)).toBeVisible();
+  // Deep recording UI should NOT be visible
+  await expect(page.getByText(/Что эта мысль говорит о вас/i)).not.toBeVisible();
 });

@@ -11,8 +11,11 @@ test('shows text input when Speech API missing', async ({ page }) => {
   await page.addInitScript(() => {
     delete (window as Record<string, unknown>).SpeechRecognition;
     delete (window as Record<string, unknown>).webkitSpeechRecognition;
-  });
+});
+
   await page.goto('/');
   await expect(page.getByPlaceholder('Опишите, что вас тревожит...')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Отправить' })).toBeVisible();
 });
+
+
