@@ -76,19 +76,19 @@
                                    {:model    model
                                     :messages [{:role "system" :content prompt}
                                                {:role "user"   :content prompt}]})
-                    :socket-timeout 10000
+                     :socket-timeout 25000
                     :conn-timeout    5000
                     :as              :json})]
     (get-in response [:body :choices 0 :message :content])))
 
 (defn call-with-retry
   "Call LLM with retry on transient failures. Configurable via llm-config:
-   :max-retries (default 3) and :retry-backoff-ms (default 1000).
+   :max-retries (default 5) and :retry-backoff-ms (default 2000).
    Uses core.async parking timeout between retries.
    llm-call-fn is a function of two args (llm-config prompt) that performs the actual LLM call."
   [llm-config llm-call-fn prompt]
-  (let [max-retries  (or (:max-retries llm-config) 3)
-        backoff-ms   (or (:retry-backoff-ms llm-config) 1000)]
+  (let [max-retries  (or (:max-retries llm-config) 5)
+        backoff-ms   (or (:retry-backoff-ms llm-config) 2000)]
     (loop [attempt 1]
       (let [result (try
                      {:value (llm-call-fn llm-config prompt)}
