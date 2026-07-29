@@ -33,6 +33,7 @@ constitution → specify → plan → tasks → implement
 3. **Баг или правка** — проверь, не противоречит ли исправление конституции. Если нет — правь, с тестами.
 4. **⚠️ ВСЕГДА сначала обновляй speckit-артефакты, потом код.** Никакой реализации до обновления spec/plan/tasks.
 5. **⚠️ Новая фича → acceptance-тест ДО реализации.** Без E2E/acceptance-теста PR не мёрджится.
+6. **Каждая новая задача — от свежего main.** `git checkout main && git pull` перед `git checkout -b feature/xxx` или `fix/xxx` (см. Git → Commit style).
 
 > **Примечание по `/speckit.implement`**: вместо встроенного инструмента speckit мы используем `/start-work` + OpenCode-агентов для реализации. Это даёт полный контроль над контекстом (constitution, spec, plan, design tokens) и позволяет параллельное выполнение независимых задач. Результат тот же — tasks.md → код → CI/CD → продакшен.
 

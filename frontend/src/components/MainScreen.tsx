@@ -248,7 +248,7 @@ export function MainScreen() {
                   onClick={() => {
                     if (manualText.trim()) {
                       dispatch({ type: 'SET_SURFACE_THOUGHT', text: manualText.trim() });
-                      dispatch({ type: 'STOP_RECORDING' });
+                      dispatch({ type: 'ANALYZE' });
                       sendText(manualText.trim())
                         .then(() => dispatch({ type: 'RESULT_RECEIVED' }))
                         .catch(() => {
