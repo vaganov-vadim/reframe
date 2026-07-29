@@ -71,6 +71,7 @@ export function useSSE() {
         } else {
           error = errorMessageForStatus(response.status);
         }
+        console.error(`[useSSE] HTTP ${response.status} — ${error}`);
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -82,6 +83,7 @@ export function useSSE() {
 
       const reader = response.body?.getReader();
       if (!reader) {
+        console.error('[useSSE] No ReadableStream — response.body is null');
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -93,6 +95,7 @@ export function useSSE() {
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let hasData = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -105,6 +108,7 @@ export function useSSE() {
         for (const line of lines) {
           const parsed = parseSSEData(line);
           if (parsed && typeof parsed === 'object' && 'error' in (parsed as Record<string, unknown>)) {
+            console.warn(`[useSSE] SSE error event — ${(parsed as Record<string, string>).error}`);
             setState((prev) => ({
               ...prev,
               loading: false,
@@ -114,6 +118,7 @@ export function useSSE() {
             return;
           }
           if (parsed && typeof parsed === 'object' && 'reframing' in (parsed as Record<string, unknown>)) {
+            hasData = true;
             setState((prev) => ({ ...prev, data: parsed as ReframeResponse }));
           }
         }
@@ -128,9 +133,13 @@ export function useSSE() {
           ? null
           : 'Ответ пришёл не до конца. Но вот что есть.',
       }));
+      if (!hasData) {
+        console.warn('[useSSE] Partial response — no reframing or distortions in stream');
+      }
     } catch (err: unknown) {
       const error = err as { name?: string };
       if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        console.error(`[useSSE] ${error.name} — request timed out or was aborted`);
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -140,6 +149,7 @@ export function useSSE() {
             : 'Не получилось. Попробуем через минуту?',
         }));
       } else {
+        console.error(`[useSSE] ${error.name || 'NetworkError'} — request failed`);
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -186,6 +196,7 @@ export function useSSE() {
         } else {
           error = errorMessageForStatus(response.status);
         }
+        console.error(`[useSSE:deep] HTTP ${response.status} — ${error}`);
         setState((prev) => ({
           ...prev,
           deepLoading: false,
@@ -197,6 +208,7 @@ export function useSSE() {
       const reader = response.body?.getReader();
       if (!reader) {
         const msg = 'Streaming не поддерживается';
+        console.error('[useSSE:deep] No ReadableStream — response.body is null');
         setState((prev) => ({
           ...prev,
           deepLoading: false,
@@ -220,6 +232,7 @@ export function useSSE() {
           const parsed = parseSSEData(line);
           if (parsed && typeof parsed === 'object' && 'error' in (parsed as Record<string, unknown>)) {
             const sseError = (parsed as Record<string, string>).error;
+            console.warn(`[useSSE:deep] SSE error event — ${sseError}`);
             setState((prev) => ({
               ...prev,
               deepLoading: false,
@@ -238,6 +251,7 @@ export function useSSE() {
       // Only handle network/timeout errors here; HTTP errors already handled above
       if (error.name === 'TimeoutError' || error.name === 'AbortError') {
         const msg = 'Не получилось. Попробуем через минуту?';
+        console.error(`[useSSE:deep] ${error.name} — request timed out or was aborted`);
         setState((prev) => ({
           ...prev,
           deepLoading: false,
@@ -246,6 +260,7 @@ export function useSSE() {
         throw new Error(msg, { cause: err });
       } else if (error.name === 'TypeError') {
         const msg = 'Кажется, нет связи. Проверим?';
+        console.error('[useSSE:deep] TypeError — network unavailable');
         setState((prev) => ({
           ...prev,
           deepLoading: false,

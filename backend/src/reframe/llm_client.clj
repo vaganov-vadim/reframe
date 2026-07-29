@@ -4,7 +4,8 @@
   (:require [clj-http.client :as http]
             [clojure.string :as str]
             [clojure.core.async :refer [alts!! timeout]]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [taoensso.timbre :as timbre]))
 
 ;; ─── Mock infrastructure ────────────────────────────────────────────────────
 
@@ -69,6 +70,7 @@
   (let [api-url  (:api-url llm-config)
         api-key  (:api-key llm-config)
         model    (:model llm-config)
+        start-ms (System/currentTimeMillis)
         response (http/post api-url
                    {:headers     {"Authorization" (str "Bearer " api-key)
                                   "Content-Type"  "application/json"}
@@ -76,9 +78,11 @@
                                    {:model    model
                                     :messages [{:role "system" :content prompt}
                                                {:role "user"   :content prompt}]})
-                     :socket-timeout 25000
+                    :socket-timeout 25000
                     :conn-timeout    5000
-                    :as              :json})]
+                    :as              :json})
+        elapsed  (- (System/currentTimeMillis) start-ms)]
+    (timbre/debug "LLM call completed in" elapsed "ms")
     (get-in response [:body :choices 0 :message :content])))
 
 (defn call-with-retry
@@ -95,11 +99,18 @@
                      (catch Exception e
                        {:error e}))]
         (if-let [v (:value result)]
-          v
+          (do (when (> attempt 1)
+                (timbre/info "LLM retry succeeded on attempt" (str attempt "/" max-retries)))
+              v)
           (if (< attempt max-retries)
-            (do (alts!! [(timeout (* backoff-ms attempt))])
-                (recur (inc attempt)))
-            (throw (:error result))))))))
+            (let [wait-ms (* backoff-ms attempt)]
+              (timbre/warn "LLM attempt" attempt "failed, retrying in" wait-ms "ms"
+                          {:error (.getMessage ^Exception (:error result))})
+              (alts!! [(timeout wait-ms)])
+              (recur (inc attempt)))
+            (do (timbre/error "LLM exhausted all" max-retries "retries"
+                             {:error (.getMessage ^Exception (:error result))})
+                (throw (:error result)))))))))
 
 ;; ─── Public API ─────────────────────────────────────────────────────────────
 
@@ -118,5 +129,7 @@
   (let [{:keys [api-key mock-enabled] :as llm-config} (:llm config)]
     (if (or (= "true" mock-enabled)
             (nil? api-key))
-      (mock-call-llm prompt)
-       (call-with-retry llm-config real-call-llm prompt))))
+      (do (timbre/debug "LLM call — using mock mode")
+          (mock-call-llm prompt))
+      (do (timbre/debug "LLM call — using real API (" (:model llm-config) ")")
+          (call-with-retry llm-config real-call-llm prompt)))))

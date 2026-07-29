@@ -143,11 +143,28 @@
 
 ---
 
-## Итого: 72 задач выполнено, 10 фаз
+## Phase 11 — Операционное логирование (timbre)
+
+- [x] 11.1 `project.clj`: добавить `com.taoensso/timbre "6.5.0"`
+- [x] 11.2 ТЕСТ: `logging_test.clj` — инициализация без ошибок, ротация, очистка старых логов
+- [x] 11.3 `logging.clj`: конфигурация timbre, консольный (INFO+) и файловый (DEBUG+) аппендеры
+- [x] 11.4 `logging.clj`: ежедневная ротация (`reframe.YYYY-MM-DD.log`), автоочистка >7 дней
+- [x] 11.5 `core.clj`: вызов `logging/init!` при старте, замена `println` на `timbre/info`
+- [x] 11.6 `handler.clj`: `timbre/error` с exception и stack trace в catch-блоке
+- [x] 11.7 `llm_client.clj`: логирование retry (WARN), успеха (INFO), исчерпания (ERROR), времени ответа (DEBUG), режима mock/real (DEBUG)
+- [x] 11.8 `.gitignore`: добавить `logs/`
+- [x] 11.9 Прогнать `lein test` — все тесты проходят
+- [x] 11.10 `useSSE.ts`: `console.error` для HTTP ошибок, таймаутов, обрывов; `console.warn` для частичных ответов и SSE-ошибок
+- [x] 11.11 `MainScreen.tsx`: `console.error` в обработчиках ошибок (ERROR dispatch)
+- [x] 11.12 Прогнать `tsc --noEmit && eslint . && vitest run` — всё чисто
+
+---
+
+## Итого: 83 задачи выполнены, 11 фаз
 
 ```
 
-Phase 1 (8) → Phase 2 (8) ∥ Phase 3 (6) → Phase 4 (8) → Phase 5 (6) → Phase 6 (5) → Phase 7 (5) → Phase 8 (9) → Phase 9 (7) → Phase 10 (6)
+Phase 1 (8) → Phase 2 (8) ∥ Phase 3 (6) → Phase 4 (8) → Phase 5 (6) → Phase 6 (5) → Phase 7 (5) → Phase 8 (9) → Phase 9 (7) → Phase 10 (6) → Phase 11 (12)
                     ↑                   ↑
                E2E после 2          E2E после 4, 5, 6, 8
 ```
