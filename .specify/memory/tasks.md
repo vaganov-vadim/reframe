@@ -160,11 +160,34 @@
 
 ---
 
-## Итого: 83 задачи выполнены, 11 фаз
+---
 
-```
+## Phase 12 — Multi-Agent Core (backend, v2)
 
-Phase 1 (8) → Phase 2 (8) ∥ Phase 3 (6) → Phase 4 (8) → Phase 5 (6) → Phase 6 (5) → Phase 7 (5) → Phase 8 (9) → Phase 9 (7) → Phase 10 (6) → Phase 11 (12)
-                    ↑                   ↑
-               E2E после 2          E2E после 4, 5, 6, 8
-```
+- [ ] 12.1 Создать `agents.clj` — протокол Agent + реестр (burns-agent, stoic-agent)
+- [ ] 12.2 ТЕСТ: `agents_test.clj` — соответствие протоколу, поиск в реестре, параллельное выполнение
+- [ ] 12.3 Добавить `stoic-prompt` и `consensus-prompt` в prompt.clj (burns-prompt = переименованный build-prompt)
+- [ ] 12.4 Обновить handler.clj: проверка `:agents`, ветвление v1/v2, параллельная оркестрация через pmap
+- [ ] 12.5 Обновить handler.clj: multi-agent SSE streaming (одно событие на агента)
+- [ ] 12.6 Добавить маппинг агент→модель в config.edn
+- [ ] 12.7 Адаптировать handler_test.clj под новый контракт
+
+## Phase 13 — Multi-Agent UI (frontend, v2)
+
+- [ ] 13.1 Создать `AgentCard.tsx` в `components/v2/` — аватар, имя, бейдж модели, streaming-текст
+- [ ] 13.2 Создать `ConsensusView.tsx` в `components/v2/` — карточка синтеза
+- [ ] 13.3 Создать `StudioScreen.tsx` в `components/v2/` — InputMethod + сетка AgentCard + ConsensusView
+- [ ] 13.4 Обновить `useSSE.ts` — multi-event SSE, обратная совместимость с v1
+- [ ] 13.5 Обновить `App.tsx` — `/` → MainScreen (v1), `/studio` → StudioScreen (v2)
+- [ ] 13.6 ТЕСТ: AgentCard (рендеринг состояний загрузки/текста/ошибки)
+
+## Phase 14 — Тестирование и полировка (v2)
+
+- [ ] 14.1 E2E-тест: `/studio` полный флоу — ввод → 2 карточки агентов → консенсус
+- [ ] 14.2 E2E-тест: `/` (v1) работает после изменений v2
+- [ ] 14.3 Прогнать все тесты: `lein test` + `vitest run` + `npx playwright test`
+- [ ] 14.4 Обновить speckit-артефакты: spec.md, plan.md, tasks.md (синхронизация)
+
+---
+
+## Итого: 83 задачи выполнены (v1), 19 задач запланировано (v2), 11 + 3 фаз
