@@ -51,7 +51,7 @@ export function AnxietySlider({
         ))}
       </div>
 
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', maxWidth: '380px', margin: '0 auto' }}>
         <input
           type="range"
           min={1}
@@ -67,10 +67,12 @@ export function AnxietySlider({
             width: '100%',
             height: 'var(--touch-target)',
             WebkitAppearance: 'none',
+            MozAppearance: 'none',
             appearance: 'none',
             background: 'transparent',
             cursor: disabled ? 'not-allowed' : 'pointer',
             opacity: disabled ? 0.4 : 1,
+            margin: 0,
           }}
         />
         {/* Custom thin track */}
