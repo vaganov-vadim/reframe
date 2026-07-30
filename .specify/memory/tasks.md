@@ -164,30 +164,33 @@
 
 ## Phase 12 — Multi-Agent Core (backend, v2)
 
-- [ ] 12.1 Создать `agents.clj` — протокол Agent + реестр (burns-agent, stoic-agent)
-- [ ] 12.2 ТЕСТ: `agents_test.clj` — соответствие протоколу, поиск в реестре, параллельное выполнение
-- [ ] 12.3 Добавить `stoic-prompt` и `consensus-prompt` в prompt.clj (burns-prompt = переименованный build-prompt)
-- [ ] 12.4 Обновить handler.clj: проверка `:agents`, ветвление v1/v2, параллельная оркестрация через pmap
-- [ ] 12.5 Обновить handler.clj: multi-agent SSE streaming (одно событие на агента)
-- [ ] 12.6 Добавить маппинг агент→модель в config.edn
-- [ ] 12.7 Адаптировать handler_test.clj под новый контракт
+- [x] 12.1 ТЕСТ: `agents_test.clj` — реестр burns/stoic, lookup, analyze contract
+- [x] 12.2 Создать `agents.clj` — реестр + `analyze-agent` + `orchestrate!` (futures + completion queue)
+- [x] 12.3 Добавить `stoic-prompt` и `consensus-prompt` в prompt.clj (`burns-prompt` = alias `build-prompt`)
+- [x] 12.4 Обновить handler.clj: `:agents` → agent-complete SSE (http-kit channel), v1 path без изменений
+- [x] 12.5 Partial failure: error-event на агента; consensus только при ≥2 ok
+- [x] 12.6 config.edn: `:agents {:burns "deepseek-chat" :stoic "deepseek-chat" :consensus "deepseek-chat"}`
+- [x] 12.7 Адаптировать handler_test.clj: drain channel, v2 multi-event, v1 regression
+- [x] 12.8 Mock fixtures для stoic/consensus в mock-responses / agents mock path
 
 ## Phase 13 — Multi-Agent UI (frontend, v2)
 
-- [ ] 13.1 Создать `AgentCard.tsx` в `components/v2/` — аватар, имя, бейдж модели, streaming-текст
-- [ ] 13.2 Создать `ConsensusView.tsx` в `components/v2/` — карточка синтеза
-- [ ] 13.3 Создать `StudioScreen.tsx` в `components/v2/` — InputMethod + сетка AgentCard + ConsensusView
-- [ ] 13.4 Обновить `useSSE.ts` — multi-event SSE, обратная совместимость с v1
-- [ ] 13.5 Обновить `App.tsx` — `/` → MainScreen (v1), `/studio` → StudioScreen (v2)
-- [ ] 13.6 ТЕСТ: AgentCard (рендеринг состояний загрузки/текста/ошибки)
+- [x] 13.1 ТЕСТ: AgentCard (loading / ok structured / ok text / error)
+- [x] 13.2 Создать `AgentCard.tsx` в `components/v2/`
+- [x] 13.3 Создать `ConsensusView.tsx` в `components/v2/`
+- [x] 13.4 Создать `StudioScreen.tsx` — InputMethod + cards + consensus; ссылка «К дневнику»
+- [x] 13.5 `useSSE.sendToAgents` — multi-event agent-complete parser (timeout 45s)
+- [x] 13.6 App.tsx: `/studio` → StudioScreen; TabBar скрыт на studio
+- [x] 13.7 MainScreen: discovery-ссылка «Другой угол зрения» → `/studio`
+- [x] 13.8 Types: AgentEvent / AgentResult в session.ts
 
 ## Phase 14 — Тестирование и полировка (v2)
 
-- [ ] 14.1 E2E-тест: `/studio` полный флоу — ввод → 2 карточки агентов → консенсус
-- [ ] 14.2 E2E-тест: `/` (v1) работает после изменений v2
-- [ ] 14.3 Прогнать все тесты: `lein test` + `vitest run` + `npx playwright test`
-- [ ] 14.4 Обновить speckit-артефакты: spec.md, plan.md, tasks.md (синхронизация)
+- [x] 14.1 E2E: `/studio` — text input → 2 карточки → consensus
+- [x] 14.2 E2E: `/` (v1) работает после v2
+- [x] 14.3 Прогнать `lein test` + `vitest run` + studio playwright
+- [x] 14.4 Синхронизация ROADMAP (v2 multi-agent как ближайшее)
 
 ---
 
-## Итого: 83 задачи выполнены (v1), 19 задач запланировано (v2), 11 + 3 фаз
+## Итого: 83 задачи v1 + Phase 12–14 v2 (critique-refined) выполнены

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { ReframeResponse, DeepResponse } from '../types/session';
+import type { ReframeResponse, DeepResponse, AgentEvent } from '../types/session';
 
 interface SSEState {
   loading: boolean;
@@ -7,9 +7,15 @@ interface SSEState {
   error: string | null;
   deepLoading: boolean;
   deepData: DeepResponse | null;
+  agentsLoading: boolean;
+  agentEvents: AgentEvent[];
+  consensus: string | null;
+  consensusLoading: boolean;
+  agentsError: string | null;
 }
 
 const API_TIMEOUT = 25000; // 25s — matches backend socket-timeout, DeepSeek Vertical Arrow takes ~15s
+const AGENTS_TIMEOUT = 45000; // multi-agent: parallel + consensus
 
 /** Map HTTP status to user-facing error message per spec §7 */
 function errorMessageForStatus(status: number): string {
@@ -37,6 +43,16 @@ export function parseSSEData(line: string): unknown {
   }
 }
 
+function isAgentEvent(value: unknown): value is AgentEvent {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    'agent' in value &&
+    typeof (value as AgentEvent).agent === 'string' &&
+    'status' in value
+  );
+}
+
 export function useSSE() {
   const [state, setState] = useState<SSEState>({
     loading: false,
@@ -44,6 +60,11 @@ export function useSSE() {
     error: null,
     deepLoading: false,
     deepData: null,
+    agentsLoading: false,
+    agentEvents: [],
+    consensus: null,
+    consensusLoading: false,
+    agentsError: null,
   });
   const abortRef = useRef<AbortController | null>(null);
 
@@ -169,7 +190,139 @@ export function useSSE() {
   }, []);
 
   const dismissError = useCallback(() => {
-    setState((prev) => ({ ...prev, error: null }));
+    setState((prev) => ({ ...prev, error: null, agentsError: null }));
+  }, []);
+
+  const sendToAgents = useCallback(async (text: string, agents: string[] = ['burns', 'stoic']) => {
+    const placeholders: AgentEvent[] = agents.map((id) => ({
+      agent: id,
+      name: id === 'burns' ? 'Д-р Бёрнс' : id === 'stoic' ? 'Стоик' : id,
+      status: 'loading' as const,
+    }));
+    setState((prev) => ({
+      ...prev,
+      agentsLoading: true,
+      consensusLoading: true,
+      agentEvents: placeholders,
+      consensus: null,
+      agentsError: null,
+    }));
+    abortRef.current = new AbortController();
+
+    try {
+      const response = await fetch('/api/reframe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, agents }),
+        signal: AbortSignal.any([
+          abortRef.current.signal,
+          AbortSignal.timeout(AGENTS_TIMEOUT),
+        ]),
+      });
+
+      if (!response.ok) {
+        let error: string;
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const seconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+          error = `rate_limit:${seconds}`;
+        } else {
+          error = errorMessageForStatus(response.status);
+        }
+        console.error(`[useSSE:agents] HTTP ${response.status} — ${error}`);
+        setState((prev) => ({
+          ...prev,
+          agentsLoading: false,
+          consensusLoading: false,
+          agentsError: error,
+        }));
+        return;
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        console.error('[useSSE:agents] No ReadableStream');
+        setState((prev) => ({
+          ...prev,
+          agentsLoading: false,
+          consensusLoading: false,
+          agentsError: 'Что-то с соединением. Попробуем снова?',
+        }));
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let okCount = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const parsed = parseSSEData(line);
+          if (!isAgentEvent(parsed)) continue;
+
+          if (parsed.agent === 'consensus') {
+            const textPayload =
+              parsed.payload && 'text' in parsed.payload ? parsed.payload.text : null;
+            setState((prev) => ({
+              ...prev,
+              consensus: parsed.status === 'ok' ? textPayload : null,
+              consensusLoading: false,
+              agentsError:
+                parsed.status === 'error' ? parsed.error || 'Не собрал общее.' : prev.agentsError,
+            }));
+            continue;
+          }
+
+          if (parsed.status === 'ok') okCount += 1;
+
+          setState((prev) => {
+            const others = prev.agentEvents.filter((e) => e.agent !== parsed.agent);
+            return {
+              ...prev,
+              agentEvents: [...others, parsed],
+            };
+          });
+        }
+      }
+
+      setState((prev) => ({
+        ...prev,
+        agentsLoading: false,
+        consensusLoading: false,
+        agentsError:
+          okCount === 0 && !prev.agentsError
+            ? 'Не получилось. Попробуем через минуту?'
+            : prev.agentsError,
+      }));
+    } catch (err: unknown) {
+      const error = err as { name?: string };
+      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        console.error(`[useSSE:agents] ${error.name}`);
+        setState((prev) => ({
+          ...prev,
+          agentsLoading: false,
+          consensusLoading: false,
+          agentsError: prev.agentEvents.some((e) => e.status === 'ok')
+            ? null
+            : 'Не получилось. Попробуем через минуту?',
+        }));
+      } else {
+        console.error('[useSSE:agents] network error');
+        setState((prev) => ({
+          ...prev,
+          agentsLoading: false,
+          consensusLoading: false,
+          agentsError: 'Кажется, нет связи. Проверим?',
+        }));
+      }
+    }
   }, []);
 
   const sendDeepText = useCallback(async (text: string, surface: string) => {
@@ -248,7 +401,6 @@ export function useSSE() {
       setState((prev) => ({ ...prev, deepLoading: false }));
     } catch (err: unknown) {
       const error = err as { name?: string };
-      // Only handle network/timeout errors here; HTTP errors already handled above
       if (error.name === 'TimeoutError' || error.name === 'AbortError') {
         const msg = 'Не получилось. Попробуем через минуту?';
         console.error(`[useSSE:deep] ${error.name} — request timed out or was aborted`);
@@ -268,10 +420,17 @@ export function useSSE() {
         }));
         throw new Error(msg, { cause: err });
       }
-      // For HTTP errors (regular Error), SSE state already set above — just propagate
       throw err;
     }
   }, []);
 
-  return { ...state, sendText, sendDeepText, resetDeep, dismissError, abort };
+  return {
+    ...state,
+    sendText,
+    sendDeepText,
+    sendToAgents,
+    resetDeep,
+    dismissError,
+    abort,
+  };
 }

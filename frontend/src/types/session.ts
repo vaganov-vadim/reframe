@@ -23,6 +23,28 @@ export interface DeepResponse {
   question?: string;
 }
 
+/** v2 multi-agent payloads */
+export interface BurnsAgentPayload {
+  distortions?: Distortion[];
+  reframing?: string;
+  question?: string;
+  pattern?: string;
+}
+
+export interface TextAgentPayload {
+  text: string;
+}
+
+export type AgentPayload = BurnsAgentPayload | TextAgentPayload;
+
+export interface AgentEvent {
+  agent: string;
+  name: string;
+  status: 'ok' | 'error' | 'loading';
+  payload?: AgentPayload;
+  error?: string;
+}
+
 export interface Session {
   id: string;
   date: string;

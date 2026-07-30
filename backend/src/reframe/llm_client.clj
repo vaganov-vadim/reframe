@@ -35,8 +35,15 @@
     :fixture
     (let [fixtures (load-mock-fixtures)
           is-deeper (and prompt (str/includes? prompt "Vertical Arrow"))
-          fixture  (if is-deeper (last fixtures) (first fixtures))]
-      (json/generate-string (:output fixture)))
+          is-stoic (and prompt (str/includes? prompt "стоический философ"))
+          is-consensus (and prompt (str/includes? prompt "нейтральный синтезатор"))]
+      (cond
+        is-deeper (json/generate-string (:output (last fixtures)))
+        is-stoic (json/generate-string
+                  {:text "Молчание других вне твоего контроля. В контроле — факт опоздания и следующий шаг: короткое сообщение команде."})
+        is-consensus (json/generate-string
+                      {:text "Проблема в интерпретации, а не в самом факте. Стоит отделить домыслы от того, что можно проверить."})
+        :else (json/generate-string (:output (first fixtures)))))
     :rotate
     (let [n (swap! mock-call-count inc)]
       (case n

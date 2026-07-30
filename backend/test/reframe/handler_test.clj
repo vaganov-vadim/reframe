@@ -2,11 +2,25 @@
   "Comprehensive test suite for HTTP handler (Phase 2).
    RED phase: tests define expected API contract before handler implementation."
   (:require [cheshire.core :as json]
+            [clojure.core.async :as async]
+            [clojure.string :as str]
             [clojure.test :refer :all]
             [reframe.handler :as handler]
             [reframe.rate-limiter :as rate-limiter]
             [reframe.llm-client :as llm-client])
   (:import [java.io ByteArrayInputStream]))
+
+(defn- drain-sse-body
+  "Drain string or core.async channel SSE body into a single string."
+  [body]
+  (cond
+    (string? body) body
+    (satisfies? clojure.core.async.impl.protocols/ReadPort body)
+    (loop [acc ""]
+      (if-let [chunk (async/<!! body)]
+        (recur (str acc chunk))
+        acc))
+    :else (str body)))
 
 ;; ─── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -168,11 +182,11 @@
                                  :body (json-body {:text "Я безответственный человек"
                                                    :mode "deeper"
                                                    :surface "Я опоздал на встречу"})})
-          body     (:body response)]
+          body     (drain-sse-body (:body response))]
       (is (= 200 (:status response)))
       (is (= "text/event-stream" (get-in response [:headers "Content-Type"])))
-      (is (clojure.string/includes? body "levels"))
-      (is (clojure.string/includes? body "reframing")))))
+      (is (str/includes? body "levels"))
+      (is (str/includes? body "reframing")))))
 
 (deftest post-reframe-deeper-missing-surface
   (testing "POST /api/reframe with mode=deeper but no surface returns 400"
@@ -180,6 +194,23 @@
                                  :uri "/api/reframe"
                                  :body (json-body {:text "test" :mode "deeper"})})]
       (is (= 400 (:status response))))))
+
+;; ─── POST /api/reframe — v2 multi-agent ─────────────────────────────────────
+
+(deftest post-reframe-multi-agent-ok
+  (testing "POST with :agents returns multi-event SSE with burns, stoic, consensus"
+    (llm-client/set-mock-mode! :fixture)
+    (let [response ((handler/app test-config) {:request-method :post
+                                               :uri "/api/reframe"
+                                               :body (json-body {:text "Я опоздал"
+                                                                 :agents ["burns" "stoic"]})})
+          body (drain-sse-body (:body response))]
+      (is (= 200 (:status response)))
+      (is (= "text/event-stream" (get-in response [:headers "Content-Type"])))
+      (is (str/includes? body "\"agent\":\"burns\""))
+      (is (str/includes? body "\"agent\":\"stoic\""))
+      (is (str/includes? body "\"agent\":\"consensus\""))
+      (is (str/includes? body "reframing")))))
 
 ;; ─── 404 — unknown routes ──────────────────────────────────────────────────
 
