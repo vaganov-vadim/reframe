@@ -67,8 +67,7 @@ input[type="range"]::-moz-range-thumb {
   height: 24px;
   border-radius: 50%;
   background: var(--accent);
-  border: 2px solid var(--bg-primary);
-  box-shadow: none;
-  -moz-appearance: none;
+  border: none;
+  box-shadow: 0 0 0 2px var(--bg-primary);
   cursor: pointer;
 }
