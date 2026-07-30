@@ -72,3 +72,10 @@ input[type="range"]::-moz-range-thumb {
   -moz-appearance: none;
   cursor: pointer;
 }
+
+@-moz-document url-prefix() {
+  input[type="range"]::-moz-range-thumb {
+    background-image: none;
+    background-color: var(--accent);
+  }
+}
