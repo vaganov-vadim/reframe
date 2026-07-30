@@ -3,6 +3,7 @@
    Routes requests, validates input, checks rate limits, calls LLM, returns SSE stream."
   (:require [cheshire.core :as json]
             [clojure.string :as str]
+            [reframe.agents :as agents]
             [reframe.prompt :as prompt]
             [reframe.rate-limiter :as rate-limiter]
             [reframe.llm-client :as llm-client]
@@ -88,16 +89,24 @@
                     :errors   @error-counter
                     :memory   mem-used-mb})))
 
+(defn- normalize-agent-ids
+  "Coerce agents field to a seq of keywords. Nil if missing/empty."
+  [agents-field]
+  (when (seq agents-field)
+    (mapv #(keyword (name %)) agents-field)))
+
 (defn- reframe-handler
   "POST /api/reframe — validate, rate limit, call LLM, return SSE stream.
    Supports :mode param in body-params — when \"deeper\", uses build-deeper-prompt
    with :surface (original thought) and :text (user response).
+   When :agents is present — v2 multi-agent orchestration (agent-complete SSE channel).
    Config is the full Aero config map, threaded to llm-client/call-llm."
   [config request]
   (let [body-params (json/parse-string (slurp (:body request)) true)
         text        (:text body-params)
         mode        (:mode body-params)
-        surface     (:surface body-params)]
+        surface     (:surface body-params)
+        agent-ids   (normalize-agent-ids (:agents body-params))]
     (cond
       ;; ── Input validation ──────────────────────────────────────────────
       (nil? text)
@@ -118,30 +127,39 @@
       (do (swap! error-counter inc)
           (json-body 429 {:error "Rate limit exceeded"} "Retry-After" "60"))
 
-       ;; ── LLM call ─────────────────────────────────────────────────────
-       :else
-       (try
-         (let [llm-prompt (if (= "deeper" mode)
+      ;; ── v2 multi-agent ────────────────────────────────────────────────
+      (seq agent-ids)
+      (do
+        (rate-limiter/consume-request! request)
+        (swap! request-counter inc)
+        {:status  200
+         :headers {"Content-Type"  sse-content-type
+                   "Cache-Control" "no-cache"
+                   "Connection"    "keep-alive"}
+         :body    (agents/orchestrate! config text agent-ids)})
+
+      ;; ── v1 single-agent LLM call ──────────────────────────────────────
+      :else
+      (try
+        (let [llm-prompt (if (= "deeper" mode)
                            (prompt/build-deeper-prompt surface text)
                            (prompt/build-prompt text))
-                llm-result (llm-client/call-llm config llm-prompt)
-               parsed     (try (json/parse-string llm-result)
-                               (catch Exception _ llm-result))]
-           ;; Only consume token on successful LLM call
-           (rate-limiter/consume-request! request)
-           (swap! request-counter inc)
-           (sse-body (if (map? parsed) parsed {:result llm-result})))
-          (catch Exception e
-            (let [ex-type (-> e ex-data :type)]
-              (swap! error-counter inc)
-              ;; Log the exception with cause chain but WITHOUT user text
-              (if (= :llm-timeout ex-type)
-                (do (timbre/error "LLM timeout — upstream did not respond in time"
-                                  {:error-counter @error-counter})
-                    (json-body 504 {:error "LLM timeout"}))
-                (do (timbre/error e "LLM API error — upstream returned error or connection failed"
-                                  {:error-counter @error-counter})
-                    (json-body 502 {:error "LLM API error"})))))))))
+              llm-result (llm-client/call-llm config llm-prompt)
+              parsed     (try (json/parse-string llm-result)
+                              (catch Exception _ llm-result))]
+          (rate-limiter/consume-request! request)
+          (swap! request-counter inc)
+          (sse-body (if (map? parsed) parsed {:result llm-result})))
+        (catch Exception e
+          (let [ex-type (-> e ex-data :type)]
+            (swap! error-counter inc)
+            (if (= :llm-timeout ex-type)
+              (do (timbre/error "LLM timeout — upstream did not respond in time"
+                                {:error-counter @error-counter})
+                  (json-body 504 {:error "LLM timeout"}))
+              (do (timbre/error e "LLM API error — upstream returned error or connection failed"
+                                {:error-counter @error-counter})
+                  (json-body 502 {:error "LLM API error"})))))))))
 
 ;; ─── Main dispatcher ────────────────────────────────────────────────────────
 

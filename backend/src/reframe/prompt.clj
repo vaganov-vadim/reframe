@@ -69,6 +69,34 @@
   [text]
   (str system-prompt "\n\nТекст пользователя: " text))
 
+(def burns-prompt
+  "Alias for build-prompt — Burns CBT agent (v2 registry)."
+  build-prompt)
+
+(defn stoic-prompt
+  "Build prompt for Stoic agent: control vs acceptance. Returns free-text JSON contract."
+  [text]
+  (str
+   "Ты — стоический философ (Сенека / Эпиктет) в роли спокойного собеседника. "
+   "НЕ используй КПТ-термины и список когнитивных искажений.\n\n"
+   "Задача: помочь отделить то, что под контролем человека, от того, что вне контроля.\n"
+   "Тон: ясный, краткий, без морализаторства и токсичного позитива.\n"
+   "Длина ответа: ≤ 80 слов.\n\n"
+   "ОТВЕТ ВСЕГДА В JSON (без markdown):\n"
+   "{\"text\": \"краткий стоический взгляд: что в контроле / что принять\"}\n\n"
+   "Ситуация пользователя: " text))
+
+(defn consensus-prompt
+  "Build prompt that synthesizes common ground across agent outputs."
+  [thought agent-summaries]
+  (str
+   "Ты — нейтральный синтезатор. Ниже — несколько взглядов на одну ситуацию. "
+   "Найди ОБЩЕЕ (1–2 предложения). Без новых советов, без спора с агентами.\n\n"
+   "Исходная мысль: " thought "\n\n"
+   "Взгляды:\n" agent-summaries "\n\n"
+   "ОТВЕТ ВСЕГДА В JSON (без markdown):\n"
+   "{\"text\": \"что общего между взглядами\"}"))
+
 (defn build-deeper-prompt
   "Build the LLM prompt for Vertical Arrow (Burns) deep analysis.
    surface-thought: the original thought from first reframing

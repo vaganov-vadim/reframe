@@ -1,4 +1,5 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useRecording } from '../contexts/RecordingContext';
 import { useSession } from '../contexts/SessionContext';
 import { useSSE } from '../hooks/useSSE';
@@ -197,6 +198,20 @@ export function MainScreen() {
         }}>
           голосовой КПТ-дневник
         </p>
+        <Link
+          to="/studio"
+          data-testid="studio-discovery"
+          style={{
+            display: 'inline-block',
+            marginTop: 'var(--space-sm)',
+            color: 'var(--accent)',
+            fontSize: 13,
+            textDecoration: 'none',
+            fontWeight: 500,
+          }}
+        >
+          Другой угол зрения →
+        </Link>
       </div>
 
       <ErrorBanner

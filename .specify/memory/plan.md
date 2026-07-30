@@ -874,40 +874,45 @@ console.warn('[useSSE] Partial response — incomplete data received');
 
 ## v2 — Multi-Agent платформа
 
-> Статус: спроектировано, не реализовано. v1 архитектура стабильна. v1 на `/`, v2 на `/studio` — один SPA, один jar.
+> Статус: реализовано (v2.0). v1 на `/`, v2 на `/studio` — один SPA, один jar. Без миграции папок v1.
+
+### Решения
+
+- Coexist + discovery-ссылка с MainScreen
+- Wow = контраст Burns/Stoic + consensus
+- SSE = agent-complete (http-kit channel flush по готовности)
+- Burns = structured JSON; Stoic/consensus = `{text}`
+- Нет folder move `shared/v1`; только `components/v2/`
+- Rate limit: один POST = один token (как v1), внутри 2+1 LLM-вызова
+- Параллелизм: bounded futures + очередь завершения (не голый `pmap`)
 
 ### Структура
 
 ```
 frontend/src/components/
-├── shared/           # общие компоненты (InputMethod, AnxietySlider, ErrorBanner...)
-├── v1/               # v1-специфичные (MainScreen, ResponseView, VerticalArrow...)
-└── v2/               # v2-специфичные (StudioScreen, AgentCard, ConsensusView)
+├── ...существующие v1 (без переезда)...
+└── v2/
+    ├── StudioScreen.tsx
+    ├── AgentCard.tsx
+    └── ConsensusView.tsx
 
 backend/src/reframe/
-├── agents.clj         # NEW: протокол Agent + реестр (burns, stoic)
-├── handler.clj         # расширен: проверка :agents param, ветвление v1/v2
-├── prompt.clj          # расширен: burns-prompt + stoic-prompt + consensus-prompt
-└── ...                 # llm_client, rate_limiter, logging — без изменений
+├── agents.clj          # NEW: реестр + analyze + orchestrate
+├── handler.clj         # ветка :agents → multi-event SSE
+├── prompt.clj          # + stoic-prompt, consensus-prompt; build-prompt alias burns
+└── ...                 # llm_client, rate_limiter, logging
 ```
 
 ### Роуты
 
 | Роут | Версия | Компонент |
 |------|--------|-----------|
-| `/` | v1 | MainScreen (стабилен) |
+| `/` | v1 | MainScreen (+ ссылка на /studio) |
 | `/history` | v1 | HistoryTab |
 | `/progress` | v1 | ProgressTab |
-| `/studio` | v2 | StudioScreen (новый) |
+| `/studio` | v2 | StudioScreen |
 
-### Бэкенд-изменения
-
-- **agents.clj**: протокол `Agent` с методом `analyze`, реестр агентов
-- **prompt.clj**: `burns-prompt` (переименован из `build-prompt`), новый `stoic-prompt`, `consensus-prompt`
-- **handler.clj**: проверка `:agents` в теле запроса → параллельный `pmap` → multi-event SSE
-- **config.edn**: маппинг `{:burns "deepseek-chat" :stoic "deepseek-chat"}`
-
-### API-контракт (расширен)
+### API-контракт
 
 v1 (без изменений):
 ```json
@@ -915,43 +920,46 @@ POST /api/reframe {"text": "..."}
 → SSE: {"distortions": [...], "reframing": "...", "question": "..."}
 ```
 
-v2 (обратно совместим):
+v2:
 ```json
 POST /api/reframe {"text": "...", "agents": ["burns", "stoic"]}
-→ SSE: {"agent": "burns", "text": "..."}
-        {"agent": "stoic", "text": "..."}
-        {"agent": "consensus", "text": "..."}
+→ SSE events (agent-complete, order = completion order):
+  {"agent":"burns","name":"Д-р Бёрнс","status":"ok","payload":{"distortions":[...],"reframing":"...","question":"..."}}
+  {"agent":"stoic","name":"Стоик","status":"ok","payload":{"text":"..."}}
+  {"agent":"stoic","name":"Стоик","status":"error","error":"LLM API error"}  // partial failure
+  {"agent":"consensus","name":"Что общего","status":"ok","payload":{"text":"..."}}  // only if ≥2 ok
 ```
 
-### Фронтенд-изменения
+### Фронтенд
 
-- **AgentCard.tsx**: аватар, имя, бейдж модели, streaming-текст, скелетон загрузки
-- **ConsensusView.tsx**: карточка «Что общего»
-- **StudioScreen.tsx**: InputMethod + сетка AgentCard + ConsensusView
-- **useSSE.ts**: multi-event SSE, новый метод `sendToAgents`, обратная совместимость с v1
-- **App.tsx**: `/studio` → StudioScreen
+- `AgentCard`: loading / ok / error; Burns рендерит distortions+reframing
+- `ConsensusView`: текст синтеза
+- `StudioScreen`: InputMethod + cards + consensus; ссылка «К дневнику»
+- `useSSE.sendToAgents`: multi-event parser
+- MainScreen: ссылка «Другой угол зрения» → `/studio`
+- На `/studio` TabBar не показываем (или минимальный back)
 
 ### Таймауты
 
 | Слой | Таймаут | Примечание |
 |------|---------|------------|
-| Фронтенд | 25s | без изменений |
-| Nginx | 30s | без изменений |
-| Бэкенд | 30s | параллельно, общее время ≈ max(время агентов) |
-| DeepSeek Pro | 3-5s | параллельные вызовы |
+| Фронтенд | 45s | multi-agent: 2 параллельных + consensus |
+| Nginx | 60s | поднять proxy_read_timeout для /api/reframe при деплое v2 |
+| Бэкенд socket | 30s на вызов | общее ≈ max(агенты) + consensus |
+| DeepSeek | 3-5s/call | параллельно |
 
 ### Риски
 
-1. **Rate limit DeepSeek**: 2-4 параллельных запроса, лимит ~60/min → безопасно
-2. **SSE-сложность**: multi-event парсинг, каждое событие с префиксом `{agent: "..."}`
-3. **Качество промптов**: стоический тон должен отличаться от клинического Бёрнса
-4. **Миграция папок**: перенос v1-компонентов в `v1/` должен сохранить все импорты
+1. Product rate limit 5/min — dig deeper отложен, один studio-запрос ок
+2. SSE channel + тесты: drain channel в handler_test
+3. Промпт Стоика должен отличаться от Бёрнса
+4. Partial failure + отсутствие consensus
 
 ### Тестирование
 
-- Бэкенд: протокол Agent, pmap, порядок SSE-событий
-- Фронтенд: AgentCard (загрузка/текст/ошибка), StudioScreen с N агентами
-- E2E: полный флоу `/studio`, v1 на `/` сохранён
+- Backend: agents_test + handler multi-agent SSE
+- Frontend unit: AgentCard states
+- E2E: `/studio` flow; `/` v1 regression
 
 ---
 
