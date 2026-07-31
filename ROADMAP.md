@@ -35,13 +35,13 @@
 
 ---
 
-## Сделано (v2.0–v2.2)
+## Сделано (v2.0–v2.3)
 
 - 🔀 Multi-agent studio — Бёрнс + Стоик, «Что унести»
 - 🔗 Discovery — «Два взгляда на ситуацию →»
-- 🧭 Quiet UI + один follow-up после takeaway (не open chat)
+- 🧭 Quiet UI + один follow-up; presence (skeleton + typewriter, не token-stream)
 
-## Следом (v1.1 / v2.3)
+## Следом (v1.1 / v2.4)
 
 - 🔊 Голосовой фидбек (TTS) — озвучка рефрейминга
 - 📱 PWA — установка на телефон как приложение, офлайн-заглушка

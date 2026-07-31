@@ -4,12 +4,14 @@ import { AgentCard } from '../../src/components/v2/AgentCard';
 import type { AgentEvent } from '../../src/types/session';
 
 describe('AgentCard', () => {
-  it('renders loading state with role', () => {
+  it('renders skeleton loading state with role', () => {
     const event: AgentEvent = { agent: 'burns', name: 'Д-р Бёрнс', status: 'loading' };
     const html = renderToStaticMarkup(<AgentCard event={event} />);
     expect(html).toContain('Д-р Бёрнс');
     expect(html).toContain('agent-loading');
+    expect(html).toContain('studio-skeleton');
     expect(html).toContain('искажения и перефраз');
+    expect(html).not.toContain('Жду ответ');
   });
 
   it('shows reframing and collapsed details by default', () => {
@@ -29,7 +31,6 @@ describe('AgentCard', () => {
     expect(html).toContain('agent-burns-more');
     expect(html).toContain('aria-expanded="false"');
     expect(html).not.toContain('agent-burns-details');
-    expect(html).not.toContain('Чтение мыслей');
   });
 
   it('renders stoic role and text payload', () => {

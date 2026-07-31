@@ -305,10 +305,14 @@ API follow-up: `POST /api/reframe` с `mode: "studio-followup"`, поля `text`
 
 ### UI-компоненты
 
-- `AgentCard` — имя + мелкая роль; Burns: reframing; details под «ещё»
-- `ConsensusView` — hero «Что унести»
+- `AgentCard` — имя + мелкая роль; Burns: reframing; details под «ещё»; loading = skeleton (не «Жду…»)
+- `ConsensusView` — hero «Что унести» (типографика, без тяжёлой «коробки»); loading = skeleton; появление текста — client typewriter (не token-stream)
 - `StudioScreen` — quiet input; результат → follow-up → «Понял»; «К дневнику» только в шапке
-- Без бейджей модели; без open chat
+- Без бейджей модели; без open chat; **без token SSE** (agent-complete + presence motion)
+
+### Presence (v2.3)
+
+Прогрессия на экране без смены API: skeleton → agent-complete reveal → typewriter на takeaway. Token-stream отложен.
 
 ### Что остаётся от v1
 
