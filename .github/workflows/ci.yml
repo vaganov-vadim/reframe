@@ -120,10 +120,26 @@ jobs:
           SSH_KEY: ${{ secrets.VDS_SSH_KEY }}
           VDS_HOST: ${{ secrets.VDS_HOST }}
         run: |
+          set -euo pipefail
           JAR=$(ls backend/target/*-standalone.jar | head -1)
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no" frontend/dist/ reframe@$VDS_HOST:/var/www/reframe/dist/
-          scp -o StrictHostKeyChecking=no "$JAR" reframe@$VDS_HOST:/opt/reframe/reframe.jar
-          ssh -o StrictHostKeyChecking=no reframe@$VDS_HOST "sudo systemctl restart reframe-backend"
+          SSH="ssh -o StrictHostKeyChecking=no reframe@$VDS_HOST"
+
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" frontend/dist/ "reframe@$VDS_HOST:/var/www/reframe/dist/"
+          scp -o StrictHostKeyChecking=no "$JAR" "reframe@$VDS_HOST:/opt/reframe/reframe.jar"
+
+          # Prefer passwordless systemctl for the reframe user (no sudoers needed).
+          # Fall back to sudo only if configured; never leave new jar with old process.
+          if $SSH 'systemctl --user restart reframe-backend'; then
+            echo "Backend restarted via systemctl --user"
+          elif $SSH 'sudo -n /bin/systemctl restart reframe-backend'; then
+            echo "Backend restarted via sudo -n systemctl"
+          elif $SSH 'test -x /opt/reframe/restart.sh && /opt/reframe/restart.sh'; then
+            echo "Backend restarted via /opt/reframe/restart.sh"
+          else
+            echo "::error::Backend jar uploaded but restart failed. Fix VDS sudoers or install /opt/reframe/restart.sh"
+            echo "Manual fix: ssh reframe@$VDS_HOST and restart the backend process"
+            exit 1
+          fi

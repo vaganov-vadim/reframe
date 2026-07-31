@@ -254,6 +254,7 @@ export function useSSE() {
       const decoder = new TextDecoder();
       let buffer = '';
       let okCount = 0;
+      let sawLegacyV1Shape = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -265,6 +266,17 @@ export function useSSE() {
 
         for (const line of lines) {
           const parsed = parseSSEData(line);
+          if (
+            parsed &&
+            typeof parsed === 'object' &&
+            'reframing' in (parsed as Record<string, unknown>) &&
+            !('agent' in (parsed as Record<string, unknown>))
+          ) {
+            // Old backend ignored :agents and returned v1 payload
+            sawLegacyV1Shape = true;
+            console.error('[useSSE:agents] Legacy v1 SSE payload — backend not multi-agent capable');
+            continue;
+          }
           if (!isAgentEvent(parsed)) continue;
 
           if (parsed.agent === 'consensus') {
@@ -298,7 +310,9 @@ export function useSSE() {
         consensusLoading: false,
         agentsError:
           okCount === 0 && !prev.agentsError
-            ? 'Не получилось. Попробуем через минуту?'
+            ? sawLegacyV1Shape
+              ? 'Бэкенд не обновлён для Studio. Нужен рестарт сервиса на сервере.'
+              : 'Не получилось. Попробуем через минуту?'
             : prev.agentsError,
       }));
     } catch (err: unknown) {

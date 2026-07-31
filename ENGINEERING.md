@@ -79,6 +79,25 @@ Chrome → React SPA → POST /api/reframe → Clojure прокси → LLM API 
 - **Pre-commit**: Lefthook (типы, линтер, тесты)
 - **CI/CD**: GitHub Actions — авто-деплой на VDS после мёрджа в main
 
+### Деплой: рестарт бэкенда
+
+CI заливает `frontend/dist` и `reframe.jar`, затем перезапускает сервис. На VDS сломанный `/etc/sudoers.d/reframe` ломает `sudo systemctl restart` — фронт обновляется, а старый JVM-процесс продолжает работать. Studio тогда получает v1-ответ без поля `agent` и показывает ошибку.
+
+Разово на сервере (под root):
+
+```bash
+# Починить sudoers (одна строка, без синтаксических ошибок):
+echo 'reframe ALL=(root) NOPASSWD: /bin/systemctl restart reframe-backend, /bin/systemctl status reframe-backend' > /etc/sudoers.d/reframe
+chmod 440 /etc/sudoers.d/reframe
+visudo -cf /etc/sudoers.d/reframe
+
+# Поднять новый jar, уже залитый CI:
+sudo systemctl restart reframe-backend
+sudo systemctl status reframe-backend
+```
+
+Либо без sudo — user-level unit / скрипт `/opt/reframe/restart.sh` (см. deploy job в `.github/workflows/ci.yml`).
+
 ## Приватность
 
 Все данные только в localStorage. Бэкенд без БД. История — только метаданные.

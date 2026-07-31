@@ -129,15 +129,26 @@
 
       ;; ── v2 multi-agent ────────────────────────────────────────────────
       (seq agent-ids)
-      (do
-        (rate-limiter/consume-request! request)
-        (swap! request-counter inc)
-        {:status  200
-         :headers {"Content-Type"  sse-content-type
-                   "Cache-Control" "no-cache"
-                   "Connection"    "keep-alive"}
-         ;; Plain string body (already SSE-formatted) — reliable via http-kit/nginx
-         :body    (agents/orchestrate! config text agent-ids)})
+      (try
+        (let [sse (agents/orchestrate! config text agent-ids)]
+          (rate-limiter/consume-request! request)
+          (swap! request-counter inc)
+          {:status  200
+           :headers {"Content-Type"  sse-content-type
+                     "Cache-Control" "no-cache"
+                     "Connection"    "keep-alive"}
+           ;; Plain string body (already SSE-formatted) — reliable via http-kit/nginx
+           :body    sse})
+        (catch Exception e
+          (swap! error-counter inc)
+          (let [ex-type (-> e ex-data :type)]
+            (if (= :llm-timeout ex-type)
+              (do (timbre/error "Multi-agent LLM timeout"
+                                {:error-counter @error-counter})
+                  (json-body 504 {:error "LLM timeout"}))
+              (do (timbre/error e "Multi-agent orchestration failed"
+                                {:error-counter @error-counter})
+                  (json-body 502 {:error "LLM API error"}))))))
 
       ;; ── v1 single-agent LLM call ──────────────────────────────────────
       :else
