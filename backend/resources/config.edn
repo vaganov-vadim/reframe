@@ -1,14 +1,21 @@
 {:server     {:port #long #or [#env REFRAME_PORT 3000]}
  :rate-limit {:requests-per-minute #long #or [#env REFRAME_RATE_LIMIT 5]
               :algorithm           :token-bucket}
- :agents     {:burns     #or [#env REFRAME_AGENT_BURNS "deepseek-chat"]
-              :stoic     #or [#env REFRAME_AGENT_STOIC "deepseek-chat"]
-              :consensus #or [#env REFRAME_AGENT_CONSENSUS "deepseek-chat"]}
+ ;; Per-agent DeepSeek V4 model + thinking (reasoner = thinking enabled).
+ ;; Override model: REFRAME_AGENT_BURNS / _STOIC / _CONSENSUS
+ ;; Override thinking: REFRAME_AGENT_BURNS_THINKING / _STOIC_THINKING / _CONSENSUS_THINKING
+ :agents     {:burns     {:model    #or [#env REFRAME_AGENT_BURNS "deepseek-v4-flash"]
+                          :thinking #or [#env REFRAME_AGENT_BURNS_THINKING "disabled"]}
+              :stoic     {:model    #or [#env REFRAME_AGENT_STOIC "deepseek-v4-flash"]
+                          :thinking #or [#env REFRAME_AGENT_STOIC_THINKING "disabled"]}
+              :consensus {:model    #or [#env REFRAME_AGENT_CONSENSUS "deepseek-v4-flash"]
+                          :thinking #or [#env REFRAME_AGENT_CONSENSUS_THINKING "enabled"]}}
  :llm        {:api-key           #env LLM_API_KEY
               :api-url           #or [#env LLM_API_URL "https://api.deepseek.com/v1/chat/completions"]
-              :model             #or [#env LLM_MODEL "deepseek-chat"]
+              :model             #or [#env LLM_MODEL "deepseek-v4-flash"]
+              :thinking          #or [#env LLM_THINKING "disabled"]
               :max-retries       #long #or [#env LLM_MAX_RETRIES 5]
               :retry-backoff-ms  #long #or [#env LLM_RETRY_BACKOFF_MS 2000]
-              :socket-timeout-ms #long #or [#env LLM_SOCKET_TIMEOUT_MS 30000]
+              :socket-timeout-ms #long #or [#env LLM_SOCKET_TIMEOUT_MS 45000]
               :conn-timeout-ms   #long #or [#env LLM_CONN_TIMEOUT_MS 5000]
               :mock-enabled      #or [#env REFRAME_MOCK_LLM "false"]}}

@@ -11,10 +11,11 @@
   {:llm {:api-key nil
          :api-url "http://mock.example.com"
          :model "mock-model"
+         :thinking "disabled"
          :mock-enabled "true"}
-   :agents {:burns "deepseek-chat"
-            :stoic "deepseek-chat"
-            :consensus "deepseek-chat"}})
+   :agents {:burns {:model "deepseek-v4-flash" :thinking "disabled"}
+            :stoic {:model "deepseek-v4-flash" :thinking "disabled"}
+            :consensus {:model "deepseek-v4-flash" :thinking "enabled"}}})
 
 (use-fixtures :each
   (fn [f]
@@ -82,3 +83,45 @@
     (let [line (agents/format-sse-event {:agent "burns" :status "ok"})]
       (is (str/starts-with? line "data: "))
       (is (str/ends-with? line "\n\n")))))
+
+(deftest agent-llm-opts-from-map-config
+  (testing "Map agent config yields model + thinking opts"
+    (is (= {:model "deepseek-v4-flash" :thinking "disabled"}
+           (agents/agent-llm-opts test-config :burns)))
+    (is (= {:model "deepseek-v4-flash" :thinking "enabled"}
+           (agents/agent-llm-opts test-config :consensus)))))
+
+(deftest agent-llm-opts-legacy-string
+  (testing "Legacy string agent config yields only :model"
+    (let [cfg (assoc test-config :agents {:burns "deepseek-v4-pro"})]
+      (is (= {:model "deepseek-v4-pro"}
+             (agents/agent-llm-opts cfg :burns))))))
+
+(deftest analyze-passes-per-agent-opts-to-call-llm
+  (testing "analyze-agent forwards agent model/thinking to call-llm"
+    (let [seen (atom nil)]
+      (with-redefs [llm-client/call-llm
+                    (fn [_config _prompt & [opts]]
+                      (reset! seen opts)
+                      (json/generate-string
+                       {:distortions [] :reframing "ok" :question "?"}))]
+        (agents/analyze-agent test-config :burns "thought")
+        (is (= {:model "deepseek-v4-flash" :thinking "disabled"} @seen))))))
+
+(deftest consensus-passes-thinking-enabled-opts
+  (testing "orchestrate consensus uses enabled thinking from config"
+    (let [seen (atom [])]
+      (with-redefs [llm-client/call-llm
+                    (fn [_config prompt & [opts]]
+                      (swap! seen conj opts)
+                      (cond
+                        (str/includes? (str prompt) "стоический")
+                        (json/generate-string {:text "stoic"})
+                        (str/includes? (str prompt) "нейтральный синтезатор")
+                        (json/generate-string {:text "common"})
+                        :else
+                        (json/generate-string
+                         {:distortions [] :reframing "b" :question "?"})))]
+        (agents/orchestrate! test-config "thought" [:burns :stoic])
+        (is (= {:model "deepseek-v4-flash" :thinking "enabled"}
+               (last @seen)))))))

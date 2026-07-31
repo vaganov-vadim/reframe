@@ -216,10 +216,15 @@ Vertical Arrow использует тот же эндпоинт POST /api/refra
 
 LLM provider configuration (server-side env vars):
 - `LLM_API_KEY` — API-ключ
-- `LLM_API_URL` — эндпоинт (по умолчанию DeepSeek)
-- `LLM_MODEL` — модель (по умолчанию deepseek-chat)
+- `LLM_API_URL` — эндпоинт (по умолчанию DeepSeek OpenAI-compatible)
+- `LLM_MODEL` — модель v1 (по умолчанию `deepseek-v4-flash`; альтернатива `deepseek-v4-pro`)
+- `LLM_THINKING` — `disabled` \| `enabled` (по умолчанию `disabled` для стабильного JSON)
 - `LLM_MAX_RETRIES` — количество повторов при timeout/5xx (по умолчанию 3)
 - `LLM_RETRY_BACKOFF_MS` — базовая задержка между повторами в ms (по умолчанию 2000)
+- Per-agent (v2): `REFRAME_AGENT_BURNS` / `REFRAME_AGENT_STOIC` / `REFRAME_AGENT_CONSENSUS` — model ID
+- Per-agent thinking: `REFRAME_AGENT_BURNS_THINKING` / `_STOIC_THINKING` / `_CONSENSUS_THINKING`
+
+`call-llm` принимает опциональные opts `{:model :thinking}`; agents.clj передаёт конфиг агента из `:agents`. Тело запроса к DeepSeek включает `"thinking": {"type": "enabled"|"disabled"}` явно (у V4 thinking по умолчанию enabled).
 
 
 Retry logic: при ошибке HTTP или таймауте — повтор без задержки, до max-retries попыток. Конфигурация через Aero (`config.edn`):
@@ -235,7 +240,7 @@ Retry logic: при ошибке HTTP или таймауте — повтор �
 |------|---------|-------------|
 | Frontend `fetch` | 25 с | `useSSE.ts` → `API_TIMEOUT` |
 | Nginx `proxy_read_timeout` | 30 с | `/etc/nginx/sites-enabled/reframe` |
-| Backend `socket-timeout` | 30 с | `config.edn` → `LLM_SOCKET_TIMEOUT_MS` |
+| Backend `socket-timeout` | 45 с | `config.edn` → `LLM_SOCKET_TIMEOUT_MS` |
 | Backend `conn-timeout` | 5 с | `config.edn` → `LLM_CONN_TIMEOUT_MS` |
 | Backend retry | 5 попыток, backoff 2 с | `config.edn` |
 

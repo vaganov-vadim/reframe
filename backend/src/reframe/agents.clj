@@ -22,6 +22,26 @@
   [agent-id]
   (get agent-registry (keyword agent-id)))
 
+(defn agent-llm-opts
+  "Resolve :model / :thinking for agent-id from config :agents.
+   Supports map {:model :thinking} or legacy string model id."
+  [config agent-id]
+  (let [entry (get-in config [:agents (keyword agent-id)])]
+    (cond
+      (map? entry)
+      (cond-> {}
+        (some? (:model entry)) (assoc :model (:model entry))
+        (some? (:thinking entry)) (assoc :thinking
+                                         (if (keyword? (:thinking entry))
+                                           (name (:thinking entry))
+                                           (str (:thinking entry)))))
+
+      (string? entry)
+      {:model entry}
+
+      :else
+      {})))
+
 (defn format-sse-event
   "Format a Clojure map as an SSE data line."
   [event]
@@ -55,7 +75,7 @@
       {:agent (name id) :name (name id) :status "error" :error "Unknown agent"}
       (try
         (let [prompt ((:prompt-fn meta) thought)
-              raw (llm-client/call-llm config prompt)
+              raw (llm-client/call-llm config prompt (agent-llm-opts config id))
               payload (parse-llm-json raw)]
           {:agent (name id)
            :name (:name meta)
@@ -77,7 +97,9 @@
       (let [summaries (->> ok-events
                            (map summarize-for-consensus)
                            (str/join "\n"))
-            raw (llm-client/call-llm config (prompt/consensus-prompt thought summaries))
+            raw (llm-client/call-llm config
+                                     (prompt/consensus-prompt thought summaries)
+                                     (agent-llm-opts config :consensus))
             payload (parse-llm-json raw)]
         {:agent "consensus"
          :name "Что общего"

@@ -193,4 +193,13 @@
 
 ---
 
-## Итого: 83 задачи v1 + Phase 12–14 v2 (critique-refined) выполнены
+## Phase 15 — DeepSeek V4 models + per-agent wiring
+
+- [x] 15.1 ТЕСТ: `llm_client_test.clj` — `call-llm` шлёт `model` + `thinking.type` из opts; дефолт thinking disabled
+- [x] 15.2 `llm_client.clj`: opts merge, body с explicit thinking; дефолт model `deepseek-v4-flash`
+- [x] 15.3 ТЕСТ: `agents_test` — analyze/consensus вызывают `call-llm` с model/thinking из `:agents`
+- [x] 15.4 `agents.clj`: resolve agent opts из config (map или legacy string)
+- [x] 15.5 `config.edn`: V4 flash defaults; consensus thinking enabled; env overrides
+- [x] 15.6 Обновить spec/plan (модели, env); `lein test` зелёный
+
+## Итого: 83 задачи v1 + Phase 12–14 v2 + Phase 15 (DeepSeek V4) выполнены
