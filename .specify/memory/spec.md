@@ -263,11 +263,15 @@ Reframe — приватный голосовой КПТ-дневник для �
 
 ### Агенты (v2.0)
 
-| ID | Имя | Роль | Модель | Формат ответа |
-|----|-----|------|--------|---------------|
-| `:burns` | Д-р Бёрнс | КПТ: искажения + рефрейминг | `deepseek-chat` | structured JSON (как v1) |
-| `:stoic` | Стоик | Контролируемое vs нет | `deepseek-chat` | `{ "text": "..." }` |
-| `:consensus` | (синтез) | Общее в ответах агентов | `deepseek-chat` | `{ "text": "..." }` |
+| ID | Имя | Роль | Модель (дефолт) | Thinking | Формат ответа |
+|----|-----|------|-----------------|----------|---------------|
+| `:burns` | Д-р Бёрнс | КПТ: искажения + рефрейминг | `deepseek-v4-flash` | disabled | structured JSON (как v1) |
+| `:stoic` | Стоик | Контролируемое vs нет | `deepseek-v4-flash` | disabled | `{ "text": "..." }` |
+| `:consensus` | (синтез) | Общее в ответах агентов | `deepseek-v4-flash` | **enabled** (reasoner-режим) | `{ "text": "..." }` |
+
+v1 (`POST /api/reframe` без `:agents`) использует `LLM_MODEL` (дефолт `deepseek-v4-flash`) с `LLM_THINKING=disabled` — стабильный JSON без CoT.
+
+**DeepSeek V4**: актуальные ID — `deepseek-v4-flash` и `deepseek-v4-pro`. Legacy `deepseek-chat` / `deepseek-reasoner` сняты (июль 2026). Reasoning — параметр `thinking: {type: enabled|disabled}`, не отдельная модель. Per-agent override: `REFRAME_AGENT_BURNS` / `_STOIC` / `_CONSENSUS` (+ `*_THINKING`). Для качества consensus можно выставить `REFRAME_AGENT_CONSENSUS=deepseek-v4-pro`.
 
 Будущие (не в v2.0): `:friend`, `:skeptic`, `:analyst`; Dig deeper; выбор агентов пользователем.
 

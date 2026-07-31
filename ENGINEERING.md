@@ -39,8 +39,14 @@ cd backend && lein deps && REFRAME_MOCK_LLM=true lein run
 
 ```
 LLM_API_KEY=your-key
+# Optional (defaults shown):
+# LLM_MODEL=deepseek-v4-flash
+# LLM_THINKING=disabled
+# REFRAME_AGENT_CONSENSUS=deepseek-v4-pro   # heavier synthesis
+# REFRAME_AGENT_CONSENSUS_THINKING=enabled
 ```
 
+DeepSeek V4: `deepseek-v4-flash` / `deepseek-v4-pro`. Thinking (бывший reasoner) — параметр `LLM_THINKING` / per-agent `*_THINKING`, не отдельная модель. Legacy `deepseek-chat` не использовать.
 ### Сеть
 
 - Фронтенд: http://localhost:5173 (Vite dev server)

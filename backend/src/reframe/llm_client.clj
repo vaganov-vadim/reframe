@@ -1,6 +1,7 @@
 (ns reframe.llm-client
   "LLM API client. Supports mock mode (auto-enabled when no API key or REFRAME_MOCK_LLM=true).
-   Mock mode rotates through: error → timeout → fixture responses."
+   Mock mode rotates through: error → timeout → fixture responses.
+   DeepSeek V4: explicit model + thinking.type on every real request."
   (:require [clj-http.client :as http]
             [clojure.string :as str]
             [clojure.core.async :refer [alts!! timeout]]
@@ -70,28 +71,40 @@
 
 ;; ─── Real LLM call ──────────────────────────────────────────────────────────
 
+(defn- normalize-thinking
+  "Coerce thinking flag to \"enabled\" or \"disabled\". Default disabled."
+  [thinking]
+  (let [s (cond
+            (keyword? thinking) (name thinking)
+            (string? thinking) thinking
+            (nil? thinking) "disabled"
+            :else (str thinking))]
+    (if (#{"enabled" "disabled"} s) s "disabled")))
+
 (defn- real-call-llm
   "Make an actual HTTP request to the LLM API using clj-http.
-   Config is the `:llm` sub-map from Aero config."
+   Config is the `:llm` sub-map from Aero config (may include merged opts)."
   [llm-config prompt]
-  (let [api-url       (:api-url llm-config)
-        api-key       (:api-key llm-config)
-        model         (:model llm-config)
+  (let [api-url        (:api-url llm-config)
+        api-key        (:api-key llm-config)
+        model          (:model llm-config)
+        thinking       (normalize-thinking (:thinking llm-config))
         socket-timeout (or (:socket-timeout-ms llm-config) 30000)
         conn-timeout   (or (:conn-timeout-ms llm-config) 5000)
-        start-ms      (System/currentTimeMillis)
-        response      (http/post api-url
-                        {:headers     {"Authorization" (str "Bearer " api-key)
-                                       "Content-Type"  "application/json"}
-                         :body        (json/generate-string
-                                        {:model    model
-                                         :messages [{:role "system" :content prompt}
-                                                    {:role "user"   :content prompt}]})
-                         :socket-timeout socket-timeout
-                         :conn-timeout   conn-timeout
-                         :as              :json})
-        elapsed  (- (System/currentTimeMillis) start-ms)]
-    (timbre/debug "LLM call completed in" elapsed "ms")
+        start-ms       (System/currentTimeMillis)
+        body           {:model    model
+                        :thinking {:type thinking}
+                        :messages [{:role "system" :content prompt}
+                                   {:role "user"   :content prompt}]}
+        response       (http/post api-url
+                         {:headers     {"Authorization" (str "Bearer " api-key)
+                                        "Content-Type"  "application/json"}
+                          :body        (json/generate-string body)
+                          :socket-timeout socket-timeout
+                          :conn-timeout   conn-timeout
+                          :as              :json})
+        elapsed (- (System/currentTimeMillis) start-ms)]
+    (timbre/debug "LLM call completed in" elapsed "ms" {:model model :thinking thinking})
     (get-in response [:body :choices 0 :message :content])))
 
 (defn call-with-retry
@@ -126,19 +139,28 @@
 (defn call-llm
   "Call the LLM with the given prompt.
    Returns the response as a JSON string.
-   
-   Config is the full Aero config map.  LLM settings are read from (:llm config):
+
+   Config is the full Aero config map. LLM settings are read from (:llm config):
      :api-url      — LLM API endpoint
      :api-key      — API authentication token
-     :model        — model name (e.g. deepseek-chat)
+     :model        — model name (e.g. deepseek-v4-flash)
+     :thinking     — enabled | disabled (default disabled)
      :mock-enabled — when \"true\" or when :api-key is nil, mock mode is used
-   
+
+   Optional opts map overrides :model and/or :thinking for this call (per-agent).
+
    In mock mode, responses rotate through error → timeout → fixture."
-  [config prompt]
-  (let [{:keys [api-key mock-enabled] :as llm-config} (:llm config)]
-    (if (or (= "true" mock-enabled)
-            (nil? api-key))
-      (do (timbre/debug "LLM call — using mock mode")
-          (mock-call-llm prompt))
-      (do (timbre/debug "LLM call — using real API (" (:model llm-config) ")")
-          (call-with-retry llm-config real-call-llm prompt)))))
+  ([config prompt]
+   (call-llm config prompt nil))
+  ([config prompt opts]
+   (let [{:keys [api-key mock-enabled] :as llm-base} (:llm config)
+         llm-config (merge llm-base
+                           (select-keys (or opts {}) [:model :thinking]))]
+     (if (or (= "true" mock-enabled)
+             (nil? api-key))
+       (do (timbre/debug "LLM call — using mock mode")
+           (mock-call-llm prompt))
+       (do (timbre/debug "LLM call — using real API"
+                         {:model (:model llm-config)
+                          :thinking (normalize-thinking (:thinking llm-config))})
+           (call-with-retry llm-config real-call-llm prompt))))))
