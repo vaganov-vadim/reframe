@@ -135,6 +135,11 @@ export function StudioScreen() {
     }
   }, [analyze, lastText, dismissError, clearError]);
 
+  const handleUnderstood = useCallback(() => {
+    setPhase('input');
+    setReviewText(null);
+  }, []);
+
   const displayEvents: AgentEvent[] =
     agentEvents.length > 0
       ? agentEvents
@@ -144,15 +149,17 @@ export function StudioScreen() {
 
   return (
     <main data-testid="studio-screen" style={{ padding: 'var(--space-lg) var(--space-md) 80px', maxWidth: 720, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-lg)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)', gap: 'var(--space-md)' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 'var(--font-size-heading)', color: 'var(--text-primary)' }}>Studio</h1>
-          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 14 }}>Два взгляда на одну мысль</p>
+          <h1 style={{ margin: 0, fontSize: 'var(--font-size-heading)', color: 'var(--text-primary)' }}>Два взгляда</h1>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.4 }}>
+            КПТ и стоицизм на одну ситуацию — и общий вывод
+          </p>
         </div>
         <Link
           to="/"
           data-testid="back-to-diary"
-          style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}
+          style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: 14, fontWeight: 500, flexShrink: 0, paddingTop: 4 }}
         >
           ← К дневнику
         </Link>
@@ -170,8 +177,20 @@ export function StudioScreen() {
 
       {(phase === 'input' || phase === 'recording' || phase === 'review') && (
         <div className="phase-enter">
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
-            Что тебя тревожит?
+          <p style={{ textAlign: 'center', color: 'var(--text-primary)', marginBottom: 'var(--space-xs)', fontSize: 16 }}>
+            Опиши одну ситуацию: что случилось и что ты себе сказал(а)
+          </p>
+          <p
+            data-testid="studio-example"
+            style={{
+              textAlign: 'center',
+              color: 'var(--text-secondary)',
+              marginBottom: 'var(--space-md)',
+              fontSize: 13,
+              lineHeight: 1.4,
+            }}
+          >
+            Например: «Опоздал на созвон, молчат в чате — кажется, все злятся»
           </p>
           <InputMethod
             isSupported={isSupported}
@@ -189,13 +208,14 @@ export function StudioScreen() {
               setPhase('input');
             }}
             recordingPrompt="Я слушаю..."
-            textPlaceholder="Опишите ситуацию..."
+            textPlaceholder="Одна ситуация своими словами..."
           />
         </div>
       )}
 
       {(phase === 'analyzing' || phase === 'result') && (
         <div className="phase-enter" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+          <ConsensusView text={consensus} loading={consensusLoading || phase === 'analyzing'} />
           <div
             style={{
               display: 'grid',
@@ -207,30 +227,43 @@ export function StudioScreen() {
               <AgentCard key={event.agent} event={event} />
             ))}
           </div>
-          <ConsensusView text={consensus} loading={consensusLoading || phase === 'analyzing'} />
           {phase === 'result' && (
-            <button
-              type="button"
-              data-testid="studio-again"
-              onClick={() => {
-                setPhase('input');
-                setReviewText(null);
-              }}
+            <div
               style={{
-                alignSelf: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 'var(--space-sm)',
                 marginTop: 'var(--space-sm)',
-                background: 'transparent',
-                color: 'var(--accent)',
-                border: '1px solid var(--accent)',
-                borderRadius: 'var(--border-radius-sm)',
-                padding: 'var(--space-sm) var(--space-lg)',
-                cursor: 'pointer',
-                fontSize: 14,
-                minHeight: 48,
               }}
             >
-              Ещё раз
-            </button>
+              <button
+                type="button"
+                data-testid="studio-again"
+                onClick={handleUnderstood}
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--bg-primary)',
+                  border: 'none',
+                  borderRadius: 'var(--border-radius-sm)',
+                  padding: 'var(--space-sm) var(--space-lg)',
+                  cursor: 'pointer',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  minHeight: 48,
+                  minWidth: 200,
+                }}
+              >
+                Понял · ещё раз
+              </button>
+              <Link
+                to="/"
+                data-testid="studio-to-diary"
+                style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 14, minHeight: 48, display: 'inline-flex', alignItems: 'center' }}
+              >
+                К дневнику
+              </Link>
+            </div>
           )}
         </div>
       )}

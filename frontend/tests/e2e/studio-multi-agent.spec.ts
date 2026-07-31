@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('studio multi-agent flow shows two cards and consensus', async ({ page }) => {
+test('studio multi-agent flow shows takeaway then two lenses', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('reframe_onboarding', 'true');
     // Force text input path
@@ -33,7 +33,7 @@ test('studio multi-agent flow shows two cards and consensus', async ({ page }) =
         },
         {
           agent: 'consensus',
-          name: 'Что общего',
+          name: 'Что унести',
           status: 'ok',
           payload: { text: 'Проблема в интерпретации, не в факте.' },
         },
@@ -51,17 +51,31 @@ test('studio multi-agent flow shows two cards and consensus', async ({ page }) =
 
   await page.goto('/studio');
   await expect(page.getByTestId('studio-screen')).toBeVisible();
-  await expect(page.getByPlaceholder('Опишите ситуацию...')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Два взгляда' })).toBeVisible();
+  await expect(page.getByTestId('studio-example')).toBeVisible();
+  await expect(page.getByPlaceholder('Одна ситуация своими словами...')).toBeVisible();
 
-  await page.getByPlaceholder('Опишите ситуацию...').fill('Я опоздал, все думают что я безответственный');
+  await page.getByPlaceholder('Одна ситуация своими словами...').fill('Я опоздал, все думают что я безответственный');
   await page.getByRole('button', { name: 'Отправить' }).click();
 
-  await expect(page.getByTestId('agent-card-burns')).toBeVisible({ timeout: 5000 });
+  await expect(page.getByTestId('consensus-view')).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText('Что унести')).toBeVisible();
+  await expect(page.getByText('Проблема в интерпретации, не в факте.')).toBeVisible();
+  await expect(page.getByTestId('agent-card-burns')).toBeVisible();
   await expect(page.getByTestId('agent-card-stoic')).toBeVisible();
+  await expect(page.getByText('искажения и перефраз')).toBeVisible();
+  await expect(page.getByText('что в контроле / что отпустить')).toBeVisible();
   await expect(page.getByText('Опоздание — факт. Остальное — интерпретация.')).toBeVisible();
   await expect(page.getByText('Мнение других вне контроля. В контроле — следующий шаг.')).toBeVisible();
-  await expect(page.getByTestId('consensus-view')).toBeVisible();
-  await expect(page.getByText('Проблема в интерпретации, не в факте.')).toBeVisible();
+  await expect(page.getByTestId('studio-again')).toHaveText('Понял · ещё раз');
+  await expect(page.getByTestId('studio-to-diary')).toBeVisible();
+
+  // Hero takeaway appears before agent cards in DOM order
+  const consensusBox = await page.getByTestId('consensus-view').boundingBox();
+  const burnsBox = await page.getByTestId('agent-card-burns').boundingBox();
+  expect(consensusBox).toBeTruthy();
+  expect(burnsBox).toBeTruthy();
+  expect(consensusBox!.y).toBeLessThan(burnsBox!.y);
 });
 
 test('v1 home still works and links to studio', async ({ page }) => {
@@ -71,7 +85,7 @@ test('v1 home still works and links to studio', async ({ page }) => {
 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Reframe' })).toBeVisible();
-  await expect(page.getByTestId('studio-discovery')).toBeVisible();
+  await expect(page.getByTestId('studio-discovery')).toHaveText(/Два взгляда на ситуацию/);
   await page.getByTestId('studio-discovery').click();
   await expect(page).toHaveURL(/\/studio/);
   await expect(page.getByTestId('studio-screen')).toBeVisible();
@@ -138,7 +152,7 @@ test('studio voice stop waits for async transcript then shows review', async ({ 
       },
       {
         agent: 'consensus',
-        name: 'Что общего',
+        name: 'Что унести',
         status: 'ok',
         payload: { text: 'Проблема в интерпретации.' },
       },

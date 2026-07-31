@@ -202,4 +202,13 @@
 - [x] 15.5 `config.edn`: V4 flash defaults; consensus thinking enabled; env overrides
 - [x] 15.6 Обновить spec/plan (модели, env); `lein test` зелёный
 
-## Итого: 83 задачи v1 + Phase 12–14 v2 + Phase 15 (DeepSeek V4) выполнены
+## Phase 16 — Studio CJM UX (v2.1)
+
+- [x] 16.1 Spec/plan: CJM hierarchy «Что унести» → линзы; зафиксированный копирайт
+- [x] 16.2 ТЕСТ: AgentCard — role subtitle; Burns reframing→distortions→question
+- [x] 16.3 AgentCard + ConsensusView («Что унести», hero)
+- [x] 16.4 StudioScreen: title/subtitle/prompt/example; result order; CTA «Понял · ещё раз»
+- [x] 16.5 MainScreen discovery: «Два взгляда на ситуацию →»
+- [x] 16.6 E2E/unit обновлены; vitest + playwright studio зелёные
+
+## Итого: Phase 12–16 (вкл. Studio CJM UX v2.1) выполнены

@@ -210,7 +210,7 @@ export function MainScreen() {
             fontWeight: 500,
           }}
         >
-          Другой угол зрения →
+          Два взгляда на ситуацию →
         </Link>
       </div>
 
