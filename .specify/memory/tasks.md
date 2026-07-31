@@ -211,4 +211,13 @@
 - [x] 16.5 MainScreen discovery: «Два взгляда на ситуацию →»
 - [x] 16.6 E2E/unit обновлены; vitest + playwright studio зелёные
 
-## Итого: Phase 12–16 (вкл. Studio CJM UX v2.1) выполнены
+## Phase 17 — Studio Quiet UI + один follow-up (v2.2)
+
+- [x] 17.1 Spec/plan/ROADMAP: Quiet UI + `mode: studio-followup`
+- [x] 17.2 Quiet UI: убрать subtitle/example; Burns «ещё»; один CTA
+- [x] 17.3 ТЕСТ backend: follow-up 200 + 400 missing fields
+- [x] 17.4 `studio-followup-prompt` + handler + mock
+- [x] 17.5 `useSSE.sendStudioFollowup` + StudioScreen фазы follow-up/skip
+- [x] 17.6 E2E: quiet input, follow-up updates takeaway, skip → Понял
+
+## Итого: Phase 12–17 (вкл. Quiet UI + follow-up v2.2) выполнены

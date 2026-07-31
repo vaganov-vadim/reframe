@@ -9,11 +9,10 @@ describe('AgentCard', () => {
     const html = renderToStaticMarkup(<AgentCard event={event} />);
     expect(html).toContain('Д-р Бёрнс');
     expect(html).toContain('agent-loading');
-    expect(html).toContain('Смотрю');
     expect(html).toContain('искажения и перефраз');
   });
 
-  it('renders structured Burns payload with reframing first, then distortions, then question', () => {
+  it('shows reframing and collapsed details by default', () => {
     const event: AgentEvent = {
       agent: 'burns',
       name: 'Д-р Бёрнс',
@@ -25,18 +24,12 @@ describe('AgentCard', () => {
       },
     };
     const html = renderToStaticMarkup(<AgentCard event={event} />);
-    expect(html).toContain('agent-burns-payload');
     expect(html).toContain('agent-burns-reframing');
-    expect(html).toContain('agent-burns-distortions');
-    expect(html).toContain('agent-burns-question');
     expect(html).toContain('Факт: опоздание на 5 минут.');
-    expect(html).toContain('Чтение мыслей');
-    expect(html).toContain('Что бы сказал другу?');
-    const reframingIdx = html.indexOf('agent-burns-reframing');
-    const distortionsIdx = html.indexOf('agent-burns-distortions');
-    const questionIdx = html.indexOf('agent-burns-question');
-    expect(reframingIdx).toBeLessThan(distortionsIdx);
-    expect(distortionsIdx).toBeLessThan(questionIdx);
+    expect(html).toContain('agent-burns-more');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain('agent-burns-details');
+    expect(html).not.toContain('Чтение мыслей');
   });
 
   it('renders stoic role and text payload', () => {
@@ -49,7 +42,6 @@ describe('AgentCard', () => {
     const html = renderToStaticMarkup(<AgentCard event={event} />);
     expect(html).toContain('agent-text-payload');
     expect(html).toContain('что в контроле / что отпустить');
-    expect(html).toContain('Вне контроля — мнение других.');
   });
 
   it('renders error state', () => {

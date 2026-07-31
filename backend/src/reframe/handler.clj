@@ -97,15 +97,16 @@
 
 (defn- reframe-handler
   "POST /api/reframe — validate, rate limit, call LLM, return SSE stream.
-   Supports :mode param in body-params — when \"deeper\", uses build-deeper-prompt
-   with :surface (original thought) and :text (user response).
-   When :agents is present — v2 multi-agent orchestration (agent-complete SSE channel).
+   Supports :mode param — \"deeper\" (Vertical Arrow), \"studio-followup\" (one takeaway refresh).
+   When :agents is present — v2 multi-agent orchestration (agent-complete SSE).
    Config is the full Aero config map, threaded to llm-client/call-llm."
   [config request]
   (let [body-params (json/parse-string (slurp (:body request)) true)
         text        (:text body-params)
         mode        (:mode body-params)
         surface     (:surface body-params)
+        takeaway    (:takeaway body-params)
+        question    (:question body-params)
         agent-ids   (normalize-agent-ids (:agents body-params))]
     (cond
       ;; ── Input validation ──────────────────────────────────────────────
@@ -122,10 +123,41 @@
       (and (= "deeper" mode) (str/blank? surface))
       (json-body 400 {:error "Deeper mode requires 'surface' field"})
 
+      ;; ── Studio follow-up requires context fields ─────────────────────
+      (and (= "studio-followup" mode)
+           (or (str/blank? surface) (str/blank? takeaway) (str/blank? question)))
+      (json-body 400 {:error "studio-followup requires surface, takeaway, and question"})
+
       ;; ── Rate limiting ─────────────────────────────────────────────────
       (not (rate-limiter/check-request? request))
       (do (swap! error-counter inc)
           (json-body 429 {:error "Rate limit exceeded"} "Retry-After" "60"))
+
+      ;; ── v2.2 studio follow-up (single consensus SSE) ────────────────
+      (= "studio-followup" mode)
+      (try
+        (let [sse (agents/studio-followup! config
+                                           {:surface surface
+                                            :takeaway takeaway
+                                            :question question
+                                            :text text})]
+          (rate-limiter/consume-request! request)
+          (swap! request-counter inc)
+          {:status  200
+           :headers {"Content-Type"  sse-content-type
+                     "Cache-Control" "no-cache"
+                     "Connection"    "keep-alive"}
+           :body    sse})
+        (catch Exception e
+          (swap! error-counter inc)
+          (let [ex-type (-> e ex-data :type)]
+            (if (= :llm-timeout ex-type)
+              (do (timbre/error "Studio follow-up LLM timeout"
+                                {:error-counter @error-counter})
+                  (json-body 504 {:error "LLM timeout"}))
+              (do (timbre/error e "Studio follow-up failed"
+                                {:error-counter @error-counter})
+                  (json-body 502 {:error "LLM API error"}))))))
 
       ;; ── v2 multi-agent ────────────────────────────────────────────────
       (seq agent-ids)

@@ -35,10 +35,13 @@
              {:type :llm-timeout :causes :timeout}))
     :fixture
     (let [fixtures (load-mock-fixtures)
+          is-followup (and prompt (str/includes? prompt "STUDIO_FOLLOWUP"))
           is-deeper (and prompt (str/includes? prompt "Vertical Arrow"))
           is-stoic (and prompt (str/includes? prompt "стоический философ"))
           is-consensus (and prompt (str/includes? prompt "нейтральный синтезатор"))]
       (cond
+        is-followup (json/generate-string
+                     {:text "С учётом ответа: опирайся на то, что можно проверить, а не на догадки."})
         is-deeper (json/generate-string (:output (last fixtures)))
         is-stoic (json/generate-string
                   {:text "Молчание других вне твоего контроля. В контроле — факт опоздания и следующий шаг: короткое сообщение команде."})

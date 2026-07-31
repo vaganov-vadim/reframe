@@ -935,14 +935,27 @@ POST /api/reframe {"text": "...", "agents": ["burns", "stoic"]}
   {"agent":"consensus","name":"Что унести","status":"ok","payload":{"text":"..."}}  // only if ≥2 ok
 ```
 
+v2.2 follow-up (обновляет только takeaway):
+```json
+POST /api/reframe {
+  "mode": "studio-followup",
+  "text": "<ответ>",
+  "surface": "<исходная ситуация>",
+  "takeaway": "<текущее Что унести>",
+  "question": "<вопрос>"
+}
+→ SSE: {"agent":"consensus","name":"Что унести","status":"ok","payload":{"text":"..."}}
+```
+Требует non-blank `surface`, `takeaway`, `question`, `text`. Промпт: `studio-followup-prompt`. LLM opts = consensus agent config. Линзы на клиенте не перезапрашиваются.
+
 ### Фронтенд
 
-- `AgentCard`: loading / ok / error; роль под именем; Burns: reframing → distortions → question
-- `ConsensusView`: hero «Что унести» (выше карточек)
-- `StudioScreen`: promise + example + InputMethod; результат: consensus → cards → «Понял · ещё раз»
-- `useSSE.sendToAgents`: multi-event parser
-- MainScreen: ссылка «Два взгляда на ситуацию →» → `/studio`
-- На `/studio` TabBar не показываем (или минимальный back)
+- `AgentCard`: роль 11–12px; Burns: reframing; distortions/question под «ещё»
+- `ConsensusView`: hero «Что унести»
+- `StudioScreen`: quiet input (placeholder only); follow-up → «Понял»; «К дневнику» в шапке
+- `useSSE.sendToAgents` + `sendStudioFollowup`
+- MainScreen: «Два взгляда на ситуацию →»
+- На `/studio` TabBar скрыт
 
 ### Таймауты
 

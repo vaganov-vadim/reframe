@@ -212,6 +212,38 @@
       (is (str/includes? body "\"agent\":\"consensus\""))
       (is (str/includes? body "reframing")))))
 
+;; ─── POST /api/reframe — studio follow-up ───────────────────────────────────
+
+(deftest post-reframe-studio-followup-ok
+  (testing "POST mode=studio-followup returns single consensus SSE event"
+    (llm-client/set-mock-mode! :fixture)
+    (let [response ((handler/app test-config)
+                    {:request-method :post
+                     :uri "/api/reframe"
+                     :body (json-body {:mode "studio-followup"
+                                       :text "Что я могу проверить, а не додумывать"
+                                       :surface "Я опоздал, все злятся"
+                                       :takeaway "Проблема в интерпретации."
+                                       :question "Что важнее забрать с собой?"})})
+          body (drain-sse-body (:body response))]
+      (is (= 200 (:status response)))
+      (is (= "text/event-stream" (get-in response [:headers "Content-Type"])))
+      (is (str/includes? body "\"agent\":\"consensus\""))
+      (is (str/includes? body "Что унести"))
+      (is (str/includes? body "\"status\":\"ok\""))
+      (is (not (str/includes? body "\"agent\":\"burns\""))))))
+
+(deftest post-reframe-studio-followup-missing-fields
+  (testing "studio-followup without takeaway returns 400"
+    (let [response ((handler/app test-config)
+                    {:request-method :post
+                     :uri "/api/reframe"
+                     :body (json-body {:mode "studio-followup"
+                                       :text "ответ"
+                                       :surface "ситуация"
+                                       :question "вопрос?"})})]
+      (is (= 400 (:status response))))))
+
 ;; ─── 404 — unknown routes ──────────────────────────────────────────────────
 
 (deftest unknown-route

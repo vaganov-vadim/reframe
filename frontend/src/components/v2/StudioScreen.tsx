@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecording } from '../../contexts/RecordingContext';
 import { useSSE } from '../../hooks/useSSE';
@@ -6,18 +6,38 @@ import { InputMethod } from '../InputMethod';
 import { ErrorBanner } from '../ErrorBanner';
 import { AgentCard } from './AgentCard';
 import { ConsensusView } from './ConsensusView';
-import type { AgentEvent } from '../../types/session';
+import type { AgentEvent, BurnsAgentPayload } from '../../types/session';
 
-type StudioPhase = 'input' | 'recording' | 'review' | 'analyzing' | 'result';
+type StudioPhase =
+  | 'input'
+  | 'recording'
+  | 'review'
+  | 'analyzing'
+  | 'result'
+  | 'followupRecording'
+  | 'followupReview'
+  | 'followupLoading'
+  | 'done';
 
 const DEFAULT_AGENTS: AgentEvent[] = [
   { agent: 'burns', name: 'Д-р Бёрнс', status: 'loading' },
   { agent: 'stoic', name: 'Стоик', status: 'loading' },
 ];
 
+const FALLBACK_QUESTION = 'Что из этого важнее забрать с собой?';
+const TEXT_PLACEHOLDER = 'Напр.: опоздал на созвон, молчат — кажется, злятся';
+
+function burnsQuestion(events: AgentEvent[]): string {
+  const burns = events.find((e) => e.agent === 'burns' && e.status === 'ok');
+  const payload = burns?.payload as BurnsAgentPayload | undefined;
+  const q = payload?.question?.trim();
+  return q || FALLBACK_QUESTION;
+}
+
 export function StudioScreen() {
   const [phase, setPhase] = useState<StudioPhase>('input');
   const [reviewText, setReviewText] = useState<string | null>(null);
+  const [followupReviewText, setFollowupReviewText] = useState<string | null>(null);
   const [lastText, setLastText] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const {
@@ -38,24 +58,36 @@ export function StudioScreen() {
     consensusLoading,
     agentsError,
     sendToAgents,
+    sendStudioFollowup,
     dismissError,
   } = useSSE();
 
   const prevListening = useRef(isListening);
+  const followupQuestion = useMemo(() => burnsQuestion(agentEvents), [agentEvents]);
 
-  // recognition.stop() is async — wait until isListening becomes false,
-  // same pattern as MainScreen (v1).
+  // recognition.stop() is async — wait until isListening becomes false
   useEffect(() => {
-    if (prevListening.current && !isListening && phase === 'recording') {
+    if (prevListening.current && !isListening) {
       const finalText = getFinalText() || text;
-      if (finalText) {
-        setReviewText(finalText);
-        setLastText(finalText);
-        setLocalError(null);
-        setPhase('review');
-      } else {
-        setLocalError('Не расслышал. Попробуем ещё раз?');
-        setPhase('input');
+      if (phase === 'recording') {
+        if (finalText) {
+          setReviewText(finalText);
+          setLastText(finalText);
+          setLocalError(null);
+          setPhase('review');
+        } else {
+          setLocalError('Не расслышал. Попробуем ещё раз?');
+          setPhase('input');
+        }
+      } else if (phase === 'followupRecording') {
+        if (finalText) {
+          setFollowupReviewText(finalText);
+          setLocalError(null);
+          setPhase('followupReview');
+        } else {
+          setLocalError('Не расслышал. Попробуем ещё раз?');
+          setPhase('result');
+        }
       }
     }
     prevListening.current = isListening;
@@ -67,7 +99,6 @@ export function StudioScreen() {
     }
   }, [phase, agentsLoading, agentEvents]);
 
-  // If analyze finished with zero usable events, leave loading UI.
   useEffect(() => {
     if (
       phase === 'analyzing' &&
@@ -90,7 +121,6 @@ export function StudioScreen() {
 
   const handleStop = useCallback(() => {
     stop();
-    // Phase stays 'recording' until isListening flips — do not read text here.
   }, [stop]);
 
   const handleCancel = useCallback(() => {
@@ -104,6 +134,7 @@ export function StudioScreen() {
     async (t: string) => {
       setLastText(t);
       setLocalError(null);
+      setFollowupReviewText(null);
       setPhase('analyzing');
       await sendToAgents(t, ['burns', 'stoic']);
     },
@@ -128,34 +159,81 @@ export function StudioScreen() {
     dismissError();
     clearError();
     setLocalError(null);
-    if (lastText) {
+    if (lastText && (phase === 'analyzing' || phase === 'input')) {
       void analyze(lastText);
     } else {
       setPhase('input');
     }
-  }, [analyze, lastText, dismissError, clearError]);
+  }, [analyze, lastText, dismissError, clearError, phase]);
+
+  const runFollowup = useCallback(
+    async (answer: string) => {
+      if (!lastText || !consensus) return;
+      setPhase('followupLoading');
+      setLocalError(null);
+      const ok = await sendStudioFollowup({
+        text: answer,
+        surface: lastText,
+        takeaway: consensus,
+        question: followupQuestion,
+      });
+      setFollowupReviewText(null);
+      setPhase(ok ? 'done' : 'result');
+    },
+    [lastText, consensus, followupQuestion, sendStudioFollowup],
+  );
+
+  const handleFollowupStart = useCallback(() => {
+    clearError();
+    setLocalError(null);
+    setFollowupReviewText(null);
+    start();
+    setPhase('followupRecording');
+  }, [clearError, start]);
+
+  const handleFollowupCancel = useCallback(() => {
+    cancel();
+    setFollowupReviewText(null);
+    setLocalError(null);
+    setPhase('result');
+  }, [cancel]);
+
+  const handleSkipFollowup = useCallback(() => {
+    setFollowupReviewText(null);
+    setPhase('done');
+  }, []);
 
   const handleUnderstood = useCallback(() => {
     setPhase('input');
     setReviewText(null);
+    setFollowupReviewText(null);
   }, []);
 
   const displayEvents: AgentEvent[] =
     agentEvents.length > 0
       ? agentEvents
-      : phase === 'analyzing' || phase === 'result'
+      : phase === 'analyzing' || phase === 'result' || phase === 'followupLoading' || phase === 'done' ||
+          phase === 'followupRecording' || phase === 'followupReview'
         ? DEFAULT_AGENTS
         : [];
+
+  const showResultPane =
+    phase === 'analyzing' ||
+    phase === 'result' ||
+    phase === 'followupRecording' ||
+    phase === 'followupReview' ||
+    phase === 'followupLoading' ||
+    phase === 'done';
+
+  const showFollowupAsk =
+    phase === 'result' ||
+    phase === 'followupRecording' ||
+    phase === 'followupReview';
 
   return (
     <main data-testid="studio-screen" style={{ padding: 'var(--space-lg) var(--space-md) 80px', maxWidth: 720, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)', gap: 'var(--space-md)' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 'var(--font-size-heading)', color: 'var(--text-primary)' }}>Два взгляда</h1>
-          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.4 }}>
-            КПТ и стоицизм на одну ситуацию — и общий вывод
-          </p>
-        </div>
+        <h1 style={{ margin: 0, fontSize: 'var(--font-size-heading)', color: 'var(--text-primary)' }}>Два взгляда</h1>
         <Link
           to="/"
           data-testid="back-to-diary"
@@ -177,21 +255,6 @@ export function StudioScreen() {
 
       {(phase === 'input' || phase === 'recording' || phase === 'review') && (
         <div className="phase-enter">
-          <p style={{ textAlign: 'center', color: 'var(--text-primary)', marginBottom: 'var(--space-xs)', fontSize: 16 }}>
-            Опиши одну ситуацию: что случилось и что ты себе сказал(а)
-          </p>
-          <p
-            data-testid="studio-example"
-            style={{
-              textAlign: 'center',
-              color: 'var(--text-secondary)',
-              marginBottom: 'var(--space-md)',
-              fontSize: 13,
-              lineHeight: 1.4,
-            }}
-          >
-            Например: «Опоздал на созвон, молчат в чате — кажется, все злятся»
-          </p>
           <InputMethod
             isSupported={isSupported}
             text={text}
@@ -208,14 +271,17 @@ export function StudioScreen() {
               setPhase('input');
             }}
             recordingPrompt="Я слушаю..."
-            textPlaceholder="Одна ситуация своими словами..."
+            textPlaceholder={TEXT_PLACEHOLDER}
           />
         </div>
       )}
 
-      {(phase === 'analyzing' || phase === 'result') && (
+      {showResultPane && (
         <div className="phase-enter" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-          <ConsensusView text={consensus} loading={consensusLoading || phase === 'analyzing'} />
+          <ConsensusView
+            text={consensus}
+            loading={consensusLoading || phase === 'analyzing' || phase === 'followupLoading'}
+          />
           <div
             style={{
               display: 'grid',
@@ -227,43 +293,86 @@ export function StudioScreen() {
               <AgentCard key={event.agent} event={event} />
             ))}
           </div>
-          {phase === 'result' && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 'var(--space-sm)',
-                marginTop: 'var(--space-sm)',
-              }}
-            >
-              <button
-                type="button"
-                data-testid="studio-again"
-                onClick={handleUnderstood}
+
+          {showFollowupAsk && consensus && (
+            <section data-testid="studio-followup" style={{ marginTop: 'var(--space-sm)' }}>
+              <p
+                data-testid="studio-followup-question"
                 style={{
-                  background: 'var(--accent)',
-                  color: 'var(--bg-primary)',
-                  border: 'none',
-                  borderRadius: 'var(--border-radius-sm)',
-                  padding: 'var(--space-sm) var(--space-lg)',
-                  cursor: 'pointer',
-                  fontSize: 15,
-                  fontWeight: 600,
-                  minHeight: 48,
-                  minWidth: 200,
+                  margin: '0 0 var(--space-md)',
+                  fontSize: 16,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.45,
+                  textAlign: 'center',
                 }}
               >
-                Понял · ещё раз
-              </button>
-              <Link
-                to="/"
-                data-testid="studio-to-diary"
-                style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 14, minHeight: 48, display: 'inline-flex', alignItems: 'center' }}
-              >
-                К дневнику
-              </Link>
-            </div>
+                {followupQuestion}
+              </p>
+              <InputMethod
+                isSupported={isSupported}
+                text={phase === 'followupRecording' ? text : ''}
+                isListening={isListening && phase === 'followupRecording'}
+                onStart={handleFollowupStart}
+                onStop={handleStop}
+                onCancel={handleFollowupCancel}
+                onTextSubmit={(t) => {
+                  void runFollowup(t);
+                }}
+                reviewText={followupReviewText}
+                onReviewSubmit={() => {
+                  if (followupReviewText) void runFollowup(followupReviewText);
+                }}
+                onRetry={() => {
+                  setFollowupReviewText(null);
+                  setPhase('result');
+                }}
+                recordingPrompt="Я слушаю..."
+                textPlaceholder="Короткий ответ..."
+              />
+              {phase === 'result' && (
+                <button
+                  type="button"
+                  data-testid="studio-skip-followup"
+                  onClick={handleSkipFollowup}
+                  style={{
+                    display: 'block',
+                    margin: 'var(--space-md) auto 0',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    minHeight: 48,
+                  }}
+                >
+                  Пропустить
+                </button>
+              )}
+            </section>
+          )}
+
+          {phase === 'done' && (
+            <button
+              type="button"
+              data-testid="studio-again"
+              onClick={handleUnderstood}
+              style={{
+                alignSelf: 'center',
+                marginTop: 'var(--space-sm)',
+                background: 'var(--accent)',
+                color: 'var(--bg-primary)',
+                border: 'none',
+                borderRadius: 'var(--border-radius-sm)',
+                padding: 'var(--space-sm) var(--space-lg)',
+                cursor: 'pointer',
+                fontSize: 15,
+                fontWeight: 600,
+                minHeight: 48,
+                minWidth: 160,
+              }}
+            >
+              Понял
+            </button>
           )}
         </div>
       )}
