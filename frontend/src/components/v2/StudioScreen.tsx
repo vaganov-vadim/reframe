@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRecording } from '../../contexts/RecordingContext';
 import { useSSE } from '../../hooks/useSSE';
@@ -8,7 +8,7 @@ import { AgentCard } from './AgentCard';
 import { ConsensusView } from './ConsensusView';
 import type { AgentEvent } from '../../types/session';
 
-type StudioPhase = 'input' | 'review' | 'analyzing' | 'result';
+type StudioPhase = 'input' | 'recording' | 'review' | 'analyzing' | 'result';
 
 const DEFAULT_AGENTS: AgentEvent[] = [
   { agent: 'burns', name: 'Д-р Бёрнс', status: 'loading' },
@@ -19,6 +19,7 @@ export function StudioScreen() {
   const [phase, setPhase] = useState<StudioPhase>('input');
   const [reviewText, setReviewText] = useState<string | null>(null);
   const [lastText, setLastText] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const {
     text,
     isListening,
@@ -40,6 +41,25 @@ export function StudioScreen() {
     dismissError,
   } = useSSE();
 
+  const prevListening = useRef(isListening);
+
+  // recognition.stop() is async — wait until isListening becomes false,
+  // same pattern as MainScreen (v1).
+  useEffect(() => {
+    if (prevListening.current && !isListening && phase === 'recording') {
+      const finalText = getFinalText() || text;
+      if (finalText) {
+        setReviewText(finalText);
+        setLastText(finalText);
+        setLocalError(null);
+        setPhase('review');
+      } else {
+        setLocalError('Не расслышал. Попробуем ещё раз?');
+        setPhase('input');
+      }
+    }
+    prevListening.current = isListening;
+  }, [isListening, phase, getFinalText, text]);
 
   useEffect(() => {
     if (phase === 'analyzing' && !agentsLoading && agentEvents.some((e) => e.status !== 'loading')) {
@@ -47,33 +67,43 @@ export function StudioScreen() {
     }
   }, [phase, agentsLoading, agentEvents]);
 
+  // If analyze finished with zero usable events, leave loading UI.
+  useEffect(() => {
+    if (
+      phase === 'analyzing' &&
+      !agentsLoading &&
+      agentEvents.length > 0 &&
+      agentEvents.every((e) => e.status === 'loading') &&
+      agentsError
+    ) {
+      setPhase('input');
+    }
+  }, [phase, agentsLoading, agentEvents, agentsError]);
+
   const handleStart = useCallback(() => {
     clearError();
+    setLocalError(null);
     setReviewText(null);
     start();
-    setPhase('input');
+    setPhase('recording');
   }, [clearError, start]);
 
   const handleStop = useCallback(() => {
     stop();
-    const finalText = getFinalText();
-    if (!finalText) {
-      return;
-    }
-    setReviewText(finalText);
-    setLastText(finalText);
-    setPhase('review');
-  }, [stop, getFinalText]);
+    // Phase stays 'recording' until isListening flips — do not read text here.
+  }, [stop]);
 
   const handleCancel = useCallback(() => {
     cancel();
     setReviewText(null);
+    setLocalError(null);
     setPhase('input');
   }, [cancel]);
 
   const analyze = useCallback(
     async (t: string) => {
       setLastText(t);
+      setLocalError(null);
       setPhase('analyzing');
       await sendToAgents(t, ['burns', 'stoic']);
     },
@@ -97,6 +127,7 @@ export function StudioScreen() {
   const handleRetry = useCallback(() => {
     dismissError();
     clearError();
+    setLocalError(null);
     if (lastText) {
       void analyze(lastText);
     } else {
@@ -128,15 +159,16 @@ export function StudioScreen() {
       </div>
 
       <ErrorBanner
-        message={agentsError || speechError}
+        message={localError || agentsError || speechError}
         onRetry={handleRetry}
         onDismiss={() => {
+          setLocalError(null);
           dismissError();
           clearError();
         }}
       />
 
-      {(phase === 'input' || phase === 'review') && (
+      {(phase === 'input' || phase === 'recording' || phase === 'review') && (
         <div className="phase-enter">
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
             Что тебя тревожит?
@@ -153,6 +185,7 @@ export function StudioScreen() {
             onReviewSubmit={handleReviewSubmit}
             onRetry={() => {
               setReviewText(null);
+              setLocalError(null);
               setPhase('input');
             }}
             recordingPrompt="Я слушаю..."

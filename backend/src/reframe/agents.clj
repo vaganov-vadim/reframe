@@ -1,8 +1,7 @@
 (ns reframe.agents
   "Multi-agent registry and orchestration for Reframe v2.
-   Emits agent-complete SSE events via a core.async channel."
+   Emits agent-complete SSE events (materialized body — reliable through nginx/http-kit)."
   (:require [cheshire.core :as json]
-            [clojure.core.async :as async]
             [clojure.string :as str]
             [reframe.llm-client :as llm-client]
             [reframe.prompt :as prompt]
@@ -92,34 +91,19 @@
          :error (or (.getMessage e) "Consensus failed")}))))
 
 (defn orchestrate!
-  "Launch agents in parallel. Returns a core.async channel of SSE-formatted strings.
-   Events are emitted in completion order; consensus (if any) is last. Channel is closed when done."
+  "Run agents in parallel (bounded futures), then return a single SSE body string
+   with one event per agent (completion order preserved via doall+deref of started
+   futures) plus consensus when ≥2 succeeded.
+
+   Returns a plain string (not a channel) so http-kit/nginx reliably deliver the body."
   [config thought agent-ids]
   (let [ids (mapv keyword agent-ids)
-        out (async/chan 16)
-        completed (java.util.concurrent.LinkedBlockingQueue.)
-        n (count ids)]
-    (doseq [id ids]
-      (.start
-       (Thread.
-        (fn []
-          (.put completed (analyze-agent config id thought)))
-        (str "agent-" (name id)))))
-    (async/thread
-      (try
-        (let [ok (atom [])]
-          (dotimes [_ n]
-            (let [event (.take completed)]
-              (when (= "ok" (:status event))
-                (swap! ok conj event))
-              (async/>!! out (format-sse-event event))))
-          (when-let [consensus (run-consensus config thought @ok)]
-            (async/>!! out (format-sse-event consensus))))
-        (catch Exception e
-          (timbre/error e "Orchestration failed")
-          (async/>!! out (format-sse-event {:agent "system"
-                                            :status "error"
-                                            :error "Orchestration failed"})))
-        (finally
-          (async/close! out))))
-    out))
+        ;; Start all first, then deref — parallel wall-clock time.
+        futs (mapv (fn [id]
+                     (future (analyze-agent config id thought)))
+                   ids)
+        events (mapv deref futs)
+        ok (filterv #(= "ok" (:status %)) events)
+        consensus (run-consensus config thought ok)
+        all (cond-> events consensus (conj consensus))]
+    (apply str (map format-sse-event all))))

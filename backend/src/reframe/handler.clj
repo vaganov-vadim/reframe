@@ -136,6 +136,7 @@
          :headers {"Content-Type"  sse-content-type
                    "Cache-Control" "no-cache"
                    "Connection"    "keep-alive"}
+         ;; Plain string body (already SSE-formatted) — reliable via http-kit/nginx
          :body    (agents/orchestrate! config text agent-ids)})
 
       ;; ── v1 single-agent LLM call ──────────────────────────────────────
