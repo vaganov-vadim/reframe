@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test('studio multi-agent flow shows takeaway then two lenses', async ({ page }) => {
+test('studio quiet input, takeaway, follow-up updates hero, then Понял', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('reframe_onboarding', 'true');
-    // Force text input path
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (window as any).SpeechRecognition;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,8 +10,25 @@ test('studio multi-agent flow shows takeaway then two lenses', async ({ page }) 
   });
 
   await page.route('**/api/reframe', async (route) => {
-    const request = route.request();
-    const post = request.postDataJSON() as { agents?: string[] };
+    const post = route.request().postDataJSON() as {
+      agents?: string[];
+      mode?: string;
+      text?: string;
+    };
+    if (post.mode === 'studio-followup') {
+      const event = {
+        agent: 'consensus',
+        name: 'Что унести',
+        status: 'ok',
+        payload: { text: 'С учётом ответа: проверяй факты, не догадки.' },
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: `data: ${JSON.stringify(event)}\n\n`,
+      });
+      return;
+    }
     if (post.agents) {
       const events = [
         {
@@ -52,30 +68,83 @@ test('studio multi-agent flow shows takeaway then two lenses', async ({ page }) 
   await page.goto('/studio');
   await expect(page.getByTestId('studio-screen')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Два взгляда' })).toBeVisible();
-  await expect(page.getByTestId('studio-example')).toBeVisible();
-  await expect(page.getByPlaceholder('Одна ситуация своими словами...')).toBeVisible();
+  await expect(page.getByTestId('studio-example')).toHaveCount(0);
+  await expect(page.getByPlaceholder(/опоздал на созвон/)).toBeVisible();
 
-  await page.getByPlaceholder('Одна ситуация своими словами...').fill('Я опоздал, все думают что я безответственный');
+  await page.getByPlaceholder(/опоздал на созвон/).fill('Я опоздал, все думают что я безответственный');
   await page.getByRole('button', { name: 'Отправить' }).click();
 
   await expect(page.getByTestId('consensus-view')).toBeVisible({ timeout: 5000 });
-  await expect(page.getByText('Что унести')).toBeVisible();
   await expect(page.getByText('Проблема в интерпретации, не в факте.')).toBeVisible();
-  await expect(page.getByTestId('agent-card-burns')).toBeVisible();
-  await expect(page.getByTestId('agent-card-stoic')).toBeVisible();
-  await expect(page.getByText('искажения и перефраз')).toBeVisible();
-  await expect(page.getByText('что в контроле / что отпустить')).toBeVisible();
-  await expect(page.getByText('Опоздание — факт. Остальное — интерпретация.')).toBeVisible();
-  await expect(page.getByText('Мнение других вне контроля. В контроле — следующий шаг.')).toBeVisible();
-  await expect(page.getByTestId('studio-again')).toHaveText('Понял · ещё раз');
-  await expect(page.getByTestId('studio-to-diary')).toBeVisible();
+  await expect(page.getByTestId('agent-burns-more')).toBeVisible();
+  await expect(page.getByText('Чтение мыслей')).toHaveCount(0);
 
-  // Hero takeaway appears before agent cards in DOM order
-  const consensusBox = await page.getByTestId('consensus-view').boundingBox();
-  const burnsBox = await page.getByTestId('agent-card-burns').boundingBox();
-  expect(consensusBox).toBeTruthy();
-  expect(burnsBox).toBeTruthy();
-  expect(consensusBox!.y).toBeLessThan(burnsBox!.y);
+  await expect(page.getByTestId('studio-followup-question')).toHaveText('Что бы сказал другу?');
+  await page.getByPlaceholder('Короткий ответ...').fill('Что можно проверить, а не догадки');
+  await page.getByRole('button', { name: 'Отправить' }).click();
+
+  await expect(page.getByText('С учётом ответа: проверяй факты, не догадки.')).toBeVisible({
+    timeout: 5000,
+  });
+  await expect(page.getByTestId('studio-again')).toHaveText('Понял');
+  await expect(page.getByTestId('studio-to-diary')).toHaveCount(0);
+});
+
+test('studio skip follow-up goes to Понял without second request', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('reframe_onboarding', 'true');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).SpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (window as any).webkitSpeechRecognition;
+  });
+
+  let followupCalls = 0;
+  await page.route('**/api/reframe', async (route) => {
+    const post = route.request().postDataJSON() as { agents?: string[]; mode?: string };
+    if (post.mode === 'studio-followup') {
+      followupCalls += 1;
+      await route.fulfill({ status: 500, body: 'should not be called' });
+      return;
+    }
+    const events = [
+      {
+        agent: 'burns',
+        name: 'Д-р Бёрнс',
+        status: 'ok',
+        payload: {
+          distortions: [],
+          reframing: 'Факт.',
+          question: 'Вопрос?',
+        },
+      },
+      {
+        agent: 'stoic',
+        name: 'Стоик',
+        status: 'ok',
+        payload: { text: 'Контроль.' },
+      },
+      {
+        agent: 'consensus',
+        name: 'Что унести',
+        status: 'ok',
+        payload: { text: 'Первый вывод.' },
+      },
+    ];
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join(''),
+    });
+  });
+
+  await page.goto('/studio');
+  await page.getByPlaceholder(/опоздал на созвон/).fill('Ситуация');
+  await page.getByRole('button', { name: 'Отправить' }).click();
+  await expect(page.getByText('Первый вывод.')).toBeVisible({ timeout: 5000 });
+  await page.getByTestId('studio-skip-followup').click();
+  await expect(page.getByTestId('studio-again')).toHaveText('Понял');
+  expect(followupCalls).toBe(0);
 });
 
 test('v1 home still works and links to studio', async ({ page }) => {
@@ -94,7 +163,6 @@ test('v1 home still works and links to studio', async ({ page }) => {
 });
 
 test('studio voice stop waits for async transcript then shows review', async ({ page }) => {
-  // Reproduce the race: final transcript arrives only after recognition.stop()
   await page.addInitScript(() => {
     localStorage.setItem('reframe_onboarding', 'true');
     class MockRecognition {
@@ -108,7 +176,6 @@ test('studio voice stop waits for async transcript then shows review', async ({ 
       onerror: ((event: Event) => void) | null = null;
       onend: ((event: Event) => void) | null = null;
       start() {
-        // Interim only while listening — no final yet
         setTimeout(() => {
           this.onresult?.({
             resultIndex: 0,
@@ -117,7 +184,6 @@ test('studio voice stop waits for async transcript then shows review', async ({ 
         }, 30);
       }
       stop() {
-        // Final result arrives after stop(), then onend — matches real Web Speech API
         setTimeout(() => {
           this.onresult?.({
             resultIndex: 0,
@@ -174,7 +240,6 @@ test('studio voice stop waits for async transcript then shows review', async ({ 
     btns.find((b) => b.textContent?.includes('Стоп'))?.click();
   });
 
-  // Must reach review with transcript (would fail with immediate getFinalText after stop)
   await expect(page.getByText('Я опоздал на встречу')).toBeVisible({ timeout: 3000 });
   await expect(page.getByRole('button', { name: 'Отправить' })).toBeVisible();
 

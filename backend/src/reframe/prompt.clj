@@ -97,6 +97,21 @@
    "ОТВЕТ ВСЕГДА В JSON (без markdown):\n"
    "{\"text\": \"что общего между взглядами\"}"))
 
+(defn studio-followup-prompt
+  "Build prompt for one Studio follow-up turn: refresh takeaway from user answer.
+   Marker STUDIO_FOLLOWUP used by mock fixtures."
+  [surface takeaway question answer]
+  (str
+   "STUDIO_FOLLOWUP. Ты — нейтральный синтезатор. "
+   "Пользователь уже получил вывод и ответил на один уточняющий вопрос. "
+   "Дай ОБНОВЛЁННЫЙ краткий вывод (1–2 предложения) — что унести, с учётом ответа. "
+   "Без списков советов, без новых техник, без спора.\n\n"
+   "Исходная ситуация: " surface "\n"
+   "Предыдущий вывод: " takeaway "\n"
+   "Вопрос: " question "\n"
+   "Ответ пользователя: " answer "\n\n"
+   "ОТВЕТ ВСЕГДА В JSON (без markdown):\n"
+   "{\"text\": \"обновлённый вывод — что унести\"}"))
 (defn build-deeper-prompt
   "Build the LLM prompt for Vertical Arrow (Burns) deep analysis.
    surface-thought: the original thought from first reframing

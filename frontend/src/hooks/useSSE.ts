@@ -438,11 +438,111 @@ export function useSSE() {
     }
   }, []);
 
+  const sendStudioFollowup = useCallback(
+    async (params: {
+      text: string;
+      surface: string;
+      takeaway: string;
+      question: string;
+    }): Promise<boolean> => {
+      setState((prev) => ({
+        ...prev,
+        consensusLoading: true,
+        agentsError: null,
+      }));
+      abortRef.current = new AbortController();
+
+      try {
+        const response = await fetch('/api/reframe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'studio-followup', ...params }),
+          signal: AbortSignal.any([
+            abortRef.current.signal,
+            AbortSignal.timeout(AGENTS_TIMEOUT),
+          ]),
+        });
+
+        if (!response.ok) {
+          const error = errorMessageForStatus(response.status);
+          console.error(`[useSSE:followup] HTTP ${response.status} — ${error}`);
+          setState((prev) => ({
+            ...prev,
+            consensusLoading: false,
+            agentsError: error,
+          }));
+          return false;
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          setState((prev) => ({
+            ...prev,
+            consensusLoading: false,
+            agentsError: 'Что-то с соединением. Попробуем снова?',
+          }));
+          return false;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let ok = false;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            const parsed = parseSSEData(line);
+            if (!isAgentEvent(parsed) || parsed.agent !== 'consensus') continue;
+            const textPayload =
+              parsed.payload && 'text' in parsed.payload ? parsed.payload.text : null;
+            if (parsed.status === 'ok') ok = true;
+            setState((prev) => ({
+              ...prev,
+              consensus: parsed.status === 'ok' ? textPayload : prev.consensus,
+              consensusLoading: false,
+              agentsError:
+                parsed.status === 'error'
+                  ? parsed.error || 'Не обновил вывод.'
+                  : prev.agentsError,
+            }));
+          }
+        }
+
+        setState((prev) => ({ ...prev, consensusLoading: false }));
+        return ok;
+      } catch (err: unknown) {
+        const error = err as { name?: string };
+        if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+          console.error(`[useSSE:followup] ${error.name}`);
+          setState((prev) => ({
+            ...prev,
+            consensusLoading: false,
+            agentsError: 'Не получилось. Попробуем через минуту?',
+          }));
+        } else {
+          console.error('[useSSE:followup] network error');
+          setState((prev) => ({
+            ...prev,
+            consensusLoading: false,
+            agentsError: 'Кажется, нет связи. Проверим?',
+          }));
+        }
+        return false;
+      }
+    },
+    [],
+  );
+
   return {
     ...state,
     sendText,
     sendDeepText,
     sendToAgents,
+    sendStudioFollowup,
     resetDeep,
     dismissError,
     abort,

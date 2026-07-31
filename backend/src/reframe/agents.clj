@@ -129,3 +129,17 @@
         consensus (run-consensus config thought ok)
         all (cond-> events consensus (conj consensus))]
     (apply str (map format-sse-event all))))
+
+(defn studio-followup!
+  "One Studio follow-up turn: refresh takeaway from user answer.
+   Returns a single consensus SSE event string. Throws on LLM failure."
+  [config {:keys [surface takeaway question text]}]
+  (let [raw (llm-client/call-llm config
+                                 (prompt/studio-followup-prompt surface takeaway question text)
+                                 (agent-llm-opts config :consensus))
+        payload (parse-llm-json raw)
+        event {:agent "consensus"
+               :name "Что унести"
+               :status "ok"
+               :payload (if (:text payload) payload {:text (str raw)})}]
+    (format-sse-event event)))
