@@ -41,12 +41,18 @@
 - 🔗 Discovery — «Два взгляда на ситуацию →»
 - 🧭 Quiet UI + один follow-up; presence (skeleton + typewriter, не token-stream)
 
-## Следом (v1.1 / v2.4)
+## В работе / ближайшее (v1.1)
 
-- 🔊 Голосовой фидбек (TTS) — озвучка рефрейминга
-- 📱 PWA — установка на телефон как приложение, офлайн-заглушка
+- 🔊 TTS рефрейма (speechSynthesis)
+- 📱 PWA lite (manifest, без aggressive SW)
+- 📅 Недельный смысл в прогрессе
+- 🔒 Честная privacy-страница (устройство / наш прокси / LLM)
+
+## Следом
+
 - 🗑️ Управление историей — удаление сессий
-- 🪜 Dig deeper Vertical Arrow staircase в studio (отдельный трек)
+- 🪜 Studio → дневник (когда понадобится мост; пока Studio = lab)
+- 🪜 Dig deeper Vertical Arrow в studio
 
 ---
 
