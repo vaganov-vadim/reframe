@@ -932,16 +932,16 @@ POST /api/reframe {"text": "...", "agents": ["burns", "stoic"]}
   {"agent":"burns","name":"Д-р Бёрнс","status":"ok","payload":{"distortions":[...],"reframing":"...","question":"..."}}
   {"agent":"stoic","name":"Стоик","status":"ok","payload":{"text":"..."}}
   {"agent":"stoic","name":"Стоик","status":"error","error":"LLM API error"}  // partial failure
-  {"agent":"consensus","name":"Что общего","status":"ok","payload":{"text":"..."}}  // only if ≥2 ok
+  {"agent":"consensus","name":"Что унести","status":"ok","payload":{"text":"..."}}  // only if ≥2 ok
 ```
 
 ### Фронтенд
 
-- `AgentCard`: loading / ok / error; Burns рендерит distortions+reframing
-- `ConsensusView`: текст синтеза
-- `StudioScreen`: InputMethod + cards + consensus; ссылка «К дневнику»
+- `AgentCard`: loading / ok / error; роль под именем; Burns: reframing → distortions → question
+- `ConsensusView`: hero «Что унести» (выше карточек)
+- `StudioScreen`: promise + example + InputMethod; результат: consensus → cards → «Понял · ещё раз»
 - `useSSE.sendToAgents`: multi-event parser
-- MainScreen: ссылка «Другой угол зрения» → `/studio`
+- MainScreen: ссылка «Два взгляда на ситуацию →» → `/studio`
 - На `/studio` TabBar не показываем (или минимальный back)
 
 ### Таймауты

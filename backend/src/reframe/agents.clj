@@ -102,13 +102,13 @@
                                      (agent-llm-opts config :consensus))
             payload (parse-llm-json raw)]
         {:agent "consensus"
-         :name "Что общего"
+         :name "Что унести"
          :status "ok"
          :payload (if (:text payload) payload {:text (pr-str payload)})})
       (catch Exception e
         (timbre/error e "Consensus agent failed")
         {:agent "consensus"
-         :name "Что общего"
+         :name "Что унести"
          :status "error"
          :error (or (.getMessage e) "Consensus failed")}))))
 
