@@ -2,7 +2,6 @@
   "TDD tests for multi-agent registry and orchestration (v2)."
   (:require [clojure.test :refer :all]
             [cheshire.core :as json]
-            [clojure.core.async :as async]
             [clojure.string :as str]
             [reframe.agents :as agents]
             [reframe.llm-client :as llm-client]
@@ -58,18 +57,21 @@
       (is (= "error" (:status event)))
       (is (string? (:error event))))))
 
+(defn- parse-sse-body
+  "Split SSE body into parsed event maps."
+  [body]
+  (->> (str/split-lines body)
+       (filter #(str/starts-with? % "data: "))
+       (map #(json/parse-string (subs % 6) true))
+       vec))
+
 (deftest orchestrate-emits-agent-then-consensus
   (testing "Orchestration emits agent-complete events then consensus when ≥2 ok"
-    (let [ch (agents/orchestrate! test-config "Я опоздал" [:burns :stoic])
-          events (loop [acc []]
-                   (if-let [v (async/<!! ch)]
-                     (let [json-str (if (str/starts-with? v "data: ")
-                                      (str/trim (subs v 6))
-                                      v)]
-                       (recur (conj acc (json/parse-string json-str true))))
-                     acc))
+    (let [body (agents/orchestrate! test-config "Я опоздал" [:burns :stoic])
+          events (parse-sse-body body)
           agents-ok (filter #(and (#{"burns" "stoic"} (:agent %)) (= "ok" (:status %))) events)
           consensus (filter #(= "consensus" (:agent %)) events)]
+      (is (string? body))
       (is (>= (count agents-ok) 2))
       (is (= 1 (count consensus)))
       (is (= "ok" (:status (first consensus))))
@@ -78,5 +80,5 @@
 (deftest format-sse-line
   (testing "SSE formatter prefixes data: and ends with blank line"
     (let [line (agents/format-sse-event {:agent "burns" :status "ok"})]
-      (is (clojure.string/starts-with? line "data: "))
-      (is (clojure.string/ends-with? line "\n\n")))))
+      (is (str/starts-with? line "data: "))
+      (is (str/ends-with? line "\n\n")))))
