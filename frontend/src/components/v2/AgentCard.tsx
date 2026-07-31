@@ -31,23 +31,29 @@ export function AgentCard({ event }: AgentCardProps) {
   return (
     <article
       data-testid={`agent-card-${event.agent}`}
-      className="phase-enter"
+      className={status === 'ok' ? 'studio-lens-enter' : 'studio-lens'}
       style={{
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--border-radius)',
-        padding: 'var(--space-md)',
-        minHeight: 100,
+        background: 'transparent',
+        border: 'none',
+        borderTop: '1px solid var(--border)',
+        borderRadius: 0,
+        padding: 'var(--space-md) 0',
+        minHeight: 88,
       }}
     >
       <header style={{ marginBottom: 'var(--space-sm)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-sm)', alignItems: 'baseline' }}>
-          <h3 style={{ margin: 0, fontSize: 'var(--font-size-base)', color: 'var(--text-primary)', fontWeight: 600 }}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: 15,
+              color: 'var(--text-primary)',
+              fontWeight: 600,
+              letterSpacing: '0.01em',
+            }}
+          >
             {name}
           </h3>
-          {status === 'loading' && (
-            <span data-testid="agent-loading" style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Смотрю…</span>
-          )}
           {status === 'error' && (
             <span data-testid="agent-error" style={{ color: 'var(--error)', fontSize: 13 }}>Не вышло</span>
           )}
@@ -60,7 +66,11 @@ export function AgentCard({ event }: AgentCardProps) {
       </header>
 
       {status === 'loading' && (
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 15 }}>Жду ответ…</p>
+        <div data-testid="agent-loading" aria-hidden style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="studio-skeleton" style={{ height: 14, width: '88%' }} />
+          <div className="studio-skeleton" style={{ height: 14, width: '62%' }} />
+          <div className="studio-skeleton" style={{ height: 14, width: '74%' }} />
+        </div>
       )}
 
       {status === 'error' && (
@@ -72,7 +82,7 @@ export function AgentCard({ event }: AgentCardProps) {
           {burns.reframing && (
             <p
               data-testid="agent-burns-reframing"
-              style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}
+              style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.55 }}
             >
               {burns.reframing}
             </p>
@@ -135,7 +145,7 @@ export function AgentCard({ event }: AgentCardProps) {
       )}
 
       {status === 'ok' && isTextPayload(payload) && (
-        <p data-testid="agent-text-payload" style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+        <p data-testid="agent-text-payload" style={{ margin: 0, fontSize: 16, color: 'var(--text-primary)', lineHeight: 1.55 }}>
           {payload.text}
         </p>
       )}

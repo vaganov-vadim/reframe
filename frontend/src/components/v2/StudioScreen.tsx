@@ -231,9 +231,15 @@ export function StudioScreen() {
     phase === 'followupReview';
 
   return (
-    <main data-testid="studio-screen" style={{ padding: 'var(--space-lg) var(--space-md) 80px', maxWidth: 720, margin: '0 auto' }}>
+    <main
+      data-testid="studio-screen"
+      className="studio-screen"
+      style={{ padding: 'var(--space-md) 0 80px', maxWidth: 560, margin: '0 auto' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)', gap: 'var(--space-md)' }}>
-        <h1 style={{ margin: 0, fontSize: 'var(--font-size-heading)', color: 'var(--text-primary)' }}>Два взгляда</h1>
+        <h1 style={{ margin: 0, fontSize: 28, color: 'var(--text-primary)', fontWeight: 600, letterSpacing: '-0.02em' }}>
+          Два взгляда
+        </h1>
         <Link
           to="/"
           data-testid="back-to-diary"
@@ -277,16 +283,17 @@ export function StudioScreen() {
       )}
 
       {showResultPane && (
-        <div className="phase-enter" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <div className="phase-enter" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
           <ConsensusView
             text={consensus}
             loading={consensusLoading || phase === 'analyzing' || phase === 'followupLoading'}
           />
           <div
+            data-testid="studio-lenses"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: 'var(--space-md)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0,
             }}
           >
             {displayEvents.map((event) => (
@@ -295,15 +302,22 @@ export function StudioScreen() {
           </div>
 
           {showFollowupAsk && consensus && (
-            <section data-testid="studio-followup" style={{ marginTop: 'var(--space-sm)' }}>
+            <section
+              data-testid="studio-followup"
+              style={{
+                marginTop: 'var(--space-md)',
+                paddingTop: 'var(--space-md)',
+                borderTop: '1px solid var(--border)',
+              }}
+            >
               <p
                 data-testid="studio-followup-question"
                 style={{
                   margin: '0 0 var(--space-md)',
-                  fontSize: 16,
+                  fontSize: 17,
                   color: 'var(--text-primary)',
                   lineHeight: 1.45,
-                  textAlign: 'center',
+                  fontFamily: 'var(--studio-display, inherit)',
                 }}
               >
                 {followupQuestion}

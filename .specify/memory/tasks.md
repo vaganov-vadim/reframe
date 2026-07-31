@@ -220,4 +220,12 @@
 - [x] 17.5 `useSSE.sendStudioFollowup` + StudioScreen фазы follow-up/skip
 - [x] 17.6 E2E: quiet input, follow-up updates takeaway, skip → Понял
 
-## Итого: Phase 12–17 (вкл. Quiet UI + follow-up v2.2) выполнены
+## Phase 18 — Studio presence polish (v2.3)
+
+- [x] 18.1 Spec: skeleton + typewriter takeaway; no token SSE
+- [x] 18.2 `useTypewriter` + unit-тест
+- [x] 18.3 ConsensusView hero polish + skeleton + typewriter
+- [x] 18.4 AgentCard skeleton; lighter lens chrome; studio width/typography
+- [x] 18.5 Unit/E2E зелёные; PR
+
+## Итого: Phase 12–18 (вкл. presence polish v2.3) выполнены

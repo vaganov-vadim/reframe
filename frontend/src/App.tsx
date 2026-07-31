@@ -16,7 +16,7 @@ function AppShell() {
   const hideTabBar = location.pathname === '/studio';
 
   return (
-    <div className="app">
+    <div className={hideTabBar ? 'app app--studio' : 'app'}>
       <OnboardingOverlay />
       <ThemeToggle />
       <Routes>
