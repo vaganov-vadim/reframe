@@ -8,12 +8,13 @@ import { OnboardingOverlay } from './components/OnboardingOverlay';
 import { DistortionReference } from './components/DistortionReference';
 import { StatusPage } from './components/StatusPage';
 import { StudioScreen } from './components/v2/StudioScreen';
+import { PrivacyPage } from './components/PrivacyPage';
 import { RecordingProvider } from './contexts/RecordingContext';
 import { SessionProvider } from './contexts/SessionContext';
 
 function AppShell() {
   const location = useLocation();
-  const hideTabBar = location.pathname === '/studio';
+  const hideTabBar = location.pathname === '/studio' || location.pathname === '/privacy';
 
   return (
     <div className={hideTabBar ? 'app app--studio' : 'app'}>
@@ -25,6 +26,7 @@ function AppShell() {
         <Route path="/progress" element={<ProgressTab />} />
         <Route path="/distortions" element={<DistortionReference />} />
         <Route path="/status" element={<StatusPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/studio" element={<StudioScreen />} />
       </Routes>
       {!hideTabBar && <TabBar />}

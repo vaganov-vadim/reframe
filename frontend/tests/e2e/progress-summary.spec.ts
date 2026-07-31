@@ -26,5 +26,6 @@ test('shows progress summary with session data', async ({ page }) => {
   }, sessions);
   await page.goto('/progress');
   await expect(page.getByText('Твой прогресс')).toBeVisible();
-  await expect(page.getByText('2')).toBeVisible(); // total sessions
+  await expect(page.getByText('2', { exact: true })).toBeVisible(); // total sessions
+  await expect(page.getByTestId('weekly-insight')).toContainText('За 7 дней — 2');
 });

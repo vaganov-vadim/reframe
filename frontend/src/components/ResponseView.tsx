@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ReframeResponse } from '../types/session';
 import { DistortionInfo } from './DistortionInfo';
+import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis';
 
 export function DistortionList({
   distortions,
@@ -140,6 +141,7 @@ export function DistortionList({
 }
 
 export function ReframingText({ text }: { text: string }) {
+  const { supported, speaking, toggle } = useSpeechSynthesis();
   if (!text) return null;
 
   return (
@@ -172,6 +174,27 @@ export function ReframingText({ text }: { text: string }) {
         &ldquo;
       </div>
       <div style={{ paddingTop: '8px' }}>{text}</div>
+      {supported && (
+        <button
+          type="button"
+          data-testid="listen-reframing"
+          onClick={() => toggle(text)}
+          style={{
+            marginTop: 'var(--space-md)',
+            background: 'transparent',
+            border: '1px solid var(--accent)',
+            color: 'var(--accent)',
+            borderRadius: 'var(--border-radius-sm)',
+            padding: '8px 16px',
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: 'pointer',
+            minHeight: 48,
+          }}
+        >
+          {speaking ? 'Стоп' : 'Слушать'}
+        </button>
+      )}
     </div>
   );
 }

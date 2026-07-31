@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom';
 import { getSessions, type Session } from '../services/storageService';
+import { buildWeeklyInsight } from '../services/weeklyInsight';
 
 interface Summary {
   total: number;
@@ -40,6 +42,7 @@ function computeSummary(sessions: Session[]): Summary | null {
 export function ProgressTab() {
   const sessions = getSessions();
   const summary = computeSummary(sessions);
+  const weekly = buildWeeklyInsight(sessions);
 
   if (!summary) {
     return (
@@ -52,6 +55,11 @@ export function ProgressTab() {
         }}
       >
         Твой прогресс появится здесь после первых сессий.
+        <div style={{ marginTop: 'var(--space-lg)' }}>
+          <Link to="/privacy" data-testid="privacy-link" style={{ color: 'var(--accent)', fontSize: 13 }}>
+            Приватность
+          </Link>
+        </div>
       </div>
     );
   }
@@ -84,6 +92,35 @@ export function ProgressTab() {
       >
         Твой прогресс
       </h3>
+
+      {weekly && (
+        <section
+          data-testid="weekly-insight"
+          style={{
+            marginBottom: 'var(--space-lg)',
+            padding: 'var(--space-md)',
+            borderRadius: 'var(--border-radius)',
+            border: '1px solid var(--border)',
+            background: 'var(--accent-glow)',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              color: 'var(--accent)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginBottom: 'var(--space-sm)',
+              fontWeight: 600,
+            }}
+          >
+            За 7 дней
+          </div>
+          <p style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.55 }}>
+            {weekly.summary}
+          </p>
+        </section>
+      )}
 
       {/* Summary cards */}
       <div
@@ -215,15 +252,20 @@ export function ProgressTab() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '2px',
-                }}>
-  {d.type}
-  <span style={{ fontSize: '10px', opacity: 0.7 }}>
-    ×{d.count}
-  </span>
+                }}
+              >
+                {d.type}
+                <span style={{ fontSize: '10px', opacity: 0.7 }}>×{d.count}</span>
               </span>
             );
           })}
         </div>
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
+        <Link to="/privacy" data-testid="privacy-link" style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+          Приватность
+        </Link>
       </div>
     </div>
   );

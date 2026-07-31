@@ -228,4 +228,13 @@
 - [x] 18.4 AgentCard skeleton; lighter lens chrome; studio width/typography
 - [x] 18.5 Unit/E2E зелёные; PR
 
-## Итого: Phase 12–18 (вкл. presence polish v2.3) выполнены
+## Phase 19 — Product basics (shareable floor)
+
+- [x] 19.1 Spec/ROADMAP: PWA lite, TTS, weekly insight, honest privacy; Studio stays lab
+- [x] 19.2 PWA lite: manifest + icons (no aggressive SW)
+- [x] 19.3 TTS: «Слушать» на reframing (Web Speech speechSynthesis)
+- [x] 19.4 Weekly insight на Progress (template, last 7 days)
+- [x] 19.5 Privacy page `/privacy` (честный LLM disclaimer)
+- [x] 19.6 Tests + PR
+
+## Итого: Phase 12–19 (product basics) выполнены
