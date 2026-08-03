@@ -273,7 +273,11 @@ Retry logic: при ошибке HTTP или таймауте — повтор �
 
 **Action done (v1)**: Session field `actionDone?: boolean`. `markActionDone(id)` patches localStorage. Weekly insight adds steps line when actions exist.
 
-**Local reminder (v1)**: key `reframe_reminder` `{ enabled, hour, minute, lastNotifiedDate }`. On App mount/visibility: if due → Notification (no content from sessions). Not a background alarm.
+**Local reminder (v1)**: key `reframe_reminder` `{ enabled, hour, minute, lastNotifiedDate }`. On App mount/visibility: if due → Notification (no content from sessions). Not a background alarm. Time is device-local; UI notes «по времени на устройстве».
+
+**Privacy wipe**: `clearAllDeviceData()` removes all `STORAGE_KEYS`. Confirm on `/privacy`. No export.
+
+**Studio-from-history (spec)**: History detail → navigate `/studio` with `location.state.seed`; Studio opens in review; no write-back. Implement in Phase 26.
 
 ```typescript
 // src/types/session.ts — canonical Session interface and STORAGE_KEYS

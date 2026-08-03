@@ -273,4 +273,18 @@
 - [x] 24.4 Reminder prefs + Progress UI + nudge on App open
 - [x] 24.5 E2E + PR
 
-## Итого: Phase 12–24 выполнены
+## Phase 25 — Privacy wipe + Studio bridge spec + reminder note
+
+- [x] 25.1 ROADMAP/spec: решения (нет экспорта; wipe; homework отложено; studio-from-history CJM)
+- [x] 25.2 `clearAllDeviceData` + Privacy UI confirm + E2E
+- [x] 25.3 Spec Studio-from-history (seed, review, no write-back)
+- [x] 25.4 Reminder: подпись «по времени на устройстве»
+- [x] 25.5 PR (wipe + docs; реализация bridge — Phase 26)
+
+## Phase 26 — Studio from history (реализация)
+
+- [ ] 26.1 `seedFromSession` + History CTA
+- [ ] 26.2 StudioScreen: consume location.state seed → review
+- [ ] 26.3 E2E bridge
+
+## Итого: Phase 12–25 выполнены; Phase 26 — следующая

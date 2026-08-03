@@ -44,3 +44,10 @@ export function markActionDone(id: string, done = true): Session | null {
 export function clearSessions(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
+
+/** Wipe all Reframe keys on this device (sessions, prefs, onboarding). */
+export function clearAllDeviceData(): void {
+  for (const key of Object.values(STORAGE_KEYS)) {
+    localStorage.removeItem(key);
+  }
+}
