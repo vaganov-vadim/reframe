@@ -43,3 +43,12 @@ export function completeSession(
   };
   saveSession(completed);
 }
+
+/** Seed text for Studio bridge: action first, else reframing. */
+export function seedFromSession(session: Pick<Session, 'action' | 'reframing'>): string | null {
+  const action = session.action?.trim();
+  if (action) return action;
+  const reframing = session.reframing?.trim();
+  if (reframing) return reframing;
+  return null;
+}

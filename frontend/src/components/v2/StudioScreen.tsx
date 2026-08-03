@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useRecording } from '../../contexts/RecordingContext';
 import { useSSE } from '../../hooks/useSSE';
 import { InputMethod } from '../InputMethod';
@@ -19,6 +19,11 @@ type StudioPhase =
   | 'followupLoading'
   | 'done';
 
+type StudioEntry = {
+  seed: string;
+  fromHistory: boolean;
+};
+
 const DEFAULT_AGENTS: AgentEvent[] = [
   { agent: 'burns', name: 'Д-р Бёрнс', status: 'loading' },
   { agent: 'stoic', name: 'Стоик', status: 'loading' },
@@ -34,11 +39,31 @@ function burnsQuestion(events: AgentEvent[]): string {
   return q || FALLBACK_QUESTION;
 }
 
+function studioEntryFromState(state: unknown): StudioEntry | null {
+  if (!state || typeof state !== 'object') return null;
+  const raw = state as { seed?: unknown; from?: unknown };
+  const seed = typeof raw.seed === 'string' ? raw.seed.trim() : '';
+  if (!seed) return null;
+  return { seed, fromHistory: raw.from === 'history' };
+}
+
 export function StudioScreen() {
-  const [phase, setPhase] = useState<StudioPhase>('input');
-  const [reviewText, setReviewText] = useState<string | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const entryRef = useRef(studioEntryFromState(location.state));
+  const fromHistory = entryRef.current?.fromHistory === true;
+  const diaryPath = fromHistory ? '/history' : '/';
+
+  const [phase, setPhase] = useState<StudioPhase>(() =>
+    entryRef.current ? 'review' : 'input',
+  );
+  const [reviewText, setReviewText] = useState<string | null>(
+    () => entryRef.current?.seed ?? null,
+  );
   const [followupReviewText, setFollowupReviewText] = useState<string | null>(null);
-  const [lastText, setLastText] = useState<string | null>(null);
+  const [lastText, setLastText] = useState<string | null>(
+    () => entryRef.current?.seed ?? null,
+  );
   const [localError, setLocalError] = useState<string | null>(null);
   const {
     text,
@@ -204,10 +229,14 @@ export function StudioScreen() {
   }, []);
 
   const handleUnderstood = useCallback(() => {
+    if (fromHistory) {
+      navigate('/history');
+      return;
+    }
     setPhase('input');
     setReviewText(null);
     setFollowupReviewText(null);
-  }, []);
+  }, [fromHistory, navigate]);
 
   const displayEvents: AgentEvent[] =
     agentEvents.length > 0
@@ -241,11 +270,11 @@ export function StudioScreen() {
           Два взгляда
         </h1>
         <Link
-          to="/"
+          to={diaryPath}
           data-testid="back-to-diary"
           style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: 14, fontWeight: 500, flexShrink: 0, paddingTop: 4 }}
         >
-          ← К дневнику
+          {fromHistory ? '← К истории' : '← К дневнику'}
         </Link>
       </div>
 

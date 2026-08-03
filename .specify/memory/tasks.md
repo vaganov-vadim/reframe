@@ -283,8 +283,8 @@
 
 ## Phase 26 — Studio from history (реализация)
 
-- [ ] 26.1 `seedFromSession` + History CTA
-- [ ] 26.2 StudioScreen: consume location.state seed → review
-- [ ] 26.3 E2E bridge
+- [x] 26.1 `seedFromSession` + History CTA
+- [x] 26.2 StudioScreen: consume location.state seed → review
+- [x] 26.3 E2E bridge
 
-## Итого: Phase 12–25 выполнены; Phase 26 — следующая
+## Итого: Phase 12–26 выполнены

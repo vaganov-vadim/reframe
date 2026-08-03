@@ -5,11 +5,36 @@ vi.mock('../../src/services/storageService', () => ({
   getSessions: vi.fn(() => []),
 }));
 
-import { startSession, completeSession } from '../../src/services/sessionService';
+import { startSession, completeSession, seedFromSession } from '../../src/services/sessionService';
 import { saveSession } from '../../src/services/storageService';
 import type { Session } from '../../src/services/storageService';
 
 const mockedSaveSession = vi.mocked(saveSession);
+
+describe('seedFromSession', () => {
+  it('prefers action over reframing', () => {
+    expect(
+      seedFromSession({
+        action: '  Сделай один звонок.  ',
+        reframing: 'Это не конец.',
+      }),
+    ).toBe('Сделай один звонок.');
+  });
+
+  it('falls back to reframing when action empty', () => {
+    expect(
+      seedFromSession({
+        action: '   ',
+        reframing: '  Другой взгляд.  ',
+      }),
+    ).toBe('Другой взгляд.');
+  });
+
+  it('returns null when neither usable', () => {
+    expect(seedFromSession({ action: '', reframing: '  ' })).toBeNull();
+    expect(seedFromSession({ reframing: '' })).toBeNull();
+  });
+});
 
 describe('sessionService', () => {
   beforeEach(() => {
