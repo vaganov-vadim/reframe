@@ -59,9 +59,9 @@ test('reminder settings persist on progress', async ({ page }) => {
   await page.goto('/progress');
   await expect(page.getByTestId('reminder-settings')).toBeVisible();
   await page.getByTestId('reminder-toggle').click();
-  await expect(page.getByTestId('reminder-toggle')).toHaveText('Включено');
+  await expect(page.getByTestId('reminder-toggle')).toHaveText('Выключить');
   await page.getByTestId('reminder-time').fill('09:15');
   await page.reload();
-  await expect(page.getByTestId('reminder-toggle')).toHaveText('Включено');
+  await expect(page.getByTestId('reminder-toggle')).toHaveText('Выключить');
   await expect(page.getByTestId('reminder-time')).toHaveValue('09:15');
 });

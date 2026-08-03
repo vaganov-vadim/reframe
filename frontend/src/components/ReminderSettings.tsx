@@ -94,7 +94,7 @@ export function ReminderSettings() {
             cursor: 'pointer',
           }}
         >
-          {prefs.enabled ? 'Включено' : 'Выключено'}
+          {prefs.enabled ? 'Выключить' : 'Включить'}
         </button>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--text-primary)' }}>
           Время
