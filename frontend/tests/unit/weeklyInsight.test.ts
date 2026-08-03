@@ -11,6 +11,8 @@ function session(partial: Partial<Session> & { date: string }): Session {
     anxietyAfter: partial.anxietyAfter ?? 4,
     delta: partial.delta ?? 3,
     reframing: partial.reframing ?? 'ok',
+    action: partial.action,
+    actionDone: partial.actionDone,
   };
 }
 
@@ -39,6 +41,30 @@ describe('weeklyInsight', () => {
     expect(insight!.sessionCount).toBe(2);
     expect(insight!.summary).toContain('За 7 дней');
     expect(insight!.summary).toContain('Катастрофизация');
+  });
+
+  it('adds steps line when actions exist', () => {
+    const insight = buildWeeklyInsight(
+      [
+        session({
+          date: '2026-07-30',
+          id: 'a',
+          action: 'Спроси коллегу',
+          actionDone: true,
+        }),
+        session({
+          date: '2026-07-29',
+          id: 'b',
+          action: 'Запиши факт',
+          actionDone: false,
+        }),
+        session({ date: '2026-07-28', id: 'c' }),
+      ],
+      now,
+    );
+    expect(insight!.actionsTotal).toBe(2);
+    expect(insight!.actionsDone).toBe(1);
+    expect(insight!.summary).toContain('Шаги: 1 из 2 сделаны');
   });
 
   it('returns null when no sessions in window', () => {

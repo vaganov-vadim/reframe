@@ -4,6 +4,8 @@ export interface WeeklyInsight {
   sessionCount: number;
   avgDelta: number;
   topDistortions: string[];
+  actionsTotal: number;
+  actionsDone: number;
   /** Human template — no LLM */
   summary: string;
 }
@@ -39,6 +41,10 @@ export function buildWeeklyInsight(sessions: Session[], now = new Date()): Weekl
     .slice(0, 2)
     .map(([t]) => t);
 
+  const withAction = week.filter((s) => !!s.action);
+  const actionsTotal = withAction.length;
+  const actionsDone = withAction.filter((s) => s.actionDone).length;
+
   const n = week.length;
   const deltaPart =
     avgDelta > 0.5
@@ -52,9 +58,19 @@ export function buildWeeklyInsight(sessions: Session[], now = new Date()): Weekl
       ? ` Чаще всплывало: ${topDistortions.join(', ')}.`
       : '';
 
-  const summary = `За 7 дней — ${n} ${sessionWord(n)}. ${capitalize(deltaPart)}.${distortionPart}`;
+  const stepsPart =
+    actionsTotal > 0 ? ` Шаги: ${actionsDone} из ${actionsTotal} сделаны.` : '';
 
-  return { sessionCount: n, avgDelta, topDistortions, summary };
+  const summary = `За 7 дней — ${n} ${sessionWord(n)}. ${capitalize(deltaPart)}.${distortionPart}${stepsPart}`;
+
+  return {
+    sessionCount: n,
+    avgDelta,
+    topDistortions,
+    actionsTotal,
+    actionsDone,
+    summary,
+  };
 }
 
 function sessionWord(n: number): string {

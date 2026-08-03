@@ -11,10 +11,12 @@ import { StudioScreen } from './components/v2/StudioScreen';
 import { PrivacyPage } from './components/PrivacyPage';
 import { RecordingProvider } from './contexts/RecordingContext';
 import { SessionProvider } from './contexts/SessionContext';
+import { useDailyReminder } from './hooks/useDailyReminder';
 
 function AppShell() {
   const location = useLocation();
   const hideTabBar = location.pathname === '/studio' || location.pathname === '/privacy';
+  useDailyReminder();
 
   return (
     <div className={hideTabBar ? 'app app--studio' : 'app'}>

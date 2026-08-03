@@ -22,7 +22,7 @@ vi.stubGlobal('localStorage', {
   key: (i: number) => Object.keys(store)[i] ?? null,
 });
 
-import { getSessions, saveSession, clearSessions, deleteSession } from '../../src/services/storageService';
+import { getSessions, saveSession, clearSessions, deleteSession, markActionDone } from '../../src/services/storageService';
 
 const mockSession = {
   id: '123',
@@ -73,6 +73,13 @@ describe('storageService', () => {
     saveSession(mockSession);
     deleteSession('missing');
     expect(getSessions()).toHaveLength(1);
+  });
+
+  it('markActionDone sets actionDone on the session', () => {
+    saveSession({ ...mockSession, action: 'Спроси коллегу' });
+    const updated = markActionDone('123', true);
+    expect(updated?.actionDone).toBe(true);
+    expect(getSessions()[0].actionDone).toBe(true);
   });
 
   it('getSessions handles corrupt JSON gracefully', () => {

@@ -27,6 +27,20 @@ export function deleteSession(id: string): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+export function updateSession(id: string, patch: Partial<Session>): Session | null {
+  const sessions = getSessions();
+  const idx = sessions.findIndex((s) => s.id === id);
+  if (idx < 0) return null;
+  const updated = { ...sessions[idx], ...patch, id: sessions[idx].id };
+  sessions[idx] = updated;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+  return updated;
+}
+
+export function markActionDone(id: string, done = true): Session | null {
+  return updateSession(id, { actionDone: done });
+}
+
 export function clearSessions(): void {
   localStorage.removeItem(STORAGE_KEY);
 }

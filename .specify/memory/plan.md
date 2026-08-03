@@ -271,6 +271,10 @@ Retry logic: при ошибке HTTP или таймауте — повтор �
 
 **History delete (v1)**: `deleteSession(id)` filters `reframe_sessions` in localStorage. UI: detail → confirm → list. No server call.
 
+**Action done (v1)**: Session field `actionDone?: boolean`. `markActionDone(id)` patches localStorage. Weekly insight adds steps line when actions exist.
+
+**Local reminder (v1)**: key `reframe_reminder` `{ enabled, hour, minute, lastNotifiedDate }`. On App mount/visibility: if due → Notification (no content from sessions). Not a background alarm.
+
 ```typescript
 // src/types/session.ts — canonical Session interface and STORAGE_KEYS
 interface Session {

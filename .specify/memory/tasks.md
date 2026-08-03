@@ -265,4 +265,12 @@
 - [x] 23.3 HistoryTab: Удалить → подтверждение → список
 - [x] 23.4 E2E + PR
 
-## Итого: Phase 12–23 выполнены
+## Phase 24 — Action done + local reminders
+
+- [x] 24.1 Spec/ROADMAP: actionDone, weekly steps line; reminder on open; Studio bridge deferred
+- [x] 24.2 `updateSession` / `markActionDone` + unit
+- [x] 24.3 HistoryTab: «Сделал» / «Сделано»; weeklyInsight steps
+- [x] 24.4 Reminder prefs + Progress UI + nudge on App open
+- [x] 24.5 E2E + PR
+
+## Итого: Phase 12–24 выполнены

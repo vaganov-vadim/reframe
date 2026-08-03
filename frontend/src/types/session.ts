@@ -57,6 +57,8 @@ export interface Session {
   delta: number;
   reframing: string;
   action?: string;
+  /** User marked the daily action as done */
+  actionDone?: boolean;
   verticalArrowLevels?: VerticalArrowLevel[];
   verticalArrowReframing?: string;
 }
@@ -117,4 +119,5 @@ export const STORAGE_KEYS = {
   onboarding: 'reframe_onboarding',
   theme: 'reframe_theme',
   sessionState: 'reframe_session_state',
+  reminder: 'reframe_reminder',
 } as const;
