@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getSessions, deleteSession, markActionDone, type Session } from '../services/storageService';
+import { seedFromSession } from '../services/sessionService';
 import { ReframingText } from './ResponseView';
 
 export function HistoryTab() {
@@ -34,6 +36,8 @@ export function HistoryTab() {
   };
 
   if (selected) {
+    const studioSeed = seedFromSession(selected);
+
     return (
       <div
         style={{
@@ -253,6 +257,31 @@ export function HistoryTab() {
                 flush
               />
             </section>
+          )}
+
+          {studioSeed && (
+            <Link
+              to="/studio"
+              state={{ seed: studioSeed, from: 'history', sessionId: selected.id }}
+              data-testid="history-studio"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                minHeight: 48,
+                background: 'transparent',
+                color: 'var(--accent)',
+                border: '1px solid var(--accent)',
+                borderRadius: 'var(--border-radius-sm)',
+                fontSize: 15,
+                fontWeight: 600,
+                textDecoration: 'none',
+                boxSizing: 'border-box',
+              }}
+            >
+              Два взгляда →
+            </Link>
           )}
 
           <section

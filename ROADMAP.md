@@ -68,7 +68,7 @@
 
 ## В работе / ближайшее
 
-- 🪜 Реализация Studio-from-history (Phase 26)
+- ✅ Studio-from-history (Phase 26) — History → seed → Studio review
 
 ## Следом
 
