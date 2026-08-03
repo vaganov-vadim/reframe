@@ -12,7 +12,14 @@ export function HistoryTab() {
 
   if (selected) {
     return (
-      <div style={{ padding: 'var(--space-md)' }}>
+      <div
+        style={{
+          padding: 'var(--space-md)',
+          paddingBottom: 'var(--space-xl)',
+          maxWidth: 480,
+          margin: '0 auto',
+        }}
+      >
         <button
           onClick={() => setSelected(null)}
           style={{
@@ -21,25 +28,20 @@ export function HistoryTab() {
             border: 'none',
             fontSize: '14px',
             padding: 'var(--space-sm) 0',
-            marginBottom: 'var(--space-md)',
+            marginBottom: 'var(--space-lg)',
             cursor: 'pointer',
+            minHeight: 48,
           }}
         >
           ← Назад к списку
         </button>
-        <div
-          style={{
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--border-radius)',
-            padding: 'var(--space-lg)',
-            border: '1px solid var(--border)',
-          }}
-        >
+
+        <header style={{ marginBottom: 'var(--space-lg)' }}>
           <div
             style={{
-              fontSize: '12px',
+              fontSize: '13px',
               color: 'var(--text-secondary)',
-              marginBottom: 'var(--space-md)',
+              marginBottom: 'var(--space-xs)',
             }}
           >
             {new Date(selected.date).toLocaleDateString('ru-RU', {
@@ -50,37 +52,45 @@ export function HistoryTab() {
               minute: '2-digit',
             })}
           </div>
-          <div style={{ marginBottom: 'var(--space-md)' }}>
-            <span
-              style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: 'var(--accent)',
-              }}
-            >
-              {selected.distortion}
-            </span>
+          <div
+            style={{
+              fontSize: '18px',
+              fontWeight: 600,
+              color: 'var(--accent)',
+              letterSpacing: '-0.2px',
+            }}
+          >
+            {selected.distortion}
           </div>
+        </header>
+
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--space-lg)',
+          }}
+        >
           {selected.action && (
-            <div
+            <section
               data-testid="history-action"
               style={{
+                padding: 'var(--space-lg)',
                 background: 'var(--bg-elevated)',
                 borderRadius: 'var(--border-radius)',
-                padding: 'var(--space-md)',
-                marginBottom: 'var(--space-md)',
-                fontSize: '15px',
-                lineHeight: '1.6',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--accent)',
+                border: '1px solid var(--border)',
                 borderLeftWidth: '3px',
+                borderLeftColor: 'var(--accent)',
+                fontSize: '15px',
+                lineHeight: '1.65',
+                color: 'var(--text-primary)',
               }}
             >
               <div
                 style={{
-                  fontSize: '10px',
+                  fontSize: '11px',
                   color: 'var(--text-secondary)',
-                  marginBottom: '6px',
+                  marginBottom: 'var(--space-sm)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px',
                 }}
@@ -88,53 +98,109 @@ export function HistoryTab() {
                 Что сделать сегодня
               </div>
               {selected.action}
-            </div>
+            </section>
           )}
-          <div data-testid="history-reframing">
-            <ReframingText text={selected.reframing} listenTestId="listen-history-reframing" />
-          </div>
+
+          <section data-testid="history-reframing">
+            <ReframingText
+              text={selected.reframing}
+              listenTestId="listen-history-reframing"
+              flush
+            />
+          </section>
+
           {selected.verticalArrowLevels && selected.verticalArrowLevels.length > 0 && (
-            <div style={{ marginTop: 'var(--space-md)' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 'var(--space-sm)' }}>
+            <section style={{ paddingTop: 'var(--space-xs)' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--text-secondary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: 'var(--space-md)',
+                }}
+              >
                 Vertical Arrow
               </div>
-              {selected.verticalArrowLevels.map((level: { thought: string; label: string }, i: number) => (
-                <div key={i} style={{ marginBottom: 'var(--space-sm)' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                    {level.label}
-                  </div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-primary)', padding: 'var(--space-sm)', background: 'var(--bg-secondary)', borderRadius: 'var(--border-radius-sm)' }}>
-                    {level.thought}
-                  </div>
-                </div>
-              ))}
-            </div>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--space-md)',
+                }}
+              >
+                {selected.verticalArrowLevels.map(
+                  (level: { thought: string; label: string }, i: number) => (
+                    <div key={i}>
+                      <div
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--text-secondary)',
+                          marginBottom: 'var(--space-xs)',
+                        }}
+                      >
+                        {level.label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '15px',
+                          color: 'var(--text-primary)',
+                          padding: 'var(--space-md)',
+                          background: 'var(--bg-elevated)',
+                          borderRadius: 'var(--border-radius-sm)',
+                          border: '1px solid var(--border)',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {level.thought}
+                      </div>
+                      {i < (selected.verticalArrowLevels?.length ?? 0) - 1 && (
+                        <div
+                          style={{
+                            color: 'var(--accent)',
+                            textAlign: 'center',
+                            fontSize: 18,
+                            marginTop: 'var(--space-md)',
+                            opacity: 0.7,
+                          }}
+                        >
+                          ↓
+                        </div>
+                      )}
+                    </div>
+                  ),
+                )}
+              </div>
+            </section>
           )}
 
           {selected.verticalArrowReframing && (
-            <div data-testid="history-va-reframing">
+            <section data-testid="history-va-reframing">
               <ReframingText
                 text={selected.verticalArrowReframing}
                 listenTestId="listen-history-va-reframing"
+                flush
               />
-            </div>
+            </section>
           )}
 
-          <div
+          <section
             style={{
               display: 'flex',
               justifyContent: 'space-around',
               textAlign: 'center',
-              marginTop: 'var(--space-md)',
+              paddingTop: 'var(--space-md)',
+              marginTop: 'var(--space-xs)',
+              borderTop: '1px solid var(--border)',
             }}
           >
             <div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 4 }}>
                 До
               </div>
               <div
                 style={{
-                  fontSize: '20px',
+                  fontSize: '22px',
                   fontWeight: 700,
                   color: 'var(--error)',
                 }}
@@ -143,12 +209,12 @@ export function HistoryTab() {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 4 }}>
                 После
               </div>
               <div
                 style={{
-                  fontSize: '20px',
+                  fontSize: '22px',
                   fontWeight: 700,
                   color: 'var(--success)',
                 }}
@@ -157,15 +223,14 @@ export function HistoryTab() {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: 4 }}>
                 Дельта
               </div>
               <div
                 style={{
-                  fontSize: '20px',
+                  fontSize: '22px',
                   fontWeight: 700,
-                  color:
-                    selected.delta > 0 ? 'var(--success)' : 'var(--error)',
+                  color: selected.delta > 0 ? 'var(--success)' : 'var(--error)',
                 }}
               >
                 {selected.delta > 0
@@ -173,7 +238,7 @@ export function HistoryTab() {
                   : `+${Math.abs(selected.delta)}`}
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     );
@@ -221,12 +286,13 @@ export function HistoryTab() {
             background: 'var(--bg-elevated)',
             borderRadius: 'var(--border-radius)',
             padding: 'var(--space-md)',
-            marginBottom: 'var(--space-sm)',
+            marginBottom: 'var(--space-md)',
             border: '1px solid var(--border)',
             cursor: 'pointer',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            minHeight: 64,
           }}
         >
           <div>
@@ -245,10 +311,10 @@ export function HistoryTab() {
             </div>
             <div
               style={{
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: 600,
                 color: 'var(--accent)',
-                marginTop: '2px',
+                marginTop: 'var(--space-xs)',
               }}
             >
               {s.distortion}
