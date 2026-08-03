@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { getSessions, type Session } from '../services/storageService';
 import { buildWeeklyInsight } from '../services/weeklyInsight';
+import { ReminderSettings } from './ReminderSettings';
 
 interface Summary {
   total: number;
@@ -55,6 +56,9 @@ export function ProgressTab() {
         }}
       >
         Твой прогресс появится здесь после первых сессий.
+        <div style={{ marginTop: 'var(--space-lg)', textAlign: 'left', maxWidth: 400, marginLeft: 'auto', marginRight: 'auto' }}>
+          <ReminderSettings />
+        </div>
         <div style={{ marginTop: 'var(--space-lg)' }}>
           <Link to="/privacy" data-testid="privacy-link" style={{ color: 'var(--accent)', fontSize: 13 }}>
             Приватность
@@ -261,6 +265,8 @@ export function ProgressTab() {
           })}
         </div>
       </div>
+
+      <ReminderSettings />
 
       <div style={{ textAlign: 'center', marginTop: 'var(--space-xl)' }}>
         <Link to="/privacy" data-testid="privacy-link" style={{ color: 'var(--text-secondary)', fontSize: 13 }}>

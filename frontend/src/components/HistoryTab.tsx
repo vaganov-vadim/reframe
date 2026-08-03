@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSessions, deleteSession, type Session } from '../services/storageService';
+import { getSessions, deleteSession, markActionDone, type Session } from '../services/storageService';
 import { ReframingText } from './ResponseView';
 
 export function HistoryTab() {
@@ -22,6 +22,15 @@ export function HistoryTab() {
     setSessions(getSessions());
     setConfirmDelete(false);
     setSelected(null);
+  };
+
+  const handleMarkDone = () => {
+    if (!selected?.action) return;
+    const updated = markActionDone(selected.id, true);
+    if (updated) {
+      setSelected(updated);
+      setSessions(getSessions());
+    }
   };
 
   if (selected) {
@@ -114,7 +123,38 @@ export function HistoryTab() {
               >
                 Что сделать сегодня
               </div>
-              {selected.action}
+              <div style={{ marginBottom: 'var(--space-md)' }}>{selected.action}</div>
+              {selected.actionDone ? (
+                <div
+                  data-testid="history-action-done"
+                  style={{
+                    fontSize: 14,
+                    color: 'var(--success)',
+                    fontWeight: 600,
+                  }}
+                >
+                  Сделано
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  data-testid="history-action-mark-done"
+                  onClick={handleMarkDone}
+                  style={{
+                    minHeight: 48,
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    color: 'var(--accent)',
+                    border: '1px solid var(--accent)',
+                    borderRadius: 'var(--border-radius-sm)',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Сделал
+                </button>
+              )}
             </section>
           )}
 
