@@ -38,7 +38,7 @@
 ## Сделано (v2.0–v2.3)
 
 - 🔀 Multi-agent studio — Бёрнс + Стоик, «Что унести»
-- 🔗 Discovery — «Два взгляда на ситуацию →»
+- 🔗 Discovery — «Побрейнштормить →»; Studio на тех же шрифтах, что дневник
 - 🧭 Quiet UI + один follow-up; presence (skeleton + typewriter, не token-stream)
 
 ## Сделано (v1.1)

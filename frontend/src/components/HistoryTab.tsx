@@ -280,7 +280,7 @@ export function HistoryTab() {
                 boxSizing: 'border-box',
               }}
             >
-              Два взгляда →
+              Побрейнштормить →
             </Link>
           )}
 

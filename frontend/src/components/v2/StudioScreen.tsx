@@ -267,7 +267,7 @@ export function StudioScreen() {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)', gap: 'var(--space-md)' }}>
         <h1 style={{ margin: 0, fontSize: 28, color: 'var(--text-primary)', fontWeight: 600, letterSpacing: '-0.02em' }}>
-          Два взгляда
+          Побрейншторм
         </h1>
         <Link
           to={diaryPath}
@@ -346,7 +346,6 @@ export function StudioScreen() {
                   fontSize: 17,
                   color: 'var(--text-primary)',
                   lineHeight: 1.45,
-                  fontFamily: 'var(--studio-display, inherit)',
                 }}
               >
                 {followupQuestion}

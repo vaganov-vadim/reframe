@@ -30,7 +30,6 @@ export function ConsensusView({ text, loading = false, typewriter = true }: Cons
           textTransform: 'uppercase',
           color: 'var(--accent)',
           fontWeight: 600,
-          fontFamily: 'var(--studio-body, inherit)',
         }}
       >
         Что унести

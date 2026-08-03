@@ -218,7 +218,7 @@ export function MainScreen() {
             fontWeight: 500,
           }}
         >
-          Два взгляда на ситуацию →
+          Побрейнштормить →
         </Link>
       </div>
 

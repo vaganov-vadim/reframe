@@ -969,7 +969,7 @@ POST /api/reframe {
 - `ConsensusView`: hero «Что унести»
 - `StudioScreen`: quiet input (placeholder only); follow-up → «Понял»; «К дневнику» в шапке
 - `useSSE.sendToAgents` + `sendStudioFollowup`
-- MainScreen: «Два взгляда на ситуацию →»
+- MainScreen: «Побрейнштормить →»
 - На `/studio` TabBar скрыт
 
 ### Таймауты
