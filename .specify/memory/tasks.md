@@ -245,4 +245,11 @@
 - [x] 20.4 Persist `action` в сессии + HistoryTab detail
 - [x] 20.5 Unit + E2E; PR
 
-## Итого: Phase 12–20 (response depth) выполнены
+## Phase 21 — Deep review parity + VA TTS
+
+- [x] 21.1 Spec: deep-review как у первой записи; «Слушать» на VA reframing
+- [x] 21.2 Phase `deep-review` + `deepText`; stop → review → submit/retry
+- [x] 21.3 VerticalArrow: reuse ReframingText (TTS)
+- [x] 21.4 E2E: deep review + listen; update vertical-arrow specs; PR
+
+## Итого: Phase 12–21 выполнены

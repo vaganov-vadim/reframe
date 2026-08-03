@@ -1,4 +1,5 @@
 import type { VerticalArrowLevel } from '../types/session';
+import { ReframingText } from './ResponseView';
 
 export function VerticalArrow({
   levels,
@@ -121,23 +122,7 @@ export function VerticalArrow({
         ))}
       </div>
 
-      {reframing && (
-        <div
-          style={{
-            marginTop: 'var(--space-lg)',
-            padding: 'var(--space-md)',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--border-radius-sm)',
-            border: '1px solid var(--accent)',
-            borderLeftWidth: '3px',
-            fontSize: '15px',
-            lineHeight: '1.6',
-            color: 'var(--text-primary)',
-          }}
-        >
-          {reframing}
-        </div>
-      )}
+      {reframing && <ReframingText text={reframing} listenTestId="listen-va-reframing" />}
 
       {question && (
         <div

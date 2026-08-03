@@ -19,7 +19,11 @@ function sessionReducer(state: MainState, action: Action): MainState {
     case 'SET_ANXIETY_AFTER':
       return { ...state, anxietyAfter: action.value };
     case 'START_DEEP':
-      return { ...state, phase: 'deep-recording' };
+      return { ...state, phase: 'deep-recording', deepText: null, error: null };
+    case 'STOP_DEEP_RECORDING':
+      return { ...state, phase: 'deep-review' };
+    case 'SET_DEEP_TEXT':
+      return { ...state, deepText: action.text };
     case 'DEEP_ANALYZE':
       return { ...state, phase: 'deep-analyzing' };
     case 'DEEP_RESULT_RECEIVED':
@@ -57,6 +61,7 @@ function sessionReducer(state: MainState, action: Action): MainState {
         deepData: null,
         surfaceThought: null,
         lastText: null,
+        deepText: null,
       };
     default:
       return state;
@@ -85,6 +90,7 @@ function createInitialState(): MainState {
           deepData: parsed.deepData ?? null,
           surfaceThought: parsed.surfaceThought ?? null,
           lastText: parsed.lastText ?? null,
+          deepText: parsed.deepText ?? null,
         };
       }
     }
@@ -101,6 +107,7 @@ function createInitialState(): MainState {
     deepData: null,
     surfaceThought: null,
     lastText: null,
+    deepText: null,
   };
 }
 

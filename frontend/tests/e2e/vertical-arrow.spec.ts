@@ -63,8 +63,11 @@ test('shows Vertical Arrow staircase after deep analysis', async ({ page }) => {
   // Use dispatchEvent to avoid TabBar (fixed bottom, z-index 100) intercepting the click
   await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Копнуть глубже'))?.click(); });
 
-  // Mock auto-completes the deep recording — wait for Vertical Arrow
-  await expect(page.getByText('Вертикальная стрелка')).toBeVisible({ timeout: 10000 });
+  // Deep recording auto-completes → review → send
+  await page.waitForTimeout(200);
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
+
+  // Wait for Vertical Arrow
   await expect(page.getByText('Вертикальная стрелка')).toBeVisible({ timeout: 10000 });
   await expect(page.getByText('Поверхностная мысль')).toBeVisible();
   await expect(page.getByText('Промежуточная')).toBeVisible();
@@ -72,4 +75,5 @@ test('shows Vertical Arrow staircase after deep analysis', async ({ page }) => {
   await expect(page.getByText('Я опоздал')).toBeVisible();
   await expect(page.getByText('Я безответственный')).toBeVisible();
   await expect(page.getByText('Я недостаточно хорош')).toBeVisible();
+  await expect(page.getByTestId('listen-va-reframing')).toBeVisible();
 });

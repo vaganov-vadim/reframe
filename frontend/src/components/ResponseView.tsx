@@ -140,7 +140,13 @@ export function DistortionList({
   );
 }
 
-export function ReframingText({ text }: { text: string }) {
+export function ReframingText({
+  text,
+  listenTestId = 'listen-reframing',
+}: {
+  text: string;
+  listenTestId?: string;
+}) {
   const { supported, speaking, toggle } = useSpeechSynthesis();
   if (!text) return null;
 
@@ -177,7 +183,7 @@ export function ReframingText({ text }: { text: string }) {
       {supported && (
         <button
           type="button"
-          data-testid="listen-reframing"
+          data-testid={listenTestId}
           onClick={() => toggle(text)}
           style={{
             marginTop: 'var(--space-md)',

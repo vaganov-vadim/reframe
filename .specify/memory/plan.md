@@ -189,6 +189,8 @@ Files: MainScreen.tsx, ResponseView.tsx, useSpeechRecognition.ts, useSSE.ts, His
 
 **Vertical Arrow prompt** — отдельный системный промпт для анализа глубинного убеждения. LLM получает: 1) исходную поверхностную мысль, 2) ответ пользователя на вопрос «что это говорит о тебе?». Возвращает JSON: `{levels: [{thought, label}], reframing}`.
 
+**Deep review (v1 parity)**: после stop в `deep-recording` → фаза `deep-review` (показ `deepText`, «Отправить» / «Записать заново»). Отмена во время записи → `result`. Рефрейминг VA использует тот же `ReframingText` / TTS, что и первый раунд.
+
 ---
 
 ## API Contract

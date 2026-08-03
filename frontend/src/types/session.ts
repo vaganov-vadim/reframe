@@ -68,6 +68,7 @@ export type Phase =
   | 'analyzing'
   | 'result'
   | 'deep-recording'
+  | 'deep-review'
   | 'deep-analyzing'
   | 'deep-result'
   | 'rating-after'
@@ -83,6 +84,8 @@ export interface MainState {
   deepData: DeepResponse | null;
   surfaceThought: string | null;
   lastText: string | null;
+  /** Transcript for Vertical Arrow review (before send) */
+  deepText: string | null;
 }
 
 export type Action =
@@ -94,6 +97,7 @@ export type Action =
   | { type: 'RESULT_RECEIVED' }
   | { type: 'SET_ANXIETY_AFTER'; value: number }
   | { type: 'START_DEEP' }
+  | { type: 'STOP_DEEP_RECORDING' }
   | { type: 'DEEP_ANALYZE' }
   | { type: 'DEEP_RESULT_RECEIVED' }
   | { type: 'SAVE' }
@@ -105,7 +109,8 @@ export type Action =
   | { type: 'STORE_RESULT'; data: ReframeResponse }
   | { type: 'STORE_DEEP_RESULT'; data: DeepResponse }
   | { type: 'SET_SURFACE_THOUGHT'; text: string }
-  | { type: 'SET_LAST_TEXT'; text: string };
+  | { type: 'SET_LAST_TEXT'; text: string }
+  | { type: 'SET_DEEP_TEXT'; text: string };
 
 export const STORAGE_KEYS = {
   sessions: 'reframe_sessions',

@@ -163,6 +163,9 @@ test('deep API failure allows retry from result phase', async ({ page }) => {
   await page.waitForTimeout(300);
   // Use dispatchEvent to avoid TabBar intercepting the click
   await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Стоп'))?.click(); });
+  await page.waitForTimeout(200);
+  // Review phase — confirm before send
+  await page.evaluate(() => { const btns = [...document.querySelectorAll('button')]; btns.find(b => b.textContent?.includes('Отправить'))?.click(); });
   await page.waitForTimeout(500);
 
   // Should see error banner with "Не получилось" and retry button
