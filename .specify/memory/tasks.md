@@ -252,4 +252,10 @@
 - [x] 21.3 VerticalArrow: reuse ReframingText (TTS)
 - [x] 21.4 E2E: deep review + listen; update vertical-arrow specs; PR
 
-## Итого: Phase 12–21 выполнены
+## Phase 22 — History TTS
+
+- [x] 22.1 Spec: «Слушать» в деталях истории (рефрейминг + VA)
+- [x] 22.2 HistoryTab: reuse ReframingText
+- [x] 22.3 E2E + PR
+
+## Итого: Phase 12–22 выполнены
