@@ -208,7 +208,7 @@
 - [x] 16.2 ТЕСТ: AgentCard — role subtitle; Burns reframing→distortions→question
 - [x] 16.3 AgentCard + ConsensusView («Что унести», hero)
 - [x] 16.4 StudioScreen: title/subtitle/prompt/example; result order; CTA «Понял · ещё раз»
-- [x] 16.5 MainScreen discovery: «Два взгляда на ситуацию →»
+- [x] 16.5 MainScreen discovery: «Побрейнштормить →» (was «Два взгляда…»)
 - [x] 16.6 E2E/unit обновлены; vitest + playwright studio зелёные
 
 ## Phase 17 — Studio Quiet UI + один follow-up (v2.2)

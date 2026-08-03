@@ -67,7 +67,7 @@ test('studio quiet input, takeaway, follow-up updates hero, then Понял', as
 
   await page.goto('/studio');
   await expect(page.getByTestId('studio-screen')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Два взгляда' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Побрейншторм' })).toBeVisible();
   await expect(page.getByTestId('studio-example')).toHaveCount(0);
   await expect(page.getByPlaceholder(/опоздал на созвон/)).toBeVisible();
 
@@ -154,7 +154,7 @@ test('v1 home still works and links to studio', async ({ page }) => {
 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Reframe' })).toBeVisible();
-  await expect(page.getByTestId('studio-discovery')).toHaveText(/Два взгляда на ситуацию/);
+  await expect(page.getByTestId('studio-discovery')).toHaveText(/Побрейнштормить/);
   await page.getByTestId('studio-discovery').click();
   await expect(page).toHaveURL(/\/studio/);
   await expect(page.getByTestId('studio-screen')).toBeVisible();

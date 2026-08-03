@@ -118,18 +118,9 @@
 .loading-dot:nth-child(2) { animation-delay: 0.2s; }
 .loading-dot:nth-child(3) { animation-delay: 0.4s; }
 
-/* Studio presence (v2.3) — scoped, does not restyle v1 diary */
+/* Studio layout — same type stack as diary (--font-family) */
 .studio-screen {
-  --studio-display: "Fraunces", "Iowan Old Style", Palatino, Georgia, serif;
-  --studio-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
-  font-family: var(--studio-body);
   width: 100%;
-}
-
-.studio-screen h1,
-.studio-takeaway-title,
-.studio-takeaway-text {
-  font-family: var(--studio-display);
 }
 
 #root:has(.app--studio) {
