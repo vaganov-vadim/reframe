@@ -1,27 +1,44 @@
 import { useState, useEffect } from 'react';
-import { getSessions, type Session } from '../services/storageService';
+import { getSessions, deleteSession, type Session } from '../services/storageService';
 import { ReframingText } from './ResponseView';
 
 export function HistoryTab() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selected, setSelected] = useState<Session | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     setSessions(getSessions());
   }, []);
 
+  const handleBack = () => {
+    setConfirmDelete(false);
+    setSelected(null);
+  };
+
+  const handleDelete = () => {
+    if (!selected) return;
+    deleteSession(selected.id);
+    setSessions(getSessions());
+    setConfirmDelete(false);
+    setSelected(null);
+  };
+
   if (selected) {
     return (
       <div
         style={{
-          padding: 'var(--space-md)',
+          paddingTop: 'var(--space-md)',
+          paddingLeft: 'var(--space-md)',
+          paddingRight: 'var(--space-md)',
           paddingBottom: 'var(--space-xl)',
           maxWidth: 480,
           margin: '0 auto',
         }}
       >
         <button
-          onClick={() => setSelected(null)}
+          type="button"
+          onClick={handleBack}
           style={{
             background: 'transparent',
             color: 'var(--accent)',
@@ -238,6 +255,79 @@ export function HistoryTab() {
                   : `+${Math.abs(selected.delta)}`}
               </div>
             </div>
+          </section>
+
+          <section style={{ paddingTop: 'var(--space-sm)' }}>
+            {!confirmDelete ? (
+              <button
+                type="button"
+                data-testid="history-delete"
+                onClick={() => setConfirmDelete(true)}
+                style={{
+                  width: '100%',
+                  minHeight: 48,
+                  background: 'transparent',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+              >
+                Удалить сессию
+              </button>
+            ) : (
+              <div data-testid="history-delete-confirm">
+                <p
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 14,
+                    color: 'var(--text-secondary)',
+                    margin: '0 0 var(--space-md)',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Удалить эту сессию с устройства? Отменить нельзя.
+                </p>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                  <button
+                    type="button"
+                    data-testid="history-delete-confirm-yes"
+                    onClick={handleDelete}
+                    style={{
+                      flex: 1,
+                      minHeight: 48,
+                      background: 'transparent',
+                      color: 'var(--error)',
+                      border: '1px solid var(--error)',
+                      borderRadius: 'var(--border-radius-sm)',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Удалить
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="history-delete-cancel"
+                    onClick={() => setConfirmDelete(false)}
+                    style={{
+                      flex: 1,
+                      minHeight: 48,
+                      background: 'var(--bg-elevated)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--border-radius-sm)',
+                      fontSize: 14,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Оставить
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </div>

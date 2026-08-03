@@ -22,6 +22,11 @@ export function saveSession(session: Session): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
 }
 
+export function deleteSession(id: string): void {
+  const next = getSessions().filter((s) => s.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
+
 export function clearSessions(): void {
   localStorage.removeItem(STORAGE_KEY);
 }

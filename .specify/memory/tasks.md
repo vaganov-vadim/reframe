@@ -258,4 +258,11 @@
 - [x] 22.2 HistoryTab: reuse ReframingText
 - [x] 22.3 E2E + PR
 
-## Итого: Phase 12–22 выполнены
+## Phase 23 — History delete
+
+- [x] 23.1 Spec/ROADMAP: удаление сессии из деталей с подтверждением
+- [x] 23.2 `deleteSession(id)` в storageService + unit
+- [x] 23.3 HistoryTab: Удалить → подтверждение → список
+- [x] 23.4 E2E + PR
+
+## Итого: Phase 12–23 выполнены
