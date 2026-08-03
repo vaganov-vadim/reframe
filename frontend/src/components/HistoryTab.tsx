@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getSessions, type Session } from '../services/storageService';
+import { ReframingText } from './ResponseView';
 
 export function HistoryTab() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -89,20 +90,8 @@ export function HistoryTab() {
               {selected.action}
             </div>
           )}
-          <div
-            style={{
-              background: 'var(--bg-secondary)',
-              borderRadius: 'var(--border-radius)',
-              padding: 'var(--space-md)',
-              marginBottom: 'var(--space-md)',
-              fontSize: '15px',
-              lineHeight: '1.6',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--accent)',
-              borderLeftWidth: '3px',
-            }}
-          >
-            {selected.reframing}
+          <div data-testid="history-reframing">
+            <ReframingText text={selected.reframing} listenTestId="listen-history-reframing" />
           </div>
           {selected.verticalArrowLevels && selected.verticalArrowLevels.length > 0 && (
             <div style={{ marginTop: 'var(--space-md)' }}>
@@ -123,20 +112,11 @@ export function HistoryTab() {
           )}
 
           {selected.verticalArrowReframing && (
-            <div
-              style={{
-                background: 'var(--bg-secondary)',
-                borderRadius: 'var(--border-radius)',
-                padding: 'var(--space-md)',
-                marginTop: 'var(--space-md)',
-                fontSize: '15px',
-                lineHeight: '1.6',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--accent)',
-                borderLeftWidth: '3px',
-              }}
-            >
-              {selected.verticalArrowReframing}
+            <div data-testid="history-va-reframing">
+              <ReframingText
+                text={selected.verticalArrowReframing}
+                listenTestId="listen-history-va-reframing"
+              />
             </div>
           )}
 
