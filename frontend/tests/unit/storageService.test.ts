@@ -22,7 +22,7 @@ vi.stubGlobal('localStorage', {
   key: (i: number) => Object.keys(store)[i] ?? null,
 });
 
-import { getSessions, saveSession, clearSessions } from '../../src/services/storageService';
+import { getSessions, saveSession, clearSessions, deleteSession } from '../../src/services/storageService';
 
 const mockSession = {
   id: '123',
@@ -58,6 +58,21 @@ describe('storageService', () => {
     saveSession(mockSession);
     clearSessions();
     expect(getSessions()).toEqual([]);
+  });
+
+  it('deleteSession removes only the matching id', () => {
+    saveSession(mockSession);
+    saveSession({ ...mockSession, id: '456' });
+    deleteSession('123');
+    const sessions = getSessions();
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].id).toBe('456');
+  });
+
+  it('deleteSession is a no-op for unknown id', () => {
+    saveSession(mockSession);
+    deleteSession('missing');
+    expect(getSessions()).toHaveLength(1);
   });
 
   it('getSessions handles corrupt JSON gracefully', () => {

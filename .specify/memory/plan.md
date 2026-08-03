@@ -269,7 +269,7 @@ Retry logic: при ошибке HTTP или таймауте — повтор �
 
 ---
 
-## Data Schema (localStorage)
+**History delete (v1)**: `deleteSession(id)` filters `reframe_sessions` in localStorage. UI: detail → confirm → list. No server call.
 
 ```typescript
 // src/types/session.ts — canonical Session interface and STORAGE_KEYS
