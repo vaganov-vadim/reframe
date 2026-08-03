@@ -168,6 +168,7 @@ export function MainScreen() {
       distortions: state.data?.distortions ?? [],
       reframing: state.data?.reframing ?? '',
       question: state.data?.question ?? '',
+      action: state.data?.action,
       verticalArrowLevels: state.deepData?.levels ?? undefined,
       verticalArrowReframing: state.deepData?.reframing ?? undefined,
     });

@@ -41,12 +41,16 @@
 - 🔗 Discovery — «Два взгляда на ситуацию →»
 - 🧭 Quiet UI + один follow-up; presence (skeleton + typewriter, не token-stream)
 
-## В работе / ближайшее (v1.1)
+## Сделано (v1.1)
 
 - 🔊 TTS рефрейма (speechSynthesis)
 - 📱 PWA lite (manifest, без aggressive SW)
 - 📅 Недельный смысл в прогрессе
 - 🔒 Честная privacy-страница (устройство / наш прокси / LLM)
+
+## Сделано (v1.2)
+
+- 🎯 Глубина ответа дневника — `action` + takeaway-first иерархия
 
 ## Следом
 

@@ -4,6 +4,7 @@ export interface LLMResponse {
   distortions: Array<{ type: string; thought: string; why: string }>;
   reframing: string;
   question: string;
+  action?: string;
   verticalArrowLevels?: Array<{ thought: string; label: string }>;
   verticalArrowReframing?: string;
 }
@@ -36,6 +37,7 @@ export function completeSession(
     distortion: response.distortions[0]?.type ?? 'не определено',
     distortions: response.distortions,
     reframing: response.reframing,
+    action: response.action,
     verticalArrowLevels: response.verticalArrowLevels,
     verticalArrowReframing: response.verticalArrowReframing,
   };

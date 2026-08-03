@@ -232,10 +232,45 @@ export function ResponseView({
 
   return (
     <div>
-      <div className="stagger-0">
-        <DistortionList distortions={data.distortions} />
-      </div>
-      <div className="stagger-1">
+      {data.action && (
+        <div
+          className="stagger-0"
+          data-testid="response-action"
+          style={{
+            padding: 'var(--space-md)',
+            margin: '0 var(--space-md) var(--space-md)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--border-radius-sm)',
+            border: '1px solid var(--accent)',
+            borderLeftWidth: '3px',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '10px',
+              color: 'var(--text-secondary)',
+              marginBottom: '6px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+          >
+            Что сделать сегодня
+          </div>
+          <div
+            style={{
+              fontSize: '16px',
+              color: 'var(--text-primary)',
+              lineHeight: '1.5',
+              fontWeight: 500,
+            }}
+          >
+            {data.action}
+          </div>
+        </div>
+      )}
+
+      <div className={data.action ? 'stagger-1' : 'stagger-0'}>
         <ReframingText text={data.reframing} />
       </div>
 
@@ -293,6 +328,10 @@ export function ResponseView({
           {data.pattern}
         </div>
       )}
+
+      <div className="stagger-2">
+        <DistortionList distortions={data.distortions} />
+      </div>
 
       {data.distortions && data.distortions.length > 0 && (
         <div style={{ textAlign: 'center', padding: '0 var(--space-md) var(--space-lg)' }}>

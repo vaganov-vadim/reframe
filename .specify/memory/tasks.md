@@ -237,4 +237,12 @@
 - [x] 19.5 Privacy page `/privacy` (честный LLM disclaimer)
 - [x] 19.6 Tests + PR
 
-## Итого: Phase 12–19 (product basics) выполнены
+## Phase 20 — v1 Response depth
+
+- [x] 20.1 Spec/ROADMAP: `action` + takeaway-first иерархия результата
+- [x] 20.2 Backend: `action` в system-prompt + mock fixtures + тест промпта
+- [x] 20.3 Frontend types + ResponseView: шаг → рефрейминг → вопрос → искажения
+- [x] 20.4 Persist `action` в сессии + HistoryTab detail
+- [x] 20.5 Unit + E2E; PR
+
+## Итого: Phase 12–20 (response depth) выполнены

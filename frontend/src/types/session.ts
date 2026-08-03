@@ -14,6 +14,8 @@ export interface ReframeResponse {
   levels?: VerticalArrowLevel[];
   reframing: string;
   question: string;
+  /** Concrete next step for today (v1.2); optional for older responses */
+  action?: string;
   pattern?: string;
 }
 
@@ -54,6 +56,7 @@ export interface Session {
   anxietyAfter: number;
   delta: number;
   reframing: string;
+  action?: string;
   verticalArrowLevels?: VerticalArrowLevel[];
   verticalArrowReframing?: string;
 }
