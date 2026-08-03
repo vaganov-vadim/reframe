@@ -35,6 +35,7 @@ describe('sessionService', () => {
       distortions: [{ type: 'Катастрофизация', thought: '...', why: '...' }],
       reframing: 'Другой взгляд.',
       question: 'Что скажешь?',
+      action: 'Запиши один факт без ярлыка.',
       verticalArrowLevels: [{ thought: 'Я плохой', label: 'Глубинное убеждение' }],
       verticalArrowReframing: 'Глубже.',
     });
@@ -46,6 +47,7 @@ describe('sessionService', () => {
     expect(saved.delta).toBe(5);
     expect(saved.distortion).toBe('Катастрофизация');
     expect(saved.reframing).toBe('Другой взгляд.');
+    expect(saved.action).toBe('Запиши один факт без ярлыка.');
     expect(saved.distortions).toEqual([{ type: 'Катастрофизация', thought: '...', why: '...' }]);
     expect(saved.verticalArrowLevels).toEqual([{ thought: 'Я плохой', label: 'Глубинное убеждение' }]);
     expect(saved.verticalArrowReframing).toBe('Глубже.');

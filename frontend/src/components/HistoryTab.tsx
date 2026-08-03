@@ -60,6 +60,35 @@ export function HistoryTab() {
               {selected.distortion}
             </span>
           </div>
+          {selected.action && (
+            <div
+              data-testid="history-action"
+              style={{
+                background: 'var(--bg-elevated)',
+                borderRadius: 'var(--border-radius)',
+                padding: 'var(--space-md)',
+                marginBottom: 'var(--space-md)',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--accent)',
+                borderLeftWidth: '3px',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '10px',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '6px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Что сделать сегодня
+              </div>
+              {selected.action}
+            </div>
+          )}
           <div
             style={{
               background: 'var(--bg-secondary)',
