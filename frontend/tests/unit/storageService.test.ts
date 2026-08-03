@@ -22,7 +22,15 @@ vi.stubGlobal('localStorage', {
   key: (i: number) => Object.keys(store)[i] ?? null,
 });
 
-import { getSessions, saveSession, clearSessions, deleteSession, markActionDone } from '../../src/services/storageService';
+import {
+  getSessions,
+  saveSession,
+  clearSessions,
+  deleteSession,
+  markActionDone,
+  clearAllDeviceData,
+} from '../../src/services/storageService';
+import { STORAGE_KEYS } from '../../src/types/session';
 
 const mockSession = {
   id: '123',
@@ -80,6 +88,20 @@ describe('storageService', () => {
     const updated = markActionDone('123', true);
     expect(updated?.actionDone).toBe(true);
     expect(getSessions()[0].actionDone).toBe(true);
+  });
+
+  it('clearAllDeviceData removes all known keys', () => {
+    saveSession(mockSession);
+    store[STORAGE_KEYS.theme] = 'light';
+    store[STORAGE_KEYS.onboarding] = 'true';
+    store[STORAGE_KEYS.reminder] = '{}';
+    store[STORAGE_KEYS.sessionState] = '{}';
+    clearAllDeviceData();
+    expect(getSessions()).toEqual([]);
+    expect(store[STORAGE_KEYS.theme]).toBeUndefined();
+    expect(store[STORAGE_KEYS.onboarding]).toBeUndefined();
+    expect(store[STORAGE_KEYS.reminder]).toBeUndefined();
+    expect(store[STORAGE_KEYS.sessionState]).toBeUndefined();
   });
 
   it('getSessions handles corrupt JSON gracefully', () => {

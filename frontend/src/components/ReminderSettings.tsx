@@ -76,6 +76,7 @@ export function ReminderSettings() {
         }}
       >
         Мягкий сигнал при открытии приложения после выбранного времени. Не будильник в фоне.
+        Время — по часам на устройстве.
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
         <button
