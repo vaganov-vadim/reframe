@@ -102,16 +102,9 @@ export function MainScreen() {
         }
       } else if (state.phase === 'deep-recording') {
         const deepText = getFinalText();
-        if (deepText && state.surfaceThought) {
-          lastSurfaceRef.current = deepText;
-          dispatch({ type: 'DEEP_ANALYZE' });
-          sendDeepText(deepText, state.surfaceThought)
-            .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
-            .catch((err: unknown) => {
-              const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
-              console.error(`[MainScreen] DEEP_ERROR after voice deep recording — ${message}`, err);
-              dispatch({ type: 'DEEP_ERROR', message });
-            });
+        if (deepText) {
+          dispatch({ type: 'SET_DEEP_TEXT', text: deepText });
+          dispatch({ type: 'STOP_DEEP_RECORDING' });
         } else {
           console.warn('[MainScreen] DEEP_ERROR — no text after deep recording');
           dispatch({ type: 'DEEP_ERROR', message: 'Не расслышал. Попробуем ещё раз?' });
@@ -154,6 +147,20 @@ export function MainScreen() {
     cancel();
     dispatch({ type: 'RESULT_RECEIVED' });
   }, [cancel, dispatch]);
+
+  const handleDeepReviewSubmit = useCallback(() => {
+    if (state.deepText && state.surfaceThought) {
+      lastSurfaceRef.current = state.deepText;
+      dispatch({ type: 'DEEP_ANALYZE' });
+      sendDeepText(state.deepText, state.surfaceThought)
+        .then(() => dispatch({ type: 'DEEP_RESULT_RECEIVED' }))
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Не получилось. Попробуем через минуту?';
+          console.error(`[MainScreen] DEEP_ERROR after deep review submit — ${message}`, err);
+          dispatch({ type: 'DEEP_ERROR', message });
+        });
+    }
+  }, [state.deepText, state.surfaceThought, sendDeepText, dispatch]);
 
   const handleReviewSubmit = useCallback(() => {
     if (state.lastText) {
@@ -348,7 +355,7 @@ export function MainScreen() {
         </div>
       )}
 
-      {state.phase === 'deep-recording' && (
+      {(state.phase === 'deep-recording' || state.phase === 'deep-review') && (
         <div className="phase-enter" key="deep-recording">
           <InputMethod
             isSupported={isSupported}
@@ -369,9 +376,12 @@ export function MainScreen() {
                   });
               }
             }}
-            reviewText={null}
-            onReviewSubmit={() => {}}
-            onRetry={() => {}}
+            reviewText={state.phase === 'deep-review' ? (state.deepText ?? null) : null}
+            onReviewSubmit={handleDeepReviewSubmit}
+            onRetry={() => {
+              dispatch({ type: 'START_DEEP' });
+              start();
+            }}
             surfaceThought={state.surfaceThought ?? undefined}
             recordingPrompt="Что эта мысль говорит о вас?"
             textPlaceholder="Напишите одно предложение..."
