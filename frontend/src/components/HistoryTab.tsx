@@ -124,37 +124,51 @@ export function HistoryTab() {
                 Что сделать сегодня
               </div>
               <div style={{ marginBottom: 'var(--space-md)' }}>{selected.action}</div>
-              {selected.actionDone ? (
-                <div
-                  data-testid="history-action-done"
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={!!selected.actionDone}
+                data-testid={selected.actionDone ? 'history-action-done' : 'history-action-mark-done'}
+                onClick={selected.actionDone ? undefined : handleMarkDone}
+                disabled={!!selected.actionDone}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  minHeight: 48,
+                  padding: '8px 4px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: selected.actionDone ? 'var(--success)' : 'var(--text-primary)',
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: selected.actionDone ? 'default' : 'pointer',
+                }}
+              >
+                <span
+                  aria-hidden
                   style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    border: selected.actionDone
+                      ? '2px solid var(--success)'
+                      : '2px solid var(--text-secondary)',
+                    background: selected.actionDone ? 'var(--success)' : 'transparent',
+                    color: 'var(--bg-primary)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     fontSize: 14,
-                    color: 'var(--success)',
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    flexShrink: 0,
                   }}
                 >
-                  Сделано
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  data-testid="history-action-mark-done"
-                  onClick={handleMarkDone}
-                  style={{
-                    minHeight: 48,
-                    padding: '8px 16px',
-                    background: 'transparent',
-                    color: 'var(--accent)',
-                    border: '1px solid var(--accent)',
-                    borderRadius: 'var(--border-radius-sm)',
-                    fontSize: 14,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Сделал
-                </button>
-              )}
+                  {selected.actionDone ? '✓' : ''}
+                </span>
+                {selected.actionDone ? 'Сделано' : 'Отметить как сделанное'}
+              </button>
             </section>
           )}
 

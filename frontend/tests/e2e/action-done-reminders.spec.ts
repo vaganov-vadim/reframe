@@ -35,7 +35,8 @@ test('marks action done in history and shows steps in weekly insight', async ({ 
   await page.getByText('Катастрофизация').click();
   await expect(page.getByTestId('history-action')).toContainText('Спроси одного коллегу');
   await page.getByTestId('history-action-mark-done').click();
-  await expect(page.getByTestId('history-action-done')).toHaveText('Сделано');
+  await expect(page.getByTestId('history-action-done')).toContainText('Сделано');
+  await expect(page.getByRole('checkbox', { name: /Сделано/i })).toBeChecked();
 
   await page.getByRole('link', { name: 'Прогресс' }).click();
   await expect(page.getByTestId('weekly-insight')).toContainText('Шаги: 2 из 2 сделаны');
