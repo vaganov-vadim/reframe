@@ -143,9 +143,12 @@ export function DistortionList({
 export function ReframingText({
   text,
   listenTestId = 'listen-reframing',
+  flush = false,
 }: {
   text: string;
   listenTestId?: string;
+  /** Drop outer margin when nested in another layout */
+  flush?: boolean;
 }) {
   const { supported, speaking, toggle } = useSpeechSynthesis();
   if (!text) return null;
@@ -156,7 +159,7 @@ export function ReframingText({
         padding: 'var(--space-lg)',
         background: 'var(--bg-secondary)',
         borderRadius: 'var(--border-radius)',
-        margin: 'var(--space-md)',
+        margin: flush ? 0 : 'var(--space-md)',
         fontSize: '15px',
         lineHeight: '1.7',
         color: 'var(--text-primary)',
