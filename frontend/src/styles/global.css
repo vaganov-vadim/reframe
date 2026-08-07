@@ -48,34 +48,46 @@ button {
   font-family: inherit;
 }
 
-/* Range slider thumb — cross-browser */
+/* Range slider — keep custom track under the thumb (Firefox otherwise shows track through it) */
+input[type="range"]::-webkit-slider-runnable-track {
+  background: transparent;
+  border: none;
+}
+
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--accent);
+  background-color: var(--accent);
+  background-image: none;
   border: 2px solid var(--bg-primary);
   cursor: pointer;
   position: relative;
   z-index: 1;
 }
 
+input[type="range"]::-moz-range-track,
+input[type="range"]::-moz-range-progress {
+  background: transparent;
+  border: none;
+}
+
+input[type="range"]::-moz-focus-outer {
+  border: 0;
+}
+
 input[type="range"]::-moz-range-thumb {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--accent);
+  background-color: var(--accent);
+  background-image: none;
   border: 2px solid var(--bg-primary);
-  box-shadow: none;
+  /* extra opaque ring so the custom track never shows through the thumb */
+  box-shadow: 0 0 0 1px var(--bg-primary);
   -moz-appearance: none;
+  appearance: none;
   cursor: pointer;
-}
-
-@-moz-document url-prefix() {
-  input[type="range"]::-moz-range-thumb {
-    background-image: none;
-    background-color: var(--accent);
-  }
 }
