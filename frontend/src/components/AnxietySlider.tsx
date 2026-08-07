@@ -64,6 +64,8 @@ export function AnxietySlider({
           onTouchStart={() => setShowTooltip(true)}
           onTouchEnd={() => setShowTooltip(false)}
           style={{
+            position: 'relative',
+            zIndex: 1,
             width: '100%',
             height: 'var(--touch-target)',
             WebkitAppearance: 'none',
@@ -75,8 +77,9 @@ export function AnxietySlider({
             margin: 0,
           }}
         />
-        {/* Custom thin track */}
+        {/* Custom thin track — under the input so it never paints through the thumb (Firefox) */}
         <div
+          aria-hidden
           style={{
             position: 'absolute',
             top: '50%',
